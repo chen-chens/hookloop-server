@@ -1,5 +1,5 @@
 # hookloop-server
-HookLoop Side Project / Server-Side : This is a project tracking application by using Node.ts and Typescript.
+HookLoop Side Project / Server-Side : This is a project tracking application by using Node.js and Typescript.
 
 ---
 
@@ -21,17 +21,17 @@ HookLoop Side Project / Server-Side : This is a project tracking application by 
 ## Folder Structure
 ```
     src/
-    ├── controllers/
-    │   ├── homeController.ts
+    ├── controllers/ : 負責處理路由的請求和回應
+    │   ├── homeController.ts 
     │   ├── userController.ts
     │   └── ...
     │
-    ├── models/
+    ├── models/ : 定義資料庫表的欄位、資料驗證規則等
     │   ├── user.ts
     │   ├── product.ts
     │   └── ...
     │
-    ├── routes/
+    ├── routes/ : 定義路由等
     │   ├── homeRoutes.ts
     │   ├── userRoutes.ts
     │   └── ...
@@ -81,3 +81,7 @@ HookLoop Side Project / Server-Side : This is a project tracking application by 
 |--|--|--|--|
 
 
+---
+## Reference
+
+-[eslint-config-airbnb-typescript](https://github.com/iamturns/eslint-config-airbnb-typescript)
