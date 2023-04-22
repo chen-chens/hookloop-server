@@ -89,6 +89,7 @@ HookLoop Side Project / Back-End : This is a project tracking application by usi
 
 ## API Docs
 |#   |API                                         |Method  |Description|Status|
+|--  |--                                          |--      |--      |--|
 |R-01|`/users`                                    |`POST`  |使用者註冊|--|
 |L-01|`/auth/login`                               |`POST`  |使用者登入|--|
 |F-01|`/auth/forgetPassword`                      |`POST`  |忘記密碼發信|--|
