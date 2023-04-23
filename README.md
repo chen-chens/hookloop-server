@@ -25,8 +25,9 @@ HookLoop Side Project / Back-End : This is a project tracking application by usi
 ## Tools
 - [`TypeScript`](https://www.typescriptlang.org/) : Strongly typed programming language builds on JavaScript.
 - [`husky`](https://github.com/typicode/husky) : Unify git commit tools.
+- [`commitlint`](https://github.com/conventional-changelog/commitlint#shared-configuration)
 - [`eslint-config-airbnb`](https://github.com/airbnb/javascript): Follow [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript/tree/master/react).
-- [ts-node](https://github.com/TypeStrong/ts-node)
+- [`ts-node`](https://github.com/TypeStrong/ts-node)
 - [`zod`](https://github.com/colinhacks/zod) : 
 
 
@@ -83,7 +84,7 @@ HookLoop Side Project / Back-End : This is a project tracking application by usi
 
 
 - ### Commit Message Guidelines
-
+    - [參考 Angular Commit Message Header](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#commit-message-header)
 
 
 
