@@ -1,11 +1,15 @@
 {
   "name": "hookloop-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "This is a Back-End project for HOOKLOOP (tracking project application).",
-  "main": "server.js",
+  "main": "server.ts",
   "scripts": {
     "dev": "nodemon src/server.ts",
     "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --fix --ext .ts",
+    "lint-staged": "lint-staged",
+    "format": "prettier --write .",
     "commit": "cz",
     "changelog": "npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "prepare": "husky install"
@@ -44,7 +48,9 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-simple-import-sort": "^10.0.0",
     "husky": "^8.0.0",
+    "lint-staged": "^13.2.1",
     "nodemon": "^2.0.22",
     "prettier": "^2.8.7",
     "typescript": "^5.0.4"

@@ -4,5 +4,11 @@
 # production: 忽略編譯後的 JavaScript 檔案
 /dist
 
-# env file
-/config.env
+
+# Environment varibales, exclude .env.example
+.env*
+!.env*.example
+
+
+# yarn error logs
+yarn-error.log

@@ -18,11 +18,11 @@ HookLoop Side Project / Back-End : This is a project tracking application by usi
 
 ## Core Skills
 
-- [express](https://github.com/expressjs/express)
-- [bcryptjs](https://github.com/dcodeIO/bcrypt.js/)
-- [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken)
-- [mongoose](https://github.com/Automattic/mongoose)
-- [validator](https://github.com/validatorjs/validator.js/)
+- [`express`](https://github.com/expressjs/express)
+- [`bcryptjs`](https://github.com/dcodeIO/bcrypt.js/)
+- [`jsonwebtoken`](https://github.com/auth0/node-jsonwebtoken)
+- [`mongoose`](https://github.com/Automattic/mongoose)
+- [`validator`](https://github.com/validatorjs/validator.js/)
 
 ## Tools
 
@@ -32,8 +32,9 @@ HookLoop Side Project / Back-End : This is a project tracking application by usi
 - [`commitizen`](https://github.com/commitizen/cz-cli) : Auto generate commit followed by commitlint convention.
 - [`conventional-changelog-cli`](https://github.com/conventional-changelog/conventional-changelog) : Generate a CHANGELOG from git metadata.
 - [`eslint-config-airbnb`](https://github.com/airbnb/javascript): Follow [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript/tree/master/react).
-- [ts-node](https://github.com/TypeStrong/ts-node)
+- [`ts-node`](https://github.com/TypeStrong/ts-node)
 - [`zod`](https://github.com/colinhacks/zod) :
+- [lint-staged](https://github.com/okonet/lint-staged) : Only Lint staged files in Git.
 
 ## Coding Style
 
@@ -54,7 +55,7 @@ HookLoop Side Project / Back-End : This is a project tracking application by usi
 
 ## Folder Structure
 
-- 參考 : [node-express-boilerplate](https://github.com/hagopj13/node-express-boilerplate/tree/master/src)
+- 參考 : [`node-express-boilerplate`](https://github.com/hagopj13/node-express-boilerplate/tree/master/src)
 - 每個資料夾都需新增 `index.ts` 將內容一致導出
 
 ```
