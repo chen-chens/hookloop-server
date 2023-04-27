@@ -6,7 +6,7 @@ HookLoop Side Project / Back-End : This is a project tracking application by usi
 
 ## Prerequisites
 
-- Node.js
+- Node.js : `>=18.12.0`
 - Yarn
 
 ## Execution
