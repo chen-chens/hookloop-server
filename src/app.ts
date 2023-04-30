@@ -1,23 +1,23 @@
-import express, { Request, Response } from "express";
+import dotenv from "dotenv";
+import express, { NextFunction, Response } from "express";
+import path from "path";
+
+import router from "./routes";
+
+dotenv.config({ path: path.join(__dirname, "../.env") });
 
 const app = express();
-
-const requestListener = async (req: Request, res: Response) => {
+app.use((_, res: Response, next: NextFunction) => {
   const headers = {
     "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Length, X-Requested-With",
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, PATCH, GET, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, PUT, POST, PATCH, DELETE, OPTIONS",
     "Content-Type": "application/json",
   };
-
-  if (req.url === "/" && req.method === "GET") {
-    res.writeHead(200, headers);
-  }
-  res.end();
-};
-
-app.get("/", requestListener);
-
-app.listen(8088, () => {
-  console.log("Server is running!");
+  res.header(headers);
+  next();
 });
+app.use(express.json());
+app.use(router); // Set router
+
+export default app;
