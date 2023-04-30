@@ -1,9 +1,11 @@
+import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
 
 import User from "../models/userModel";
 import ApiResults from "../types/apiResults";
 import ApiStatus from "../types/apiStatus";
 import StatusCode from "../types/statusCode";
+import getJwtToken from "../utils/getJwtToken";
 
 const getAllUsers = async (_: Request, res: Response) => {
   try {
@@ -114,10 +116,11 @@ const createUser = async (req: Request, res: Response) => {
   req.on("end", async () => {
     try {
       const { name, email, password, avatar } = JSON.parse(body);
+      const securedPassword = await bcrypt.hash(password, 12);
       const newUser = await User.create({
         name,
         email,
-        password,
+        password: securedPassword,
         avatar,
       });
       res.status(StatusCode.OK);
@@ -125,7 +128,10 @@ const createUser = async (req: Request, res: Response) => {
         JSON.stringify({
           status: ApiStatus.SUCCESS,
           message: ApiResults.SUCCESS_CREATE,
-          newUser,
+          user: {
+            token: getJwtToken(newUser.id!),
+            name: newUser.name,
+          },
         }),
       );
 

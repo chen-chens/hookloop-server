@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import validator from "validator";
 
-const memberSchema = new Schema(
+const userSchema = new Schema(
   {
     email: {
       type: String,
@@ -27,9 +27,9 @@ const memberSchema = new Schema(
       type: String,
       required: [true, "Password is required !"],
       trim: true,
+      select: false,
       default: "",
       minlength: 6,
-      maxLength: 20,
       validate(value: string) {
         const regexRule = /[A-Za-z0-9]+/;
         if (!value.match(regexRule)) {
@@ -58,6 +58,6 @@ const memberSchema = new Schema(
   { timestamps: true, versionKey: false },
 );
 
-const Member = mongoose.model("Member", memberSchema);
+const User = mongoose.model("User", userSchema);
 
-export default Member;
+export default User;
