@@ -50,7 +50,7 @@ HookLoop Side Project / Back-End : This is a project tracking application by usi
   - Function：使用箭頭函式
 - **Linter**
   - Prettier
-    - 引號：使用單引號 singleQuote
+    - 引號：使用雙引號 doubleQuote
     - 句尾分號：不省略
 
 ## Folder Structure
