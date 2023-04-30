@@ -4,7 +4,7 @@ const login = async (req: Request, res: Response) => {
   console.log(req, res);
   // (1) check email, password
   // (2) check if user exist by email
-  // (3) send token
+  // (3) send token: 後端 塞 cookie ?
 };
 
 const forgetPassword = async (req: Request, res: Response) => {
