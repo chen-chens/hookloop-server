@@ -11,7 +11,7 @@ mongoose
       .listen(process.env.PORT!, () => {
         console.log("Server is running again!");
       })
-      .on("exit", function () {
+      .on("close", function () {
         console.log("Server is ending!");
       });
   })
