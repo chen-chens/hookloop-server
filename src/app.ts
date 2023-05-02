@@ -8,7 +8,8 @@ import router from "./routes";
 dotenv.config();
 
 const app = express();
-app.use(cors()); // Set cross-origin request & headers
+
+app.use(cors()); // Set CORS with default options
 app.use(express.json());
 app.use(router); // Set router
 
