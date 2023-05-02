@@ -7,9 +7,13 @@ mongoose
   .connect(process.env.MONGO_DB_URI!)
   .then(() => {
     console.log("MongoDB is running!");
-    app.listen(process.env.PORT!, () => {
-      console.log("Server is running again!");
-    });
+    app
+      .listen(process.env.PORT!, () => {
+        console.log("Server is running again!");
+      })
+      .close(() => {
+        console.log("Server is Ending!");
+      });
   })
   .catch((error) => {
     console.log("MongoDB can't connect!", error);
