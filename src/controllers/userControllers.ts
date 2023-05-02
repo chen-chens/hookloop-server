@@ -108,47 +108,38 @@ const deleteUserById = async (req: Request, res: Response) => {
 };
 
 const createUser = async (req: Request, res: Response) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk;
-  });
-
-  req.on("end", async () => {
-    try {
-      const { name, email, password, avatar } = JSON.parse(body);
-      const securedPassword = await bcrypt.hash(password, 12);
-      const newUser = await User.create({
-        name,
-        email,
-        password: securedPassword,
-        avatar,
-      });
-      res.status(StatusCode.OK);
-      res.send(
-        JSON.stringify({
-          status: ApiStatus.SUCCESS,
-          message: ApiResults.SUCCESS_CREATE,
-          user: {
-            token: getJwtToken(newUser.id!),
-            name: newUser.name,
-          },
-        }),
-      );
-
-      res.end();
-    } catch (error) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR);
-      res.send(
-        JSON.stringify({
-          status: ApiStatus.FAIL,
-          message: ApiResults.FAIL_CREATE,
-          error,
-        }),
-      );
-
-      res.end();
-    }
-  });
+  try {
+    const { name, email, password, avatar } = req.body;
+    const securedPassword = await bcrypt.hash(password, 12);
+    const newUser = await User.create({
+      name,
+      email,
+      password: securedPassword,
+      avatar,
+    });
+    res.status(StatusCode.OK);
+    res.send(
+      JSON.stringify({
+        status: ApiStatus.SUCCESS,
+        message: ApiResults.SUCCESS_CREATE,
+        user: {
+          token: getJwtToken(newUser.id!),
+          name: newUser.name,
+        },
+      }),
+    );
+    res.end();
+  } catch (error) {
+    res.status(StatusCode.INTERNAL_SERVER_ERROR);
+    res.send(
+      JSON.stringify({
+        status: ApiStatus.FAIL,
+        message: ApiResults.FAIL_CREATE,
+        error,
+      }),
+    );
+    res.end();
+  }
 };
 
 const updateUser = async (req: Request, res: Response) => {
