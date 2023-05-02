@@ -42,14 +42,6 @@ const userSchema = new Schema(
       trim: true,
       default: "",
     },
-    registerTime: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedTime: {
-      type: Date,
-      default: Date.now,
-    },
     lastActiveTime: {
       type: Date,
       default: Date.now,

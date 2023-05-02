@@ -1,22 +1,14 @@
+import cors from "cors";
 import dotenv from "dotenv";
-import express, { NextFunction, Response } from "express";
-import path from "path";
+import express from "express";
 
+// import corsOptions from "./config/corsOptions";
 import router from "./routes";
 
-dotenv.config({ path: path.join(__dirname, "../.env") });
+dotenv.config();
 
 const app = express();
-app.use((_, res: Response, next: NextFunction) => {
-  const headers = {
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Length, X-Requested-With",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, PUT, POST, PATCH, DELETE, OPTIONS",
-    "Content-Type": "application/json",
-  };
-  res.header(headers);
-  next();
-});
+app.use(cors()); // Set cross-origin request & headers
 app.use(express.json());
 app.use(router); // Set router
 
