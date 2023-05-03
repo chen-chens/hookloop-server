@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
 
 import User from "../models/userModel";
-import ApiResults from "../types/apiResults";
+import { ApiResults } from "../types/apiResults";
 import ApiStatus from "../types/apiStatus";
 import StatusCode from "../types/statusCode";
 import getJwtToken from "../utils/getJwtToken";
@@ -23,7 +23,7 @@ const getAllUsers = async (_: Request, res: Response) => {
     res.status(StatusCode.INTERNAL_SERVER_ERROR);
     res.write(
       JSON.stringify({
-        status: ApiStatus.FAIL,
+        status: ApiStatus.ERROR,
         message: ApiResults.FAIL_READ,
         error,
       }),
@@ -48,8 +48,8 @@ const getUserById = async (req: Request, res: Response) => {
     res.status(StatusCode.INTERNAL_SERVER_ERROR);
     res.write(
       JSON.stringify({
-        status: ApiStatus.FAIL,
-        message: ApiResults.FAIL_READ,
+        status: ApiStatus.ERROR,
+        message: ApiResults,
         error,
       }),
     );
@@ -73,7 +73,7 @@ const deleteAllUsers = async (_: Request, res: Response) => {
     res.status(StatusCode.INTERNAL_SERVER_ERROR);
     res.write(
       JSON.stringify({
-        status: ApiStatus.FAIL,
+        status: ApiStatus.ERROR,
         message: ApiResults.FAIL_DELETE,
         error,
       }),
@@ -99,7 +99,7 @@ const deleteUserById = async (req: Request, res: Response) => {
     res.status(StatusCode.INTERNAL_SERVER_ERROR);
     res.write(
       JSON.stringify({
-        status: ApiStatus.FAIL,
+        status: ApiStatus.ERROR,
         message: ApiResults.FAIL_DELETE,
         error,
       }),
@@ -139,7 +139,7 @@ const createUser = async (req: Request, res: Response) => {
   } catch (error) {
     res
       .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .send(responsePattern(ApiStatus.FAIL, ApiResults.FAIL_CREATE, { error }));
+      .send(responsePattern(ApiStatus.ERROR, ApiResults.FAIL_CREATE, { error }));
     res.end();
   }
 };
@@ -164,7 +164,7 @@ const updateUser = async (req: Request, res: Response) => {
     res.status(StatusCode.INTERNAL_SERVER_ERROR);
     res.send(
       JSON.stringify({
-        status: ApiStatus.FAIL,
+        status: ApiStatus.ERROR,
         message: ApiResults.FAIL_UPDATE,
         error,
       }),

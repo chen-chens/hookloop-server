@@ -1,3 +1,4 @@
+import verifyLogInInputMiddleware from "./verifyLogInInputMiddleware";
 import verifyUserInputMiddleware from "./verifyUserInputMiddleware";
 
-export default verifyUserInputMiddleware;
+export { verifyLogInInputMiddleware, verifyUserInputMiddleware };

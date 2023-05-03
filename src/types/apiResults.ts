@@ -1,5 +1,5 @@
-// General CRUD Notes
-enum ApiResults {
+// General CRUD Response
+export enum ApiResults {
   SUCCESS_CREATE = "Create Successfully！",
   SUCCESS_UPDATE = "Update Successfully！",
   SUCCESS_DELETE = "Delete Successfully！",
@@ -12,4 +12,11 @@ enum ApiResults {
   FAIL_DOWNLOAD = "Failed to Download !",
   FAIL_TO_SEND_EMAIL = "Failed to send your email !",
 }
-export default ApiResults;
+
+// Log In Response
+export enum ApiLogInResults {
+  SUCCESS_LOG_IN = "Log In Successfully！",
+  FAIL_LOG_IN = "Failed to log in !",
+  MIS_MATCH_PASSWORD = "Invalid password! Please try again.",
+  UNAUTHORIZED_IDENTITY = "Authentication failed. Please check if your account and password are correct.",
+}
