@@ -14,3 +14,33 @@ mongoose
   .catch((error) => {
     console.log("MongoDB can't connect!", error);
   });
+
+// DISCUSS:Handle uncaughtException and unhandledRejection
+// const exitHandler = () => {
+//   if (server) {
+//     server.close(() => {
+//       logger.info('Server closed');
+//       process.exit(1);
+//     });
+//   } else {
+//     process.exit(1);
+//   }
+// };
+
+// const unexpectedErrorHandler = (error) => {
+//   logger.error(error);
+//   exitHandler();
+// };
+
+// process.on('uncaughtException', unexpectedErrorHandler);
+// process.on('unhandledRejection', unexpectedErrorHandler);
+
+process.on("uncaughtException", (err) => {
+  console.error("uncaughtException");
+  console.error(err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("unhandledRejection:", promise, "reason:", reason);
+});
