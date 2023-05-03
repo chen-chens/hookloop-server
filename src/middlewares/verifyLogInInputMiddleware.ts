@@ -1,11 +1,10 @@
 import { NextFunction, Request, Response } from "express";
+import { ApiLogInResults } from "types/apiResults";
+import ApiStatus from "types/apiStatus";
+import StatusCode from "types/statusCode";
+import responsePattern from "utils/responsePattern";
+import validatePassword from "utils/validatePassword";
 import validator from "validator";
-
-import { ApiLogInResults } from "../types/apiResults";
-import ApiStatus from "../types/apiStatus";
-import StatusCode from "../types/statusCode";
-import responsePattern from "../utils/responsePattern";
-import validatePassword from "../utils/validatePassword";
 
 const verifyLogInInputMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   /**

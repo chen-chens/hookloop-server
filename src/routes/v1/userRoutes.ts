@@ -1,7 +1,6 @@
+import userControllers from "controllers/userControllers";
 import { Router } from "express";
-
-import userControllers from "../../controllers/userControllers";
-import { verifyUserInputMiddleware } from "../../middlewares";
+import verifyUserInputMiddleware from "middlewares/verifyUserInputMiddleware";
 
 const router = Router();
 

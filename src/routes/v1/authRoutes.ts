@@ -1,7 +1,6 @@
+import authControllers from "controllers/authControllers";
 import { Router } from "express";
-
-import authControllers from "../../controllers/authControllers";
-import { verifyLogInInputMiddleware } from "../../middlewares";
+import verifyLogInInputMiddleware from "middlewares/verifyLogInInputMiddleware";
 
 const router = Router();
 
