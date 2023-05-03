@@ -1,23 +1,17 @@
 import mongoose, { Schema } from "mongoose";
-import validator from "validator";
 
 const userSchema = new Schema(
   {
     email: {
       type: String,
-      required: [true, "Email is required !"],
+      required: true,
       unique: true,
       trim: true,
       default: "",
-      validate(value: string) {
-        if (!validator.isEmail(value)) {
-          throw new Error("Invalid Email !");
-        }
-      },
     },
     name: {
       type: String,
-      required: [true, "User name is required !"],
+      required: true,
       trim: true,
       default: "",
       minlength: 2,
@@ -25,30 +19,16 @@ const userSchema = new Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required !"],
+      required: true,
       trim: true,
       select: false,
       default: "",
-      minlength: 6,
-      validate(value: string) {
-        const regexRule = /[A-Za-z0-9]+/;
-        if (!value.match(regexRule)) {
-          throw new Error("Password is invalid! ");
-        }
-      },
+      // minlength: 8, // 會加密，所以收到 使用者密碼先檢查：大於 8 碼，加密後給到 DB 會更多
     },
     avatar: {
       type: String,
       trim: true,
       default: "",
-    },
-    registerTime: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedTime: {
-      type: Date,
-      default: Date.now,
     },
     lastActiveTime: {
       type: Date,
