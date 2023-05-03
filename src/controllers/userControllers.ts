@@ -6,6 +6,7 @@ import ApiResults from "../types/apiResults";
 import ApiStatus from "../types/apiStatus";
 import StatusCode from "../types/statusCode";
 import getJwtToken from "../utils/getJwtToken";
+import responsePattern from "../utils/responsePattern";
 
 const getAllUsers = async (_: Request, res: Response) => {
   try {
@@ -110,74 +111,67 @@ const deleteUserById = async (req: Request, res: Response) => {
 const createUser = async (req: Request, res: Response) => {
   try {
     const { name, email, password, avatar } = req.body;
-    const securedPassword = await bcrypt.hash(password, 12);
-    const newUser = await User.create({
-      name,
-      email,
-      password: securedPassword,
-      avatar,
-    });
+    const hasExistingEmail = await User.findOne({ email });
+    if (hasExistingEmail) {
+      res.status(StatusCode.BAD_REQUEST).send(
+        responsePattern(ApiStatus.FAIL, ApiResults.FAIL_CREATE, {
+          field: "email",
+          error: "The email is existing!",
+        }),
+      );
+      res.end();
+    } else {
+      const securedPassword = await bcrypt.hash(password, 12);
+      const newUser = await User.create({
+        name,
+        email,
+        password: securedPassword,
+        avatar,
+      });
+      res.status(StatusCode.OK).send(
+        responsePattern(ApiStatus.SUCCESS, ApiResults.SUCCESS_CREATE, {
+          token: getJwtToken(newUser.id!),
+          name: newUser.name,
+        }),
+      );
+      res.end();
+    }
+  } catch (error) {
+    res
+      .status(StatusCode.INTERNAL_SERVER_ERROR)
+      .send(responsePattern(ApiStatus.FAIL, ApiResults.FAIL_CREATE, { error }));
+    res.end();
+  }
+};
+
+const updateUser = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.id;
+    const options = { new: true, runValidators: true };
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body, options);
+
     res.status(StatusCode.OK);
     res.send(
       JSON.stringify({
         status: ApiStatus.SUCCESS,
-        message: ApiResults.SUCCESS_CREATE,
-        user: {
-          token: getJwtToken(newUser.id!),
-          name: newUser.name,
-        },
+        message: ApiResults.SUCCESS_UPDATE,
+        updatedUser,
       }),
     );
+
     res.end();
   } catch (error) {
     res.status(StatusCode.INTERNAL_SERVER_ERROR);
     res.send(
       JSON.stringify({
         status: ApiStatus.FAIL,
-        message: ApiResults.FAIL_CREATE,
+        message: ApiResults.FAIL_UPDATE,
         error,
       }),
     );
+
     res.end();
   }
-};
-
-const updateUser = async (req: Request, res: Response) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk;
-  });
-
-  req.on("end", async () => {
-    try {
-      const userId = req.params.id;
-      const update = JSON.parse(body);
-      const options = { new: true, runValidators: true };
-      const updatedUser = await User.findByIdAndUpdate(userId, update, options);
-
-      res.status(StatusCode.OK);
-      res.send(
-        JSON.stringify({
-          status: ApiStatus.SUCCESS,
-          message: ApiResults.SUCCESS_UPDATE,
-          updatedUser,
-        }),
-      );
-
-      res.end();
-    } catch (error) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR);
-      res.send(
-        JSON.stringify({
-          status: ApiStatus.FAIL,
-          message: ApiResults.FAIL_UPDATE,
-          error,
-        }),
-      );
-
-      res.end();
-    }
-  });
 };
 
 export default {
