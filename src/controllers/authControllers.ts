@@ -35,7 +35,7 @@ const login = async (req: Request, res: Response) => {
     }
     const token = getJwtToken(targetUser.id);
     res
-      .cookie("token", token, {
+      .cookie("hookloop-token", token, {
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
         httpOnly: true,
         secure: true,
@@ -47,8 +47,6 @@ const login = async (req: Request, res: Response) => {
           name: targetUser.name,
         }),
       );
-    // 導向 Dashboard 頁面
-    res.redirect("/dashboard");
     res.end();
   } catch (error) {
     res
