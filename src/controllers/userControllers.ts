@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
-
-import User from "../models/userModel";
-import ApiResults from "../types/apiResults";
-import ApiStatus from "../types/apiStatus";
-import StatusCode from "../types/statusCode";
-import getJwtToken from "../utils/getJwtToken";
+import User from "models/userModel";
+import { ApiResults } from "types/apiResults";
+import ApiStatus from "types/apiStatus";
+import StatusCode from "types/statusCode";
+import getJwtToken from "utils/getJwtToken";
+import responsePattern from "utils/responsePattern";
 
 const getAllUsers = async (_: Request, res: Response) => {
   try {
@@ -22,7 +22,7 @@ const getAllUsers = async (_: Request, res: Response) => {
     res.status(StatusCode.INTERNAL_SERVER_ERROR);
     res.write(
       JSON.stringify({
-        status: ApiStatus.FAIL,
+        status: ApiStatus.ERROR,
         message: ApiResults.FAIL_READ,
         error,
       }),
@@ -47,8 +47,8 @@ const getUserById = async (req: Request, res: Response) => {
     res.status(StatusCode.INTERNAL_SERVER_ERROR);
     res.write(
       JSON.stringify({
-        status: ApiStatus.FAIL,
-        message: ApiResults.FAIL_READ,
+        status: ApiStatus.ERROR,
+        message: ApiResults,
         error,
       }),
     );
@@ -72,7 +72,7 @@ const deleteAllUsers = async (_: Request, res: Response) => {
     res.status(StatusCode.INTERNAL_SERVER_ERROR);
     res.write(
       JSON.stringify({
-        status: ApiStatus.FAIL,
+        status: ApiStatus.ERROR,
         message: ApiResults.FAIL_DELETE,
         error,
       }),
@@ -98,7 +98,7 @@ const deleteUserById = async (req: Request, res: Response) => {
     res.status(StatusCode.INTERNAL_SERVER_ERROR);
     res.write(
       JSON.stringify({
-        status: ApiStatus.FAIL,
+        status: ApiStatus.ERROR,
         message: ApiResults.FAIL_DELETE,
         error,
       }),
@@ -108,14 +108,18 @@ const deleteUserById = async (req: Request, res: Response) => {
 };
 
 const createUser = async (req: Request, res: Response) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk;
-  });
-
-  req.on("end", async () => {
-    try {
-      const { name, email, password, avatar } = JSON.parse(body);
+  try {
+    const { name, email, password, avatar } = req.body;
+    const hasExistingEmail = await User.findOne({ email });
+    if (hasExistingEmail) {
+      res.status(StatusCode.BAD_REQUEST).send(
+        responsePattern(ApiStatus.FAIL, ApiResults.FAIL_CREATE, {
+          field: "email",
+          error: "The email is existing!",
+        }),
+      );
+      res.end();
+    } else {
       const securedPassword = await bcrypt.hash(password, 12);
       const newUser = await User.create({
         name,
@@ -123,70 +127,50 @@ const createUser = async (req: Request, res: Response) => {
         password: securedPassword,
         avatar,
       });
-      res.status(StatusCode.OK);
-      res.send(
-        JSON.stringify({
-          status: ApiStatus.SUCCESS,
-          message: ApiResults.SUCCESS_CREATE,
-          user: {
-            token: getJwtToken(newUser.id!),
-            name: newUser.name,
-          },
+      res.status(StatusCode.OK).send(
+        responsePattern(ApiStatus.SUCCESS, ApiResults.SUCCESS_CREATE, {
+          token: getJwtToken(newUser.id!),
+          name: newUser.name,
         }),
       );
-
-      res.end();
-    } catch (error) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR);
-      res.send(
-        JSON.stringify({
-          status: ApiStatus.FAIL,
-          message: ApiResults.FAIL_CREATE,
-          error,
-        }),
-      );
-
       res.end();
     }
-  });
+  } catch (error) {
+    res
+      .status(StatusCode.INTERNAL_SERVER_ERROR)
+      .send(responsePattern(ApiStatus.ERROR, ApiResults.FAIL_CREATE, { error }));
+    res.end();
+  }
 };
 
 const updateUser = async (req: Request, res: Response) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk;
-  });
+  try {
+    const userId = req.params.id;
+    const options = { new: true, runValidators: true };
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body, options);
 
-  req.on("end", async () => {
-    try {
-      const userId = req.params.id;
-      const update = JSON.parse(body);
-      const options = { new: true, runValidators: true };
-      const updatedUser = await User.findByIdAndUpdate(userId, update, options);
+    res.status(StatusCode.OK);
+    res.send(
+      JSON.stringify({
+        status: ApiStatus.SUCCESS,
+        message: ApiResults.SUCCESS_UPDATE,
+        updatedUser,
+      }),
+    );
 
-      res.status(StatusCode.OK);
-      res.send(
-        JSON.stringify({
-          status: ApiStatus.SUCCESS,
-          message: ApiResults.SUCCESS_UPDATE,
-          updatedUser,
-        }),
-      );
+    res.end();
+  } catch (error) {
+    res.status(StatusCode.INTERNAL_SERVER_ERROR);
+    res.send(
+      JSON.stringify({
+        status: ApiStatus.ERROR,
+        message: ApiResults.FAIL_UPDATE,
+        error,
+      }),
+    );
 
-      res.end();
-    } catch (error) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR);
-      res.send(
-        JSON.stringify({
-          status: ApiStatus.FAIL,
-          message: ApiResults.FAIL_UPDATE,
-          error,
-        }),
-      );
-
-      res.end();
-    }
-  });
+    res.end();
+  }
 };
 
 export default {
