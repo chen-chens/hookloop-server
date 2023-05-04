@@ -34,7 +34,10 @@ const userSchema = new Schema(
       default: Date.now,
     },
   },
-  { timestamps: true, versionKey: false },
+  {
+    timestamps: true, // generate : createdAt, updatedAt
+    versionKey: false,
+  },
 );
 
 const User = mongoose.model("User", userSchema);
