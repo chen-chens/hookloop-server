@@ -1,4 +1,3 @@
-import ApiResults from "./apiResults";
 import ApiStatus from "./apiStatus";
 import StatusCode from "./statusCode";
 
@@ -6,9 +5,7 @@ import StatusCode from "./statusCode";
 interface ICustomError extends Error {
   statusCode: StatusCode;
   status: ApiStatus;
-  message: ApiResults;
   isOperational: boolean;
-  stack?: string;
 }
 
 export default ICustomError;

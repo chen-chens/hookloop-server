@@ -10,23 +10,16 @@ class CustomError extends Error implements ICustomError {
 
   status: ApiStatus;
 
-  message: ApiResults;
-
   isOperational: boolean;
 
-  stack?: string;
-
   constructor(
-    statuscode: StatusCode,
+    statusCode: StatusCode,
     message: ApiResults,
-    stack?: string,
-    status: ApiStatus = ApiStatus.ERROR,
+    status: ApiStatus = ApiStatus.FAIL,
     isOperational: boolean = true,
   ) {
-    super();
-    this.statusCode = statuscode;
-    this.message = message;
-    this.stack = stack;
+    super(message);
+    this.statusCode = statusCode;
     this.status = status;
     this.isOperational = isOperational;
   }
