@@ -1,21 +1,20 @@
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import path from "path";
 
-import errorHandler from "./middlewares/errorHandler";
+import corsOptions from "./config/corsOptions";
+import { errorHandler } from "./middlewares";
 import router from "./routes";
-import ApiResults from "./types/apiResults";
-import ApiStatus from "./types/apiStatus";
-import StatusCode from "./types/statusCode";
+import { ApiResults, ApiStatus, StatusCode } from "./types";
 
-dotenv.config({ path: path.join(__dirname, "../.env") });
+dotenv.config();
 
 const app = express();
 
-// Set CORS with default options
-app.use(cors());
+app.use(cors(corsOptions)); // Set CORS with default options
 app.use(express.json());
+app.use(cookieParser());
 
 // DISCUSS: 註冊 router 希望改成 app.use('/api',router);
 app.use(router); // Set router

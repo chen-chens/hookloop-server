@@ -1,11 +1,8 @@
-import ApiResults from "../apiResults";
-import ApiStatus from "../apiStatus";
-import ICustomError from "../customError";
-import StatusCode from "../statusCode";
+import { ApiResults, ApiStatus, CustomErrorInterface, StatusCode } from "../types";
 // DISCUSS: classes 資料夾放置位置
 // 這裡的custom error是用來包裝原本的error，並且加上一些自己的屬性
 // 不需傳入參數：status, isOperational
-class CustomError extends Error implements ICustomError {
+class CustomError extends Error implements CustomErrorInterface {
   statusCode: StatusCode;
 
   status: ApiStatus;
