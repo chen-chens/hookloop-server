@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    // "baseUrl": "./src/",
     "target": "es6",
     "module": "commonjs",
     "sourceMap": true,
@@ -18,15 +17,6 @@
       "middlewares/*": ["./src/middlewares/*"],
       "controllers/*": ["./src/controllers/*"]
     }
-    // "paths": {
-    //   "@/*": ["./*"],
-    //   "types/*": ["types/*"],
-    //   "utils/*": ["utils/*"],
-    //   "routes/*": ["routes/*"],
-    //   "models/*": ["models/*"],
-    //   "middlewares/*": ["middlewares/*"],
-    //   "controllers/*": ["controllers/*"]
-    // }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"],
