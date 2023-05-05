@@ -19,9 +19,8 @@ app.use(cookieParser());
 // DISCUSS: 註冊 router 希望改成 app.use('/api',router);
 app.use(router); // Set router
 
-// DISCUSS: 註冊 errorHandler middleware
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((_req, res, _next) => {
+// INFO: 404 error and  errorHandler middleware
+app.use((_req, res) => {
   res.status(StatusCode.NOT_FOUND).json({
     status: ApiStatus.FAIL,
     message: ApiResults.NOT_FOUND,

@@ -5,6 +5,7 @@ import { User } from "@/models";
 import { ApiLogInResults, ApiStatus, StatusCode } from "@/types";
 import { getJwtToken, responsePattern } from "@/utils";
 
+// DISCUSS:res.的 prettier 設定不同
 const login = async (req: Request, res: Response) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
   // (2) send token: 後端 塞 cookie ?

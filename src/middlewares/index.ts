@@ -1,4 +1,3 @@
-export { default as asyncWrapper } from "./asyncWrapper";
-export { default as errorHandler } from "./errorHandler";
+export { asyncWrapper, errorHandler, forwardCustomError } from "./errorMiddleware";
 export { default as verifyLogInInputMiddleware } from "./verifyLogInInputMiddleware";
 export { default as verifyUserInputMiddleware } from "./verifyUserInputMiddleware";
