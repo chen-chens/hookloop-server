@@ -1,15 +1,15 @@
 import { Response } from "express";
 
-import { CustomError } from "@/classes";
-import { ApiResults, ApiStatus, StatusCode } from "@/types";
+import { ApiResults, ApiStatus, CustomError, StatusCode } from "@/types";
 
 import responsePattern from "./responsePattern";
 
-interface DataType {
+interface IDataType {
   [key: string]: any;
 }
 
-export const sendSuccessResponse = (res: Response, message: ApiResults, data: DataType = {}) => {
+// DISCUSS JASon 要 end 嗎?
+export const sendSuccessResponse = (res: Response, message: ApiResults, data: IDataType = {}) => {
   console.log("sendSuccessResponse");
   res.status(StatusCode.OK).send(responsePattern(ApiStatus.SUCCESS, message, data)).end();
 };

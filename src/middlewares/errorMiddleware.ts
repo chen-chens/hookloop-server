@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
-import { CustomError } from "@/classes";
-import { ApiResults, ApiStatus, DataType, StatusCode } from "@/types";
+import { ApiResults, ApiStatus, CustomError, IDataType, StatusCode } from "@/types";
 import { sendErrorResponse } from "@/utils";
 
 // INFO: 使用 asyncWrapper 包裹 async 函数，可以避免每個 async 函数都寫 try catch
@@ -27,7 +26,7 @@ export const forwardCustomError = (
   next: NextFunction,
   statusCode: StatusCode,
   message: ApiResults,
-  data: DataType = {},
+  data: IDataType = {},
 ) => {
   const err = new CustomError(statusCode, message, data);
   console.log("forwardCustomError");
@@ -35,10 +34,8 @@ export const forwardCustomError = (
 };
 
 // INFO: Error handler middleware
-// DISCUSS:要做開發環境的response嗎? 可以查看error stack
-// HELP: next 不傳入參數的寫法無效
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const errorHandler = (err: CustomError | any, req: Request, res: Response, _next: NextFunction) => {
+export const errorHandler = (err: CustomError | any, req: Request, res: Response, _: NextFunction) => {
   console.log("errorHandler");
   if (err instanceof CustomError) {
     console.log("CustomError");
@@ -53,7 +50,7 @@ export const errorHandler = (err: CustomError | any, req: Request, res: Response
     } else {
       console.log("other error");
       console.error(err);
-      console.error(err.name);
+      console.error("err.name:", err.name);
       customError = new CustomError(StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR, {}, ApiStatus.ERROR);
     }
     sendErrorResponse(customError, res);
