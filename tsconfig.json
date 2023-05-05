@@ -8,19 +8,43 @@
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["./src/*"],
-      "types/*": ["./src/types/*"],
-      "utils/*": ["./src/utils/*"],
-      "routes/*": ["./src/routes/*"],
-      "models/*": ["./src/models/*"],
-      "middlewares/*": ["./src/middlewares/*"],
-      "controllers/*": ["./src/controllers/*"]
+      "@/*": [
+        "*"
+      ],
+      "@/types": [
+        "types"
+      ],
+      "@/utils": [
+        "utils"
+      ],
+      "@/routes": [
+        "routes"
+      ],
+      "@/models": [
+        "models"
+      ],
+      "@/middlewares": [
+        "middlewares"
+      ],
+      "@/controllers": [
+        "controllers"
+      ]
     }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
   "ts-node": {
-    "require": ["tsconfig-paths/register"]
+    "require": [
+      "tsconfig-paths/register"
+    ]
+  },
+  "resolve": {
+    "extensions": [".ts", ".tsx"]
   }
 }

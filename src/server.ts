@@ -8,9 +8,19 @@ mongoose
   .then(() => {
     console.log("MongoDB is running!");
     app.listen(process.env.PORT!, () => {
-      console.log("Server is running again!");
+      console.log("Server is running again!", process.env.PORT);
     });
   })
   .catch((error) => {
     console.log("MongoDB can't connect!", error);
   });
+
+// INFO: Handle uncaughtException and unhandledRejection
+process.on("uncaughtException", (err) => {
+  console.error("uncaughtException:", err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("unhandledRejection:", promise, "reason:", reason);
+});

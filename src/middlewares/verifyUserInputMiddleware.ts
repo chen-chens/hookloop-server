@@ -1,10 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { ApiResults } from "types/apiResults";
-import ApiStatus from "types/apiStatus";
-import StatusCode from "types/statusCode";
-import responsePattern from "utils/responsePattern";
-import validatePassword from "utils/validatePassword";
 import validator from "validator";
+
+import { ApiResults, ApiStatus, StatusCode } from "@/types";
+import { responsePattern, validatePassword } from "@/utils";
 
 const verifyUserInputMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   /**

@@ -1,12 +1,11 @@
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
-import User from "models/userModel";
-import { ApiLogInResults } from "types/apiResults";
-import ApiStatus from "types/apiStatus";
-import StatusCode from "types/statusCode";
-import getJwtToken from "utils/getJwtToken";
-import responsePattern from "utils/responsePattern";
 
+import { User } from "@/models";
+import { ApiLogInResults, ApiStatus, StatusCode } from "@/types";
+import { getJwtToken, responsePattern } from "@/utils";
+
+// DISCUSS:res.的 prettier 設定不同
 const login = async (req: Request, res: Response) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
   // (2) send token: 後端 塞 cookie ?
