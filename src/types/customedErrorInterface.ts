@@ -5,7 +5,7 @@ export interface IDataType {
   [key: string]: any;
 }
 
-export interface ICustomErrorInterface extends Error {
+export interface ICustomedErrorInterface extends Error {
   statusCode: StatusCode;
   status: ApiStatus;
   data?: IDataType;

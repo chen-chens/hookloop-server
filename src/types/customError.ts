@@ -1,6 +1,6 @@
 import { ApiResults } from "./apiResults";
 import ApiStatus from "./apiStatus";
-import { ICustomErrorInterface, IDataType } from "./customErrorInterface";
+import { ICustomErrorInterface, IDataType } from "./customedErrorInterface";
 import StatusCode from "./statusCode";
 
 // DISCUSS: classes 資料夾放置位置?
