@@ -16,11 +16,11 @@ app.use(cors(corsOptions)); // Set CORS with default options
 app.use(express.json());
 app.use(cookieParser());
 
-// DISCUSS: 註冊 router 要不要改成 app.use('/api',router);
 app.use(router); // Set router
 
 // INFO: 404 error and  errorHandler middleware
-app.use((_req, res) => {
+app.use((_, res) => {
+  console.log("404");
   res.status(StatusCode.NOT_FOUND).json({
     status: ApiStatus.FAIL,
     message: ApiResults.NOT_FOUND,

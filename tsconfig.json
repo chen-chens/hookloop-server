@@ -8,30 +8,28 @@
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "baseUrl": "./src",
     "paths": {
       "@/*": [
-        "./src/*"
+        "*"
       ],
       "@/types": [
-        "./src/types"
+        "types"
       ],
       "@/utils": [
-        "./src/utils"
+        "utils"
       ],
       "@/routes": [
-        "./src/routes"
+        "routes"
       ],
       "@/models": [
-        "./src/models"
+        "models"
       ],
       "@/middlewares": [
-        "./src/middlewares"
+        "middlewares"
       ],
       "@/controllers": [
-        "./src/controllers"
-      ],
-      "@/classes": [
-        "./src/classes"
+        "controllers"
       ]
     }
   },
