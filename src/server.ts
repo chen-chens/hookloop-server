@@ -14,3 +14,13 @@ mongoose
   .catch((error) => {
     console.log("MongoDB can't connect!", error);
   });
+
+// INFO: Handle uncaughtException and unhandledRejection
+process.on("uncaughtException", (err) => {
+  console.error("uncaughtException:", err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("unhandledRejection:", promise, "reason:", reason);
+});

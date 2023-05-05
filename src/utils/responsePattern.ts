@@ -1,4 +1,4 @@
-import ApiStatus from "../types/apiStatus";
+import { ApiStatus } from "@/types";
 
 interface DataType {
   [key: string]: any;

@@ -1,11 +1,9 @@
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
-import User from "models/userModel";
-import { ApiResults } from "types/apiResults";
-import ApiStatus from "types/apiStatus";
-import StatusCode from "types/statusCode";
-import getJwtToken from "utils/getJwtToken";
-import responsePattern from "utils/responsePattern";
+
+import { User } from "@/models";
+import { ApiResults, ApiStatus, StatusCode } from "@/types";
+import { getJwtToken, responsePattern } from "@/utils";
 
 const getAllUsers = async (_: Request, res: Response) => {
   try {

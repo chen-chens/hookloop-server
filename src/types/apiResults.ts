@@ -11,6 +11,8 @@ export enum ApiResults {
   FAIL_DELETE = "Failed to delete !",
   FAIL_DOWNLOAD = "Failed to Download !",
   FAIL_TO_SEND_EMAIL = "Failed to send your email !",
+  NOT_FOUND = "Failed to find this page, please check your URL！",
+  UNEXPECTED_ERROR = "Unexpected error occurred, please contact the administrator！",
 }
 
 // Log In Response
