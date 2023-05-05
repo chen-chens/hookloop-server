@@ -16,7 +16,7 @@ app.use(cors(corsOptions)); // Set CORS with default options
 app.use(express.json());
 app.use(cookieParser());
 
-// DISCUSS: 註冊 router 希望改成 app.use('/api',router);
+// DISCUSS: 註冊 router 要不要改成 app.use('/api',router);
 app.use(router); // Set router
 
 // INFO: 404 error and  errorHandler middleware

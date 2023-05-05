@@ -10,7 +10,7 @@ router.get("/", (_req, res) => {
 });
 router.use("/api/v1", v1Routes);
 
-// FIXME: demo 用，之後要拿掉
+// FIXME: Remove this route after demo
 // eslint-disable-next-line import/first, import/order
 import { asyncWrapper } from "@/middlewares";
 
@@ -18,6 +18,6 @@ import { asyncWrapper } from "@/middlewares";
 import errorDemo from "./errorDemo";
 
 router.use("/errorDemo", asyncWrapper(errorDemo));
-// FIXME:到此為止
+// FIXME: end
 
 export default router;

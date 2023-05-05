@@ -4,7 +4,7 @@ import { CustomError } from "@/classes";
 import { ApiResults, ApiStatus, DataType, StatusCode } from "@/types";
 import { sendErrorResponse } from "@/utils";
 
-// DISCUSS: 使用 asyncWrapper 包裹 async 函数，可以避免每個 async 函数都寫 try catch
+// INFO: 使用 asyncWrapper 包裹 async 函数，可以避免每個 async 函数都寫 try catch
 // const asyncWrapper = (fn) => {
 //   return  (req, res, nex) => {
 //     try {
@@ -20,7 +20,7 @@ export const asyncWrapper = (fn: (req: Request, res: Response, next: NextFunctio
   };
 };
 
-// INFO: 包裝成 custom error 並 next(err) 送至 errorHandler
+// INFO: 包裝成 customError 並 next(err) 送至 errorHandler
 export const forwardCustomError = (
   next: NextFunction,
   statusCode: StatusCode,
@@ -33,6 +33,7 @@ export const forwardCustomError = (
 
 // INFO: Error handler middleware
 // DISCUSS:要做開發環境的response嗎? 可以查看error stack
+// HELP: next 不傳入參數的寫法無效
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler = (err: CustomError | any, req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof CustomError) {

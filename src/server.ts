@@ -15,26 +15,7 @@ mongoose
     console.log("MongoDB can't connect!", error);
   });
 
-// DISCUSS:node.js 內建紀錄死機 error 寫法選擇
-// const exitHandler = () => {
-//   if (server) {
-//     server.close(() => {
-//       logger.info('Server closed');
-//       process.exit(1);
-//     });
-//   } else {
-//     process.exit(1);
-//   }
-// };
-
-// const unexpectedErrorHandler = (error) => {
-//   logger.error(error);
-//   exitHandler();
-// };
-
-// process.on('uncaughtException', unexpectedErrorHandler);
-// process.on('unhandledRejection', unexpectedErrorHandler);
-
+// INFO: Handle uncaughtException and unhandledRejection
 process.on("uncaughtException", (err) => {
   console.error("uncaughtException:", err);
   process.exit(1);
