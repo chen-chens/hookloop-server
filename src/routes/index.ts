@@ -15,9 +15,9 @@ router.use("/api/v1", v1Routes);
 import { asyncWrapper } from "@/middlewares";
 
 // eslint-disable-next-line import/first
-import errorDemo from "./errorDemo";
+import errorDemoCreateUser from "./errorDemoCreateUser";
 
-router.use("/errorDemo", asyncWrapper(errorDemo));
+router.post("/errorDemo", asyncWrapper(errorDemoCreateUser));
 // FIXME: end
 
 export default router;

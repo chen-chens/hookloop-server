@@ -15,7 +15,9 @@ import { sendErrorResponse } from "@/utils";
 //   };
 // };
 export const asyncWrapper = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {
+  console.log("asyncWrapper");
   return (req: Request, res: Response, next: NextFunction) => {
+    console.log("fn");
     fn(req, res, next).catch((err: Error) => next(err));
   };
 };
@@ -28,6 +30,7 @@ export const forwardCustomError = (
   data: DataType = {},
 ) => {
   const err = new CustomError(statusCode, message, data);
+  console.log("forwardCustomError");
   next(err);
 };
 
@@ -36,17 +39,23 @@ export const forwardCustomError = (
 // HELP: next 不傳入參數的寫法無效
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler = (err: CustomError | any, req: Request, res: Response, _next: NextFunction) => {
+  console.log("errorHandler");
   if (err instanceof CustomError) {
+    console.log("CustomError");
     sendErrorResponse(err, res);
   } else {
+    // Handle other errors
+    console.log("CatchError");
     let customError: CustomError;
     if (err.code === 11000) {
-      // Handle other errors
+      console.log("err.code === 11000");
       customError = new CustomError(StatusCode.INTERNAL_SERVER_ERROR, ApiResults.FAIL_CREATE, {}, ApiStatus.ERROR);
-      sendErrorResponse(customError, res);
     } else {
+      console.log("other error");
+      console.error(err);
+      console.error(err.name);
       customError = new CustomError(StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR, {}, ApiStatus.ERROR);
-      sendErrorResponse(customError, res);
     }
+    sendErrorResponse(customError, res);
   }
 };
