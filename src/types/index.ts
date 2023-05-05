@@ -1,4 +1,5 @@
-export { ApiLogInResults, ApiResults } from "./apiResults"; // DISCUSS分成兩個檔案?
+export { ApiLogInResults, ApiResults } from "./apiResults";
 export { default as ApiStatus } from "./apiStatus";
-export { CustomErrorInterface, DataType } from "./CustomErrorInterface";
+export { default as CustomError } from "./customError";
+export { ICustomErrorInterface, IDataType } from "./customErrorInterface";
 export { default as StatusCode } from "./statusCode";

@@ -1,14 +1,13 @@
 import ApiStatus from "./apiStatus";
 import StatusCode from "./statusCode";
 
-export interface DataType {
+export interface IDataType {
   [key: string]: any;
 }
 
-// DISCUSS: the structure of custom error&檔案名稱要有I嗎?
-export interface CustomErrorInterface extends Error {
+export interface ICustomErrorInterface extends Error {
   statusCode: StatusCode;
   status: ApiStatus;
-  data?: DataType;
+  data?: IDataType;
   isOperational?: boolean;
 }
