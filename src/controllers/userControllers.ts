@@ -90,6 +90,7 @@ const createUser = async (req: Request, res: Response) => {
       res.end();
     }
   } catch (error) {
+    console.log(error);
     res
       .status(StatusCode.INTERNAL_SERVER_ERROR)
       .send(responsePattern(ApiStatus.ERROR, ApiResults.FAIL_CREATE, { error }));
