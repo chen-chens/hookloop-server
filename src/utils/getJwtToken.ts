@@ -4,4 +4,6 @@ const getJwtToken = (userId: string): string => {
   return jwt.sign({ userId }, process.env.JWT_SECRET_KEY!, { expiresIn: process.env.JWT_EXPIRE_DAY! });
 };
 
-export default getJwtToken;
+const getUserId = (token: string) => jwt.verify(token, process.env.JWT_SECRET_KEY!);
+
+export { getJwtToken, getUserId };
