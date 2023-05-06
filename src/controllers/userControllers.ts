@@ -1,107 +1,63 @@
 import bcrypt from "bcryptjs";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
-import { User } from "@/models";
+import { forwardCustomError } from "@/middlewares";
+import { User, Workspace } from "@/models";
 import { ApiResults, ApiStatus, StatusCode } from "@/types";
-import { getJwtToken, responsePattern } from "@/utils";
+import { getJwtToken, getUserId, responsePattern, sendSuccessResponse } from "@/utils";
 
 const getAllUsers = async (_: Request, res: Response) => {
-  try {
-    const users = await User.find();
-    res.status(StatusCode.OK);
-    res.write(
-      JSON.stringify({
-        status: ApiStatus.SUCCESS,
-        users,
-      }),
-    );
-    res.end();
-  } catch (error) {
-    res.status(StatusCode.INTERNAL_SERVER_ERROR);
-    res.write(
-      JSON.stringify({
-        status: ApiStatus.ERROR,
-        message: ApiResults.FAIL_READ,
-        error,
-      }),
-    );
-    res.end();
-  }
+  const users = await User.find();
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+    users,
+  });
 };
 
-const getUserById = async (req: Request, res: Response) => {
-  try {
-    const userId = req.params.id;
-    const targetUser = await User.findById(userId);
-    res.status(StatusCode.OK);
-    res.write(
-      JSON.stringify({
-        status: ApiStatus.SUCCESS,
-        targetUser,
-      }),
-    );
-    res.end();
-  } catch (error) {
-    res.status(StatusCode.INTERNAL_SERVER_ERROR);
-    res.write(
-      JSON.stringify({
-        status: ApiStatus.ERROR,
-        message: ApiResults,
-        error,
-      }),
-    );
-    res.end();
+const getUserById = async (req: Request, res: Response, next: NextFunction) => {
+  const token = getUserId(req.cookies.token);
+
+  const { userId } = token as { userId: string };
+  const targetUser = await User.findById(userId);
+
+  if (!token || !targetUser) {
+    forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_GET_DATA, {
+      field: "userId",
+      error: "The user is not existing!",
+    });
+  } else if (token && targetUser) {
+    const workspaceData = await Workspace.find({ members: userId });
+
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+      userData: targetUser,
+      workspaceData,
+    });
   }
 };
 
 const deleteAllUsers = async (_: Request, res: Response) => {
-  try {
-    await User.deleteMany({});
-    res.status(StatusCode.OK);
-    res.write(
-      JSON.stringify({
-        status: ApiStatus.SUCCESS,
-        message: ApiResults.SUCCESS_DELETE,
-        users: [],
-      }),
-    );
-    res.end();
-  } catch (error) {
-    res.status(StatusCode.INTERNAL_SERVER_ERROR);
-    res.write(
-      JSON.stringify({
-        status: ApiStatus.ERROR,
-        message: ApiResults.FAIL_DELETE,
-        error,
-      }),
-    );
-    res.end();
-  }
+  await User.deleteMany({});
+  sendSuccessResponse(res, ApiResults.SUCCESS_DELETE, {
+    users: [],
+  });
 };
 
-const deleteUserById = async (req: Request, res: Response) => {
-  try {
-    const userId = req.params.id;
+const deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
+  const token = getUserId(req.cookies.token);
+  const { userId } = token as { userId: string };
+  const targetUser = await User.findById(userId);
 
-    await User.findByIdAndDelete(userId);
-    res.status(StatusCode.OK);
-    res.write(
-      JSON.stringify({
-        status: ApiStatus.SUCCESS,
-        message: ApiResults.SUCCESS_DELETE,
-      }),
-    );
-    res.end();
-  } catch (error) {
-    res.status(StatusCode.INTERNAL_SERVER_ERROR);
-    res.write(
-      JSON.stringify({
-        status: ApiStatus.ERROR,
-        message: ApiResults.FAIL_DELETE,
-        error,
-      }),
-    );
-    res.end();
+  if (!token || !targetUser) {
+    forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_GET_DATA, {
+      field: "userId",
+      error: "The user is not existing!",
+    });
+  } else if (token && targetUser) {
+    const options = { new: true, runValidators: true };
+
+    const userData = await User.findByIdAndUpdate(userId, { isActive: false }, options);
+    sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+      userData,
+    });
   }
 };
 
@@ -134,6 +90,7 @@ const createUser = async (req: Request, res: Response) => {
       res.end();
     }
   } catch (error) {
+    console.log(error);
     res
       .status(StatusCode.INTERNAL_SERVER_ERROR)
       .send(responsePattern(ApiStatus.ERROR, ApiResults.FAIL_CREATE, { error }));
@@ -141,33 +98,32 @@ const createUser = async (req: Request, res: Response) => {
   }
 };
 
-const updateUser = async (req: Request, res: Response) => {
-  try {
-    const userId = req.params.id;
-    const options = { new: true, runValidators: true };
-    const updatedUser = await User.findByIdAndUpdate(userId, req.body, options);
+const updateUser = async (req: Request, res: Response, next: NextFunction) => {
+  const token = getUserId(req.cookies.token);
+  const { userId } = token as { userId: string };
+  const targetUser = await User.findById(userId);
 
-    res.status(StatusCode.OK);
-    res.send(
-      JSON.stringify({
-        status: ApiStatus.SUCCESS,
-        message: ApiResults.SUCCESS_UPDATE,
-        updatedUser,
-      }),
-    );
+  const options = { new: true, runValidators: true };
+  const { name, email, avatar, isActive } = req.body;
 
-    res.end();
-  } catch (error) {
-    res.status(StatusCode.INTERNAL_SERVER_ERROR);
-    res.send(
-      JSON.stringify({
-        status: ApiStatus.ERROR,
-        message: ApiResults.FAIL_UPDATE,
-        error,
-      }),
-    );
-
-    res.end();
+  if (!token || !targetUser) {
+    forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_GET_DATA, {
+      field: "userId",
+      error: "The user is not existing!",
+    });
+  } else if (email) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "email",
+      error: "Email cannot be changed!",
+    });
+  } else if (name || avatar || isActive) {
+    await User.findByIdAndUpdate(userId, req.body, options);
+    sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE);
+  } else {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "",
+      error: "The column is not existing!",
+    });
   }
 };
 

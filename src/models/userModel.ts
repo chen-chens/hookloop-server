@@ -29,6 +29,10 @@ const userSchema = new Schema(
       trim: true,
       default: "",
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     lastActiveTime: {
       type: Date,
       default: Date.now,
