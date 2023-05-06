@@ -1,9 +1,10 @@
 import bcrypt from "bcryptjs";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
-import { User } from "@/models";
+import { forwardCustomError } from "@/middlewares";
+import { User, Workspace } from "@/models";
 import { ApiResults, ApiStatus, StatusCode } from "@/types";
-import { getJwtToken, responsePattern } from "@/utils";
+import { getJwtToken, responsePattern, sendSuccessResponse } from "@/utils";
 
 const getAllUsers = async (_: Request, res: Response) => {
   try {
@@ -29,28 +30,22 @@ const getAllUsers = async (_: Request, res: Response) => {
   }
 };
 
-const getUserById = async (req: Request, res: Response) => {
-  try {
-    const userId = req.params.id;
-    const targetUser = await User.findById(userId);
-    res.status(StatusCode.OK);
-    res.write(
-      JSON.stringify({
-        status: ApiStatus.SUCCESS,
-        targetUser,
-      }),
-    );
-    res.end();
-  } catch (error) {
-    res.status(StatusCode.INTERNAL_SERVER_ERROR);
-    res.write(
-      JSON.stringify({
-        status: ApiStatus.ERROR,
-        message: ApiResults,
-        error,
-      }),
-    );
-    res.end();
+const getUserById = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.params.id;
+  const targetUser = await User.findById(userId);
+
+  if (!targetUser) {
+    forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_GET_DATA, {
+      field: "userId",
+      error: "The user is not existing!",
+    });
+  } else {
+    const workspaceData = await Workspace.find({ members: userId });
+
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+      uaerData: targetUser,
+      workspaceData,
+    });
   }
 };
 
@@ -141,33 +136,26 @@ const createUser = async (req: Request, res: Response) => {
   }
 };
 
-const updateUser = async (req: Request, res: Response) => {
-  try {
-    const userId = req.params.id;
-    const options = { new: true, runValidators: true };
+const updateUser = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.params.id;
+  const options = { new: true, runValidators: true };
+  const { name, email, avatar } = req.body;
+
+  if (email) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "email",
+      error: "Email cannot be changed!",
+    });
+  } else if (name || avatar) {
     const updatedUser = await User.findByIdAndUpdate(userId, req.body, options);
-
-    res.status(StatusCode.OK);
-    res.send(
-      JSON.stringify({
-        status: ApiStatus.SUCCESS,
-        message: ApiResults.SUCCESS_UPDATE,
-        updatedUser,
-      }),
-    );
-
-    res.end();
-  } catch (error) {
-    res.status(StatusCode.INTERNAL_SERVER_ERROR);
-    res.send(
-      JSON.stringify({
-        status: ApiStatus.ERROR,
-        message: ApiResults.FAIL_UPDATE,
-        error,
-      }),
-    );
-
-    res.end();
+    sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+      updateData: updatedUser,
+    });
+  } else {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "",
+      error: "The column is not existing!",
+    });
   }
 };
 
