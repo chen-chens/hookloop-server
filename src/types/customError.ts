@@ -1,4 +1,4 @@
-import { ApiResults } from "./apiResults";
+import ApiResults from "./apiResults";
 import ApiStatus from "./apiStatus";
 import { ICustomErrorInterface, IDataType } from "./customErrorInterface";
 import StatusCode from "./statusCode";

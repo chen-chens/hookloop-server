@@ -10,39 +10,20 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": "./src",
     "paths": {
-      "@/*": [
-        "*"
-      ],
-      "@/types": [
-        "types"
-      ],
-      "@/utils": [
-        "utils"
-      ],
-      "@/routes": [
-        "routes"
-      ],
-      "@/models": [
-        "models"
-      ],
-      "@/middlewares": [
-        "middlewares"
-      ],
-      "@/controllers": [
-        "controllers"
-      ]
+      "@/*": ["*"],
+      "@/types": ["types"],
+      "@/utils": ["utils"],
+      "@/routes": ["routes"],
+      "@/models": ["models"],
+      "@/middlewares": ["middlewares"],
+      "@/controllers": ["controllers"],
+      "@/const": ["const"],
     }
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"],
   "ts-node": {
-    "require": [
-      "tsconfig-paths/register"
-    ]
+    "require": ["tsconfig-paths/register"]
   },
   "resolve": {
     "extensions": [".ts", ".tsx"]

@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import jwt from "jsonwebtoken";
 
 import { ApiResults, ApiStatus, CustomError, IDataType, StatusCode } from "@/types";
 import { sendErrorResponse } from "@/utils";
@@ -40,6 +41,9 @@ export const errorHandler = (err: CustomError | any, req: Request, res: Response
   if (err instanceof CustomError) {
     console.log("CustomError");
     sendErrorResponse(err, res);
+  } else if (err instanceof jwt.TokenExpiredError) {
+    const customError = new CustomError(StatusCode.UNAUTHORIZED, ApiResults.TOKEN_IS_EXPIRED, {}, ApiStatus.FAIL);
+    sendErrorResponse(customError, res);
   } else {
     // Handle other errors
     console.log("CatchError");

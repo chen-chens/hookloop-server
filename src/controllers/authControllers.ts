@@ -1,58 +1,39 @@
 import bcrypt from "bcryptjs";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
+import HOOKLOOP_TOKEN from "@/const";
+import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
-import { ApiLogInResults, ApiStatus, StatusCode } from "@/types";
-import { getJwtToken, responsePattern } from "@/utils";
+import { ApiResults, StatusCode } from "@/types";
+import { getJwtToken, sendSuccessResponse } from "@/utils";
+import setCookie from "@/utils/setCookie";
 
-// DISCUSS:res.的 prettier 設定不同
-const login = async (req: Request, res: Response) => {
+const login = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
-  // (2) send token: 後端 塞 cookie ?
-  try {
-    const { email, password } = req.body;
-    const targetUser = await User.findOne({ email }).select("+password");
-    const comparePasswordResult = await bcrypt.compare(password, targetUser?.password || "");
-    if (!targetUser) {
-      res.status(StatusCode.UNAUTHORIZED).send(
-        responsePattern(ApiStatus.FAIL, ApiLogInResults.FAIL_LOG_IN, {
-          error: ApiLogInResults.UNAUTHORIZED_IDENTITY,
-        }),
-      );
-      res.end();
-      return;
-    }
-    if (!comparePasswordResult) {
-      res.status(StatusCode.UNAUTHORIZED).send(
-        responsePattern(ApiStatus.FAIL, ApiLogInResults.FAIL_LOG_IN, {
-          field: "password",
-          error: ApiLogInResults.MIS_MATCH_PASSWORD,
-        }),
-      );
-      res.end();
-      return;
-    }
-    const token = getJwtToken(targetUser.id);
-    res
-      .cookie("hookloop-token", token, {
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
-        httpOnly: true,
-        secure: true,
-      })
-      .status(StatusCode.OK)
-      .send(
-        responsePattern(ApiStatus.SUCCESS, ApiLogInResults.SUCCESS_LOG_IN, {
-          token,
-          name: targetUser.name,
-        }),
-      );
-    res.end();
-  } catch (error) {
-    res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .send(responsePattern(ApiStatus.ERROR, ApiLogInResults.FAIL_LOG_IN, { error }));
-    res.end();
+  // (2) send token: 後端 塞 cookie
+  const { email, password } = req.body;
+  const targetUser = await User.findOne({ email }).select("+password");
+  const comparePasswordResult = await bcrypt.compare(password, targetUser?.password || "");
+  if (!targetUser) {
+    forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_LOG_IN, {
+      error: ApiResults.UNAUTHORIZED_IDENTITY,
+    });
+    return;
   }
+  if (!comparePasswordResult) {
+    forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_LOG_IN, {
+      field: "password",
+      error: ApiResults.MIS_MATCH_PASSWORD,
+    });
+    return;
+  }
+  const token = getJwtToken(targetUser.id);
+  setCookie(res, token);
+  sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
+    token,
+    name: targetUser.name,
+  });
 };
 
 const forgetPassword = async (req: Request, res: Response) => {
@@ -70,9 +51,31 @@ const verifyEmail = async (req: Request, res: Response) => {
   console.log(req, res);
 };
 
+interface IDecoded extends JwtPayload {
+  userId: string;
+}
+const verifyUserToken = async (req: Request, res: Response, next: NextFunction) => {
+  // (1) 從 cookie 中拿 token
+  // (2) 驗證 token 有沒有過期
+  const token = req.cookies[HOOKLOOP_TOKEN];
+  if (!token) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.TOKEN_IS_NULL);
+    return;
+  }
+  const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
+  const { userId } = decode as IDecoded;
+  const targetUser = await User.findById(userId);
+  if (!targetUser) {
+    forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_READ);
+    return;
+  }
+  sendSuccessResponse(res, ApiResults.VERIFIED_TOKEN, targetUser);
+};
+
 export default {
   login,
   forgetPassword,
   verifyPassword,
   verifyEmail,
+  verifyUserToken,
 };
