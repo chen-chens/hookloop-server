@@ -2,10 +2,12 @@ import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
+import HOOKLOOP_TOKEN from "@/const";
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { getJwtToken, sendSuccessResponse } from "@/utils";
+import setCookie from "@/utils/setCookie";
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
@@ -27,11 +29,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     return;
   }
   const token = getJwtToken(targetUser.id);
-  res.cookie("hookloop-token", token, {
-    expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
-    httpOnly: true,
-    secure: true,
-  });
+  setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
     token,
     name: targetUser.name,
@@ -59,27 +57,19 @@ interface IDecoded extends JwtPayload {
 const verifyUserToken = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 從 cookie 中拿 token
   // (2) 驗證 token 有沒有過期
-  const token = req.cookies["hookloop-token"];
+  const token = req.cookies[HOOKLOOP_TOKEN];
   if (!token) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.TOKEN_IS_NULL);
     return;
   }
-  try {
-    const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
-    const { userId } = decode as IDecoded;
-    const targetUser = await User.findById(userId);
-    if (!targetUser) {
-      forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_READ);
-      return;
-    }
-    sendSuccessResponse(res, ApiResults.VERIFIED_TOKEN, targetUser);
-  } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.TOKEN_IS_EXPIRED);
-      return;
-    }
-    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.TOKEN_IS_NULL);
+  const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
+  const { userId } = decode as IDecoded;
+  const targetUser = await User.findById(userId);
+  if (!targetUser) {
+    forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_READ);
+    return;
   }
+  sendSuccessResponse(res, ApiResults.VERIFIED_TOKEN, targetUser);
 };
 
 export default {

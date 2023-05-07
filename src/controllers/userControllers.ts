@@ -5,6 +5,7 @@ import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { getJwtToken, getUserId, sendSuccessResponse } from "@/utils";
+import setCookie from "@/utils/setCookie";
 
 const getAllUsers = async (_: Request, res: Response) => {
   const users = await User.find();
@@ -79,8 +80,10 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
     password: securedPassword,
     avatar,
   });
+  const token = getJwtToken(newUser.id!);
+  setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
-    token: getJwtToken(newUser.id!),
+    token,
     name: newUser.name,
   });
 };

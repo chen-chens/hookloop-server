@@ -20,7 +20,7 @@ enum ApiResults {
   UNAUTHORIZED_IDENTITY = "Authentication failed. Please check if your account and password are correct.",
   VERIFIED_TOKEN = "Token has been verified! ",
   TOKEN_IS_NULL = "Token is null. Can't be identitied. Please log in!",
-  TOKEN_IS_EXPIRED = "TToken is expired! ",
+  TOKEN_IS_EXPIRED = "Token is expired! ",
 }
 
 export default ApiResults;
