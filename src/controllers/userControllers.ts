@@ -3,8 +3,8 @@ import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
-import { ApiResults, ApiStatus, StatusCode } from "@/types";
-import { getJwtToken, getUserId, responsePattern, sendSuccessResponse } from "@/utils";
+import { ApiResults, StatusCode } from "@/types";
+import { getJwtToken, getUserId, sendSuccessResponse } from "@/utils";
 
 const getAllUsers = async (_: Request, res: Response) => {
   const users = await User.find();
@@ -61,40 +61,26 @@ const deleteUserById = async (req: Request, res: Response, next: NextFunction) =
   }
 };
 
-const createUser = async (req: Request, res: Response) => {
-  try {
-    const { name, email, password, avatar } = req.body;
-    const hasExistingEmail = await User.findOne({ email });
-    if (hasExistingEmail) {
-      res.status(StatusCode.BAD_REQUEST).send(
-        responsePattern(ApiStatus.FAIL, ApiResults.FAIL_CREATE, {
-          field: "email",
-          error: "The email is existing!",
-        }),
-      );
-      res.end();
-    } else {
-      const securedPassword = await bcrypt.hash(password, 12);
-      const newUser = await User.create({
-        name,
-        email,
-        password: securedPassword,
-        avatar,
-      });
-      res.status(StatusCode.OK).send(
-        responsePattern(ApiStatus.SUCCESS, ApiResults.SUCCESS_CREATE, {
-          token: getJwtToken(newUser.id!),
-          name: newUser.name,
-        }),
-      );
-      res.end();
-    }
-  } catch (error) {
-    console.log(error);
-    res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .send(responsePattern(ApiStatus.ERROR, ApiResults.FAIL_CREATE, { error }));
-    res.end();
+const createUser = async (req: Request, res: Response, next: NextFunction) => {
+  const { name, email, password, avatar } = req.body;
+  const hasExistingEmail = await User.findOne({ email });
+  if (hasExistingEmail) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "email",
+      error: "The email is existing!",
+    });
+  } else {
+    const securedPassword = await bcrypt.hash(password, 12);
+    const newUser = await User.create({
+      name,
+      email,
+      password: securedPassword,
+      avatar,
+    });
+    sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
+      token: getJwtToken(newUser.id!),
+      name: newUser.name,
+    });
   }
 };
 
