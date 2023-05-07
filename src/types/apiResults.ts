@@ -6,7 +6,7 @@ enum ApiResults {
   SUCCESS_DOWNLOAD = "Download Successfully！",
   SUCCESS_SEND_EMAIL = "The letter has been delivered！Please check your email!",
   FAIL_CREATE = "Failed to create！",
-  FAIL_READ = "Failed to get information from server！",
+  FAIL_READ = "Failed to get information from DB",
   FAIL_UPDATE = "Failed to upadte！",
   FAIL_DELETE = "Failed to delete !",
   FAIL_TO_GET_DATA = "Failed to Get Data!",
@@ -18,6 +18,9 @@ enum ApiResults {
   FAIL_LOG_IN = "Failed to log in !",
   MIS_MATCH_PASSWORD = "Invalid password! Please try again.",
   UNAUTHORIZED_IDENTITY = "Authentication failed. Please check if your account and password are correct.",
+  VERIFIED_TOKEN = "Token has been verified! ",
+  TOKEN_IS_NULL = "Token is null. Can't be identitied. Please log in!",
+  TOKEN_IS_EXPIRED = "TToken is expired! ",
 }
 
 export default ApiResults;

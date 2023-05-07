@@ -69,19 +69,20 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
       field: "email",
       error: "The email is existing!",
     });
-  } else {
-    const securedPassword = await bcrypt.hash(password, 12);
-    const newUser = await User.create({
-      name,
-      email,
-      password: securedPassword,
-      avatar,
-    });
-    sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
-      token: getJwtToken(newUser.id!),
-      name: newUser.name,
-    });
+    return;
   }
+
+  const securedPassword = await bcrypt.hash(password, 12);
+  const newUser = await User.create({
+    name,
+    email,
+    password: securedPassword,
+    avatar,
+  });
+  sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
+    token: getJwtToken(newUser.id!),
+    name: newUser.name,
+  });
 };
 
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {

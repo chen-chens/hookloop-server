@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
@@ -52,9 +53,39 @@ const verifyEmail = async (req: Request, res: Response) => {
   console.log(req, res);
 };
 
+interface IDecoded extends JwtPayload {
+  userId: string;
+}
+const verifyUserToken = async (req: Request, res: Response, next: NextFunction) => {
+  // (1) 從 cookie 中拿 token
+  // (2) 驗證 token 有沒有過期
+  const token = req.cookies["hookloop-token"];
+  if (!token) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.TOKEN_IS_NULL);
+    return;
+  }
+  try {
+    const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
+    const { userId } = decode as IDecoded;
+    const targetUser = await User.findById(userId);
+    if (!targetUser) {
+      forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_READ);
+      return;
+    }
+    sendSuccessResponse(res, ApiResults.VERIFIED_TOKEN, targetUser);
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.TOKEN_IS_EXPIRED);
+      return;
+    }
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.TOKEN_IS_NULL);
+  }
+};
+
 export default {
   login,
   forgetPassword,
   verifyPassword,
   verifyEmail,
+  verifyUserToken,
 };
