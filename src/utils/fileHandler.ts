@@ -21,7 +21,7 @@ function getValidFile(files: fileupload.FileArray | null | undefined): fileuploa
   if (!files || !Object.keys(files).length) {
     return false;
   }
-  const file = files!.file as fileupload.UploadedFile;
+  const file = files[Object.keys(files)[0]] as fileupload.UploadedFile;
   return file;
 }
 
