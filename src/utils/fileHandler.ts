@@ -10,9 +10,9 @@ const imageBaseUrl = "https://www.filestackapi.com/api/file";
 
 function getKeys() {
   return {
-    API_KEY: process.env.API_KEY,
-    policy: process.env.POLICY_KEY,
-    signature: process.env.SIGNATURE_KEY,
+    key: process.env.FILESTACK_API_KEY,
+    policy: process.env.FILESTACK_POLICY_KEY,
+    signature: process.env.FILESTACK_SIGNATURE_KEY,
   };
 }
 
@@ -55,16 +55,14 @@ const filePost = async (file: fileupload.UploadedFile, next: NextFunction) => {
     return null;
   }
 
-  const { API_KEY } = getKeys();
+  const { key } = getKeys();
   const { mimetype } = file;
   const response = await axios({
     method: "post",
     url: `https://www.filestackapi.com/api/store/S3`,
     data: file.data,
     headers: { "Content-type": mimetype },
-    params: {
-      key: API_KEY,
-    },
+    params: { key },
   });
 
   console.log("Upload Result:", response);
@@ -126,12 +124,12 @@ const filePatch = async (fileId: string, file: fileupload.UploadedFile, next: Ne
 const fileDelete = async (fileId: string, next: NextFunction) => {
   console.log("DeleteId:", fileId);
 
-  const { API_KEY, policy, signature } = getKeys();
+  const { key, policy, signature } = getKeys();
   const response = await axios({
     method: "delete",
     url: `${imageBaseUrl}/${fileId}`,
     params: {
-      key: API_KEY,
+      key,
       policy,
       signature,
     },
