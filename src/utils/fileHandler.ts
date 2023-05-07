@@ -16,15 +16,6 @@ function getKeys() {
   };
 }
 
-function getValidFile(files: fileupload.FileArray | null | undefined): fileupload.UploadedFile | false {
-  // 檢查上傳檔案
-  if (!files || !Object.keys(files).length) {
-    return false;
-  }
-  const file = files[Object.keys(files)[0]] as fileupload.UploadedFile;
-  return file;
-}
-
 const fileGetMeta = async (fileId: string, next: NextFunction) => {
   console.log("GetId:", fileId);
 
@@ -152,5 +143,4 @@ export default {
   fileGetMeta,
   filePatch,
   fileDelete,
-  getValidFile,
 };
