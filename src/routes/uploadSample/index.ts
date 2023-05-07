@@ -9,7 +9,7 @@ import fileHandler from "@/utils/fileHandler";
 const router = Router();
 router.use(fileupload());
 
-// GET
+// GET 取得檔案
 router.get(
   "/:id",
   asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
@@ -24,40 +24,51 @@ router.get(
   }),
 );
 
-// POST
+// POST 新增檔案
 router.post(
   "/",
   asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
     // 檢查上傳檔案
-    const validFile = fileHandler.getValidFile(req.files);
-
-    if (!validFile) {
+    const { files } = req;
+    if (!files || !Object.keys(files).length) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
     } else {
-      const uploadedFileMeta = await fileHandler.filePost(validFile, next);
-      res.send(uploadedFileMeta);
+      // fileHandler.filePost() 每次只處理一個檔案
+      const validFile = files[Object.keys(files)[0]] as fileupload.UploadedFile;
+      if (!validFile) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
+      } else {
+        const uploadedFileMeta = await fileHandler.filePost(validFile, next);
+        res.send(uploadedFileMeta);
+      }
     }
   }),
 );
 
-// PATCH
+// PATCH 更新檔案
 router.patch(
   "/:id",
   asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
     const fileId = req.params.id;
 
-    const validFile = fileHandler.getValidFile(req.files);
-
-    if (!validFile) {
+    // 檢查上傳檔案
+    const { files } = req;
+    if (!files || !Object.keys(files).length) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
     } else {
-      const updatedFileMeta = await fileHandler.filePatch(fileId, validFile, next);
-      res.send(updatedFileMeta);
+      // fileHandler.filePost() 只接受一個檔案，該檔案會覆蓋同個 fileId 的檔案
+      const validFile = files[Object.keys(files)[0]] as fileupload.UploadedFile;
+      if (!validFile) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
+      } else {
+        const updatedFileMeta = await fileHandler.filePatch(fileId, validFile, next);
+        res.send(updatedFileMeta);
+      }
     }
   }),
 );
 
-// DELETE
+// DELETE 刪除檔案
 router.delete(
   "/:id",
   asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
