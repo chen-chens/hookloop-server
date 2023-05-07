@@ -12,6 +12,8 @@ enum ApiResults {
   FAIL_TO_GET_DATA = "Failed to Get Data!",
   FAIL_DOWNLOAD = "Failed to Download !",
   FAIL_TO_SEND_EMAIL = "Failed to send your email !",
+  FILE_HANDLER_FAIL = "No file or file size over than 1MB.",
+  FILE_NOT_FOUND = "File not found.",
   NOT_FOUND = "Failed to find this page, please check your URL！",
   UNEXPECTED_ERROR = "Unexpected error occurred, please contact the administrator！",
   SUCCESS_LOG_IN = "Log In Successfully！",
