@@ -10,7 +10,7 @@ const responsePattern = (statusType: ApiStatus, message: string, data: IDataType
     data,
   };
 
-  return JSON.stringify(pattern);
+  return pattern;
 };
 
 export default responsePattern;
