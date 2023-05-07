@@ -1,8 +1,10 @@
 import { NextFunction, Request, Response, Router } from "express";
 import fileupload from "express-fileupload";
+
 import { asyncWrapper, forwardCustomError } from "@/middlewares";
-import { ApiResults, StatusCode } from "@/types";
-import { fileHandler } from "@/utils";
+import { ApiResults, ApiStatus, StatusCode } from "@/types";
+import { responsePattern } from "@/utils";
+import fileHandler from "@/utils/fileHandler";
 
 const router = Router();
 router.use(fileupload());
@@ -13,7 +15,12 @@ router.get(
   asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
     const fileId = req.params.id;
     const fileMeta = await fileHandler.fileGetMeta(fileId, next);
-    res.send(fileMeta);
+
+    if (!fileMeta) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ);
+    } else {
+      res.send(fileMeta);
+    }
   }),
 );
 
@@ -55,12 +62,12 @@ router.delete(
   "/:id",
   asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
     const fileId = req.params.id;
-    const resultMessage = await fileHandler.fileDelete(fileId, next);
+    const successfullyDeleted = await fileHandler.fileDelete(fileId, next);
 
-    if (!resultMessage) {
+    if (!successfullyDeleted) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_DELETE);
     } else {
-      res.send(resultMessage);
+      res.send(responsePattern(ApiStatus.SUCCESS, ApiResults.SUCCESS_DELETE, {}));
     }
   }),
 );
