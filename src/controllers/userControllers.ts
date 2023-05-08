@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from "express";
 import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
-import { getJwtToken, getUserId, sendSuccessResponse } from "@/utils";
+import { getJwtToken, getUserIdByToken, sendSuccessResponse } from "@/utils";
 import setCookie from "@/utils/setCookie";
 
 const getAllUsers = async (_: Request, res: Response) => {
@@ -15,7 +15,7 @@ const getAllUsers = async (_: Request, res: Response) => {
 };
 
 const getUserById = async (req: Request, res: Response, next: NextFunction) => {
-  const token = getUserId(req.cookies.token);
+  const token = getUserIdByToken(req.cookies["hookloop-token"]);
 
   const { userId } = token as { userId: string };
   const targetUser = await User.findById(userId);
@@ -43,7 +43,7 @@ const deleteAllUsers = async (_: Request, res: Response) => {
 };
 
 const deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
-  const token = getUserId(req.cookies.token);
+  const token = getUserIdByToken(req.cookies["hookloop-token"]);
   const { userId } = token as { userId: string };
   const targetUser = await User.findById(userId);
 
@@ -89,7 +89,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
-  const token = getUserId(req.cookies.token);
+  const token = getUserIdByToken(req.cookies["hookloop-token"]);
   const { userId } = token as { userId: string };
   const targetUser = await User.findById(userId);
 
