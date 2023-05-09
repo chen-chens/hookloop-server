@@ -7,7 +7,7 @@ const {
   getAllWorkspaces,
   createWorkspace,
   updateWorkspaceById,
-  archiveWorkspaceById,
+  closeWorkspaceById,
   getAvailableUsersByWorkspaceId,
   addPinnedByWorkspaceId,
   deleteUserFromWorkspace,
@@ -19,7 +19,7 @@ const router = Router();
 router.get("", asyncWrapper(getAllWorkspaces));
 router.post("", asyncWrapper(createWorkspace));
 router.put("/:id", asyncWrapper(updateWorkspaceById));
-router.patch("/:id/isArchived", asyncWrapper(archiveWorkspaceById));
+router.patch("/:id/isArchived", asyncWrapper(closeWorkspaceById));
 router.get("/:id/availableUsers", asyncWrapper(getAvailableUsersByWorkspaceId));
 router.put("/:id/isPinned", asyncWrapper(addPinnedByWorkspaceId));
 router.delete("/:workspaceId/members/:memberId", asyncWrapper(deleteUserFromWorkspace));

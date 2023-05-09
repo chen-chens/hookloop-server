@@ -12,7 +12,7 @@ const updateWorkspaceById = async (req: Request, res: Response, next: NextFuncti
   console.log(req, res, next);
 };
 
-const archiveWorkspaceById = async (req: Request, res: Response, next: NextFunction) => {
+const closeWorkspaceById = async (req: Request, res: Response, next: NextFunction) => {
   console.log(req, res, next);
 };
 
@@ -36,7 +36,7 @@ export default {
   getAllWorkspaces,
   createWorkspace,
   updateWorkspaceById,
-  archiveWorkspaceById,
+  closeWorkspaceById,
   getAvailableUsersByWorkspaceId,
   addPinnedByWorkspaceId,
   deleteUserFromWorkspace,
