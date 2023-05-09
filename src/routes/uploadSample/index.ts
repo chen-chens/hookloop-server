@@ -19,7 +19,7 @@ router.get(
     if (!fileMeta) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ);
     } else {
-      res.send(fileMeta);
+      res.json(fileMeta);
     }
   }),
 );
@@ -39,7 +39,7 @@ router.post(
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
       } else {
         const uploadedFileMeta = await fileHandler.filePost(validFile, next);
-        res.send(uploadedFileMeta);
+        res.json(uploadedFileMeta);
       }
     }
   }),
@@ -62,7 +62,7 @@ router.patch(
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
       } else {
         const updatedFileMeta = await fileHandler.filePatch(fileId, validFile, next);
-        res.send(updatedFileMeta);
+        res.json(updatedFileMeta);
       }
     }
   }),
@@ -78,7 +78,7 @@ router.delete(
     if (!successfullyDeleted) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_DELETE);
     } else {
-      res.send(responsePattern(ApiStatus.SUCCESS, ApiResults.SUCCESS_DELETE, {}));
+      res.json(responsePattern(ApiStatus.SUCCESS, ApiResults.SUCCESS_DELETE, {}));
     }
   }),
 );
