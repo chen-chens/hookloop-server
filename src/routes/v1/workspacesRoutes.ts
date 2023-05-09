@@ -4,7 +4,7 @@ import { workspaceControllers } from "@/controllers";
 import { asyncWrapper } from "@/middlewares";
 
 const {
-  getAllWorkspaces,
+  getWorkspacesById,
   createWorkspace,
   updateWorkspaceById,
   closeWorkspaceById,
@@ -16,14 +16,15 @@ const {
 
 const router = Router();
 
-router.get("", asyncWrapper(getAllWorkspaces));
+router.get("/me", asyncWrapper(getWorkspacesByUserId));
+router.get("/:id", asyncWrapper(getWorkspacesById));
 router.post("", asyncWrapper(createWorkspace));
-router.put("/:id", asyncWrapper(updateWorkspaceById));
+router.patch("/:id", asyncWrapper(updateWorkspaceById));
 router.patch("/:id/isArchived", asyncWrapper(closeWorkspaceById));
+
+// 待確認的 API：看 User, Workspace Schema 怎麼關聯
 router.get("/:id/availableUsers", asyncWrapper(getAvailableUsersByWorkspaceId));
 router.put("/:id/isPinned", asyncWrapper(addPinnedByWorkspaceId));
 router.delete("/:workspaceId/members/:memberId", asyncWrapper(deleteUserFromWorkspace));
-
-router.get("/:userId", getWorkspacesByUserId);
 
 export default router;
