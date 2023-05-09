@@ -4,6 +4,6 @@ const getJwtToken = (userId: string): string => {
   return jwt.sign({ userId }, process.env.JWT_SECRET_KEY!, { expiresIn: process.env.JWT_EXPIRE_IN! });
 };
 
-const getUserId = (token: string) => jwt.verify(token, process.env.JWT_SECRET_KEY!);
+const getUserIdByToken = (token: string) => jwt.verify(token, process.env.JWT_SECRET_KEY!);
 
-export { getJwtToken, getUserId };
+export { getJwtToken, getUserIdByToken };
