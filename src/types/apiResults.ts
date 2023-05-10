@@ -23,6 +23,8 @@ enum ApiResults {
   VERIFIED_TOKEN = "Token has been verified! ",
   TOKEN_IS_NULL = "Token is null. Can't be identitied. Please log in!",
   TOKEN_IS_EXPIRED = "Token is expired! ",
+  EMAIL_BEEN_USED = "The email is already existing!",
+  EMAIL_NOT_BEEN_USED = "This email has not been used yet.",
 }
 
 export default ApiResults;

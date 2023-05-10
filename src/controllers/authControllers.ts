@@ -47,8 +47,15 @@ const verifyPassword = async (req: Request, res: Response) => {
   // 驗證：使用者輸入的驗證碼？ 這裡的 Password 是 驗證碼 嗎？(是)
 };
 
-const verifyEmail = async (req: Request, res: Response) => {
-  console.log(req, res);
+const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
+  const { email } = req.body;
+  const hasExistingEmail = await User.findOne({ email });
+
+  if (hasExistingEmail) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.EMAIL_BEEN_USED);
+  } else {
+    sendSuccessResponse(res, ApiResults.EMAIL_NOT_BEEN_USED, { email });
+  }
 };
 
 interface IDecoded extends JwtPayload {
