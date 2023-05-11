@@ -129,4 +129,35 @@ export default {
       }
     }
   },
+  pinKanban: async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const { isPinned } = req.body;
+    if (!id) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+        field: "id",
+        error: "kanban's id is required.",
+      });
+    } else if (Object.keys(req.body).indexOf("isPinned") < 0) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+        field: "isPinned",
+        error: "isPinned is required.",
+      });
+    } else {
+      const updateResult = await Kanban.updateOne({ id }, { isPinned }, { _id: 0 });
+      if (!updateResult) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+          error: "Kanban not found.",
+        });
+      } else {
+        const targetKanban = await Kanban.findOne({ id }, { _id: 0 });
+        if (!targetKanban) {
+          forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+        } else {
+          sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+            targetKanban,
+          });
+        }
+      }
+    }
+  },
 };
