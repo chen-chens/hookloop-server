@@ -67,4 +67,35 @@ export default {
       }
     }
   },
+  renameKanban: async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const { name } = req.body;
+    if (!id) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+        field: "id",
+        error: "kanban's id is required.",
+      });
+    } else if (!name) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+        field: "name",
+        error: "kanban's name is required.",
+      });
+    } else {
+      const updateResult = await Kanban.updateOne({ id }, { name }, { _id: 0 });
+      if (!updateResult) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+          error: "Kanban not found.",
+        });
+      } else {
+        const targetKanban = await Kanban.findOne({ id }, { _id: 0 });
+        if (!targetKanban) {
+          forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+        } else {
+          sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+            targetKanban,
+          });
+        }
+      }
+    }
+  },
 };
