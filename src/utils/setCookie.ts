@@ -1,6 +1,6 @@
 import { Response } from "express";
 
-import HOOKLOOP_TOKEN from "@/const";
+import HOOKLOOP_TOKEN from "@/config/const";
 
 const setCookie = (res: Response, token: string) => {
   res.cookie(HOOKLOOP_TOKEN, token, {

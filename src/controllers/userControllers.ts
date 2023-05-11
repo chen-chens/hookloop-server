@@ -65,7 +65,7 @@ const deleteUserById = async (req: Request, res: Response, next: NextFunction) =
 };
 
 const createUser = async (req: Request, res: Response, next: NextFunction) => {
-  const { name, email, password, avatar } = req.body;
+  const { username, email, password, avatar } = req.body;
   const hasExistingEmail = await User.findOne({ email });
   if (hasExistingEmail) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
@@ -77,7 +77,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
 
   const securedPassword = await bcrypt.hash(password, 12);
   const newUser = await User.create({
-    name,
+    username,
     email,
     password: securedPassword,
     avatar,
@@ -86,7 +86,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
     token,
-    name: newUser.name,
+    username: newUser.username,
   });
 };
 
