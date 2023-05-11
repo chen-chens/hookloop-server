@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 import HOOKLOOP_TOKEN from "@/const";
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
-import { ApiResults, StatusCode } from "@/types";
+import { ApiResults, IDecodedToken, StatusCode } from "@/types";
 import { getJwtToken, sendSuccessResponse } from "@/utils";
 import setCookie from "@/utils/setCookie";
 
@@ -58,9 +58,6 @@ const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-interface IDecoded extends JwtPayload {
-  userId: string;
-}
 const verifyUserToken = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 從 cookie 中拿 token
   // (2) 驗證 token 有沒有過期
@@ -70,7 +67,7 @@ const verifyUserToken = async (req: Request, res: Response, next: NextFunction) 
     return;
   }
   const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
-  const { userId } = decode as IDecoded;
+  const { userId } = decode as IDecodedToken;
   const targetUser = await User.findById(userId);
   if (!targetUser) {
     forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_READ);
