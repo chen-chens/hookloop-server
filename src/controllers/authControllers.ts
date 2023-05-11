@@ -36,6 +36,10 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
+const logout = async (req: Request, res: Response, next: NextFunction) => {
+  console.log(req, res, next);
+};
+
 const forgetPassword = async (req: Request, res: Response) => {
   console.log(req, res);
   // (1) 寄出通知信，信內容包含驗證碼
@@ -81,6 +85,7 @@ const verifyUserToken = async (req: Request, res: Response, next: NextFunction) 
 
 export default {
   login,
+  logout,
   forgetPassword,
   verifyPassword,
   verifyEmail,
