@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { workspaceControllers } from "@/controllers";
-import { asyncWrapper } from "@/middlewares";
+import { asyncWrapper, verifyTokenMiddleware } from "@/middlewares";
 
 const {
   getWorkspacesById,
@@ -18,7 +18,7 @@ const router = Router();
 
 router.get("/me", asyncWrapper(getWorkspacesByUserId));
 router.get("/:id", asyncWrapper(getWorkspacesById));
-router.post("", asyncWrapper(createWorkspace));
+router.post("", verifyTokenMiddleware, asyncWrapper(createWorkspace));
 router.patch("/:id", asyncWrapper(updateWorkspaceById));
 router.patch("/:id/isArchived", asyncWrapper(closeWorkspaceById));
 
