@@ -12,9 +12,9 @@ const verifyUserInputMiddleware = (req: Request, res: Response, next: NextFuncti
    * (1) 確認 req.body 所有必填項目是否有值: name, email, password
    * (2) 確認 email, password 是否符合規範
    */
-  const { name, email, password } = req.body;
+  const { username, email, password } = req.body;
 
-  if (validator.isEmpty(name || "")) {
+  if (validator.isEmpty(username || "")) {
     return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
       field: "name",
       error: "Name is required!",

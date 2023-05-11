@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
-import HOOKLOOP_TOKEN from "@/const";
+import HOOKLOOP_TOKEN from "@/config/const";
 import { User } from "@/models";
 import { ApiResults, IDecodedToken, StatusCode } from "@/types";
 

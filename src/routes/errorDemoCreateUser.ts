@@ -9,7 +9,7 @@ import { getJwtToken, sendSuccessResponse } from "@/utils";
 
 const errorDemoCreateUser = async (req: Request, res: Response, next: NextFunction) => {
   console.log("errorDemoCreateUser");
-  const { name, email, password, avatar } = req.body;
+  const { username, email, password, avatar } = req.body;
   const hasExistingEmail = await User.findOne({ email });
   if (hasExistingEmail) {
     console.log("hasExistingEmail");
@@ -21,14 +21,14 @@ const errorDemoCreateUser = async (req: Request, res: Response, next: NextFuncti
     console.log("createUser");
     const securedPassword = await bcrypt.hash(password, 12);
     const newUser = await User.create({
-      name,
+      username,
       email,
       password: securedPassword,
       avatar,
     });
     sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
       token: getJwtToken(newUser.id!),
-      name: newUser.name,
+      username: newUser.username,
     });
   }
 };

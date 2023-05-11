@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
-import HOOKLOOP_TOKEN from "@/const";
+import HOOKLOOP_TOKEN from "@/config/const";
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
 import { ApiResults, IDecodedToken, StatusCode } from "@/types";
@@ -32,7 +32,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
     token,
-    name: targetUser.name,
+    username: targetUser.username,
   });
 };
 
