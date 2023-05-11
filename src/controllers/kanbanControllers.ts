@@ -52,4 +52,19 @@ export default {
       }
     }
   },
+  getKanbanById: async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    if (id) {
+      const targetKanban = await Kanban.findOne({ id }, { _id: 0 });
+      if (!targetKanban) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+          error: "Kanban not found.",
+        });
+      } else {
+        sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+          targetKanban,
+        });
+      }
+    }
+  },
 };
