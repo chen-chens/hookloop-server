@@ -4,6 +4,7 @@ import { forwardCustomError } from "@/middlewares";
 import { Kanban } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
+import { getDbById, updateDbById } from "@/utils/mongoDB";
 
 export default {
   createKanban: async (req: Request, res: Response, next: NextFunction) => {
@@ -54,17 +55,13 @@ export default {
   },
   getKanbanById: async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    if (id) {
-      const targetKanban = await Kanban.findOne({ id }, { _id: 0 });
-      if (!targetKanban) {
-        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
-          error: "Kanban not found.",
-        });
-      } else {
-        sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-          targetKanban,
-        });
-      }
+    if (!id) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+        field: "id",
+        error: "Kanban's id is required.",
+      });
+    } else {
+      getDbById("Kanban", Kanban, { id }, { _id: 0 }, res, next);
     }
   },
   renameKanban: async (req: Request, res: Response, next: NextFunction) => {
@@ -73,7 +70,7 @@ export default {
     if (!id) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
         field: "id",
-        error: "kanban's id is required.",
+        error: "Kanban's id is required.",
       });
     } else if (!name) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
@@ -81,21 +78,7 @@ export default {
         error: "kanban's name is required.",
       });
     } else {
-      const updateResult = await Kanban.updateOne({ id }, { name }, { _id: 0 });
-      if (!updateResult) {
-        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
-          error: "Kanban not found.",
-        });
-      } else {
-        const targetKanban = await Kanban.findOne({ id }, { _id: 0 });
-        if (!targetKanban) {
-          forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
-        } else {
-          sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-            targetKanban,
-          });
-        }
-      }
+      updateDbById("Kanban", Kanban, { id }, { name }, { _id: 0 }, res, next);
     }
   },
   archiveKanban: async (req: Request, res: Response, next: NextFunction) => {
@@ -104,7 +87,7 @@ export default {
     if (!id) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
         field: "id",
-        error: "kanban's id is required.",
+        error: "Kanban's id is required.",
       });
     } else if (Object.keys(req.body).indexOf("isArchived") < 0) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
@@ -112,21 +95,7 @@ export default {
         error: "isArchived is required.",
       });
     } else {
-      const updateResult = await Kanban.updateOne({ id }, { isArchived }, { _id: 0 });
-      if (!updateResult) {
-        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
-          error: "Kanban not found.",
-        });
-      } else {
-        const targetKanban = await Kanban.findOne({ id }, { _id: 0 });
-        if (!targetKanban) {
-          forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
-        } else {
-          sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-            targetKanban,
-          });
-        }
-      }
+      updateDbById("Kanban", Kanban, { id }, { isArchived }, { _id: 0 }, res, next);
     }
   },
   pinKanban: async (req: Request, res: Response, next: NextFunction) => {
@@ -135,7 +104,7 @@ export default {
     if (!id) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
         field: "id",
-        error: "kanban's id is required.",
+        error: "Kanban's id is required.",
       });
     } else if (Object.keys(req.body).indexOf("isPinned") < 0) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
@@ -143,21 +112,7 @@ export default {
         error: "isPinned is required.",
       });
     } else {
-      const updateResult = await Kanban.updateOne({ id }, { isPinned }, { _id: 0 });
-      if (!updateResult) {
-        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
-          error: "Kanban not found.",
-        });
-      } else {
-        const targetKanban = await Kanban.findOne({ id }, { _id: 0 });
-        if (!targetKanban) {
-          forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
-        } else {
-          sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-            targetKanban,
-          });
-        }
-      }
+      updateDbById("Kanban", Kanban, { id }, { isPinned }, { _id: 0 }, res, next);
     }
   },
 };
