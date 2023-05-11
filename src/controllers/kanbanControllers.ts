@@ -98,4 +98,35 @@ export default {
       }
     }
   },
+  archiveKanban: async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const { isArchived } = req.body;
+    if (!id) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+        field: "id",
+        error: "kanban's id is required.",
+      });
+    } else if (Object.keys(req.body).indexOf("isArchived") < 0) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+        field: "isArchived",
+        error: "isArchived is required.",
+      });
+    } else {
+      const updateResult = await Kanban.updateOne({ id }, { isArchived }, { _id: 0 });
+      if (!updateResult) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+          error: "Kanban not found.",
+        });
+      } else {
+        const targetKanban = await Kanban.findOne({ id }, { _id: 0 });
+        if (!targetKanban) {
+          forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+        } else {
+          sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+            targetKanban,
+          });
+        }
+      }
+    }
+  },
 };

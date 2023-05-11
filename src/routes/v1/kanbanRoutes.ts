@@ -8,5 +8,6 @@ const router = Router();
 router.post("/", asyncWrapper(kanbanControllers.createKanban));
 router.get("/:id", asyncWrapper(kanbanControllers.getKanbanById));
 router.patch("/:id/rename", asyncWrapper(kanbanControllers.renameKanban));
+router.patch("/:id/archive", asyncWrapper(kanbanControllers.archiveKanban));
 
 export default router;
