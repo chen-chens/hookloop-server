@@ -1,8 +1,7 @@
 import { CorsOptions } from "cors";
 
 const corsOptions: CorsOptions = {
-  // origin: ["http://localhost:3000", "https://hookloop-client.onrender.com"],
-  origin: "*",
+  origin: ["http://localhost:3000", "https://hookloop-client.onrender.com"],
   credentials: true,
 };
 
