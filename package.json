@@ -8,7 +8,8 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "nodemon src/server.ts",
-    "build": "tsc",
+    "build:dev": "tsc",
+    "build": "cross-env NODE_ENV=production tsc",
     "start": "cross-env TS_NODE_BASEURL=./dist node -r tsconfig-paths/register dist/server.js",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --fix --ext .ts",
