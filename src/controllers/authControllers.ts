@@ -29,8 +29,6 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     return;
   }
   const token = getJwtToken(targetUser.id);
-  res.setHeader("Access-Control-Allow-Origin", "https://hookloop-client.onrender.com");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
   setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
     token,
