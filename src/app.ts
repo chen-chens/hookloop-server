@@ -12,6 +12,18 @@ dotenv.config();
 
 const app = express();
 
+// 设置允许的前端域名，可以是多个域名
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "https://hookloop-client.onrender.com");
+  next();
+});
+
+// 允许携带凭证
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
 app.use(cors(corsOptions)); // Set CORS with default options
 app.use(express.json());
 app.use(cookieParser());
