@@ -7,6 +7,9 @@ const setCookie = (res: Response, token: string) => {
     expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
     httpOnly: true,
     secure: true,
+    domain: ".localhost, .onrender.com", // accept domain for setting cookie
+    path: "/",
+    sameSite: "none", // accept setting cookie for cross-origin
   });
 };
 
