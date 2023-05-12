@@ -29,9 +29,9 @@ const userSchema = new Schema(
       trim: true,
       default: "",
     },
-    isActive: {
+    isArchived: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     lastActiveTime: {
       type: Date,
