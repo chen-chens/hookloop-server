@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
-import HOOKLOOP_TOKEN from "@/const";
+import HOOKLOOP_TOKEN from "@/config/const";
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
-import { ApiResults, StatusCode } from "@/types";
+import { ApiResults, IDecodedToken, StatusCode } from "@/types";
 import { getJwtToken, sendSuccessResponse } from "@/utils";
 import setCookie from "@/utils/setCookie";
 
@@ -32,7 +32,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
     token,
-    name: targetUser.name,
+    username: targetUser.username,
   });
 };
 
@@ -47,13 +47,17 @@ const verifyPassword = async (req: Request, res: Response) => {
   // 驗證：使用者輸入的驗證碼？ 這裡的 Password 是 驗證碼 嗎？(是)
 };
 
-const verifyEmail = async (req: Request, res: Response) => {
-  console.log(req, res);
+const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
+  const { email } = req.body;
+  const hasExistingEmail = await User.findOne({ email });
+
+  if (hasExistingEmail) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.EMAIL_BEEN_USED);
+  } else {
+    sendSuccessResponse(res, ApiResults.EMAIL_NOT_BEEN_USED, { email });
+  }
 };
 
-interface IDecoded extends JwtPayload {
-  userId: string;
-}
 const verifyUserToken = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 從 cookie 中拿 token
   // (2) 驗證 token 有沒有過期
@@ -63,7 +67,7 @@ const verifyUserToken = async (req: Request, res: Response, next: NextFunction) 
     return;
   }
   const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
-  const { userId } = decode as IDecoded;
+  const { userId } = decode as IDecodedToken;
   const targetUser = await User.findById(userId);
   if (!targetUser) {
     forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_READ);
