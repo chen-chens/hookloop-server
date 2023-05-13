@@ -13,7 +13,7 @@ const setCookie = (res: Response, token: string) => {
     sameSite: "none", // accept setting cookie for cross-origin
   });
 
-  res.cookie("WHERE_AM_I", "WHERE_AM_I");
+  res.cookie("WHERE_AM_I", "WHERE_AM_I", { expires: new Date(Date.now() + 24 * 2 * 60 * 60 * 1000) });
 };
 
 export default setCookie;
