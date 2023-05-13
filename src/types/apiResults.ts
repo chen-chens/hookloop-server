@@ -17,6 +17,7 @@ enum ApiResults {
   NOT_FOUND = "Failed to find this page, please check your URL！",
   UNEXPECTED_ERROR = "Unexpected error occurred, please contact the administrator！",
   SUCCESS_LOG_IN = "Log In Successfully！",
+  SUCCESS_LOG_OUT = "Log Out Successfully！",
   FAIL_LOG_IN = "Failed to log in !",
   MIS_MATCH_PASSWORD = "Invalid password! Please try again.",
   UNAUTHORIZED_IDENTITY = "Authentication failed. Please check if your account and password are correct.",
