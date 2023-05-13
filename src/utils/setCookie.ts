@@ -10,7 +10,7 @@ const setCookie = (res: Response, token: string) => {
     secure: true,
     domain, // accept domain for setting cookie
     path: "/",
-    sameSite: "none", // accept setting cookie for cross-origin
+    sameSite: "lax", // accept setting cookie for cross-origin
   });
 };
 
