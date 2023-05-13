@@ -13,6 +13,9 @@ const setCookie = (res: Response, token: string) => {
     path: "/",
     sameSite: "none", // accept setting cookie for cross-origin
   });
+
+  res.cookie("test1", "test");
+  res.cookie("HOOKLOOP_TOKEN", token);
 };
 
 export default setCookie;
