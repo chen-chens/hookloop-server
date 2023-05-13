@@ -12,6 +12,8 @@ const setCookie = (res: Response, token: string) => {
     path: "/",
     sameSite: "none", // accept setting cookie for cross-origin
   });
+
+  res.cookie("WHERE_AM_I", "WHERE_AM_I");
 };
 
 export default setCookie;
