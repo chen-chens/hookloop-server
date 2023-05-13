@@ -5,8 +5,10 @@ import v1Routes from "./v1";
 
 const router = Router();
 
-router.get("/", (_req, res) => {
+router.get("/", (req, res) => {
   console.log("Hello World!");
+  console.log("*".repeat(20));
+  console.log("req.cookies", req.cookies);
   res.send("Hello World!");
 });
 router.use("/api/v1", v1Routes);

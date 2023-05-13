@@ -76,6 +76,8 @@ const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
 const verifyUserToken = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 從 cookie 中拿 token
   // (2) 驗證 token 有沒有過期
+  console.log("=".repeat(20));
+  console.log("req.cookies", req.cookies);
   const token = req.cookies[HOOKLOOP_TOKEN];
   if (!token) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.TOKEN_IS_NULL);
