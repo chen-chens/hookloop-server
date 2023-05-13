@@ -37,15 +37,18 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const logout = async (req: Request, res: Response) => {
-  // (1) 清掉 token
+  // (1) 清掉 cookie
   // (2) 更新 User lastActive
 
   const options = { new: true, runValidators: true };
 
   const { id } = req.body.user;
-  await User.findByIdAndUpdate(id, { lastActiveTime: Date.now() }, options);
+  const updateUser = await User.findByIdAndUpdate(id, { lastActiveTime: Date.now() }, options);
   res.clearCookie(HOOKLOOP_TOKEN);
-  sendSuccessResponse(res, ApiResults.SUCCESS_LOG_OUT);
+  sendSuccessResponse(res, ApiResults.SUCCESS_LOG_OUT, {
+    username: updateUser?.username,
+    lastActiveTime: updateUser?.lastActiveTime,
+  });
 };
 
 const forgetPassword = async (req: Request, res: Response) => {
