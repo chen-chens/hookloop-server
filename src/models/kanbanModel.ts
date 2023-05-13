@@ -1,41 +1,41 @@
 import mongoose, { Schema } from "mongoose";
 
-const userSchema = new Schema(
+const kanbanSchema = new Schema(
   {
-    email: {
+    id: {
       type: String,
       required: true,
       unique: true,
       trim: true,
       default: "",
+      minlength: 2,
+      maxLength: 100,
     },
-    username: {
+    name: {
       type: String,
       required: true,
-      trim: true,
       default: "",
       minlength: 2,
       maxLength: 100,
     },
-    password: {
-      type: String,
+    workspace: {
+      type: Schema.Types.ObjectId,
+      ref: "Workspace",
       required: true,
-      trim: true,
-      select: false,
-      default: "",
     },
-    avatar: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    cardLists: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "List",
+      },
+    ],
     isArchived: {
       type: Boolean,
       default: false,
     },
-    lastActiveTime: {
-      type: Date,
-      default: Date.now,
+    isPinned: {
+      type: Boolean,
+      default: false,
     },
   },
   {
@@ -44,6 +44,6 @@ const userSchema = new Schema(
   },
 );
 
-const User = mongoose.model("User", userSchema);
+const Kanban = mongoose.model("Kanban", kanbanSchema);
 
-export default User;
+export default Kanban;

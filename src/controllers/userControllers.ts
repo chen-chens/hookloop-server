@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
 import fileupload from "express-fileupload";
 
+import HOOKLOOP_TOKEN from "@/config/const";
 import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
@@ -17,7 +18,7 @@ const getAllUsers = async (_: Request, res: Response) => {
 };
 
 const getUserById = async (req: Request, res: Response, next: NextFunction) => {
-  const token = getUserIdByToken(req.cookies["hookloop-token"]);
+  const token = getUserIdByToken(req.cookies[HOOKLOOP_TOKEN]);
 
   const { userId } = token as { userId: string };
   const targetUser = await User.findById(userId);
@@ -45,7 +46,7 @@ const deleteAllUsers = async (_: Request, res: Response) => {
 };
 
 const deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
-  const token = getUserIdByToken(req.cookies["hookloop-token"]);
+  const token = getUserIdByToken(req.cookies[HOOKLOOP_TOKEN]);
   const { userId } = token as { userId: string };
   const targetUser = await User.findById(userId);
 
@@ -57,7 +58,7 @@ const deleteUserById = async (req: Request, res: Response, next: NextFunction) =
   } else if (token && targetUser) {
     const options = { new: true, runValidators: true };
 
-    const userData = await User.findByIdAndUpdate(userId, { isActive: false }, options);
+    const userData = await User.findByIdAndUpdate(userId, { isArchived: true }, options);
     sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
       userData,
     });
@@ -65,7 +66,7 @@ const deleteUserById = async (req: Request, res: Response, next: NextFunction) =
 };
 
 const createUser = async (req: Request, res: Response, next: NextFunction) => {
-  const { name, email, password, avatar } = req.body;
+  const { username, email, password, avatar } = req.body;
   const hasExistingEmail = await User.findOne({ email });
   if (hasExistingEmail) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
@@ -77,7 +78,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
 
   const securedPassword = await bcrypt.hash(password, 12);
   const newUser = await User.create({
-    name,
+    username,
     email,
     password: securedPassword,
     avatar,
@@ -86,17 +87,17 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
     token,
-    name: newUser.name,
+    username: newUser.username,
   });
 };
 
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
-  const token = getUserIdByToken(req.cookies["hookloop-token"]);
+  const token = getUserIdByToken(req.cookies[HOOKLOOP_TOKEN]);
   const { userId } = token as { userId: string };
   const targetUser = await User.findById(userId);
 
   const options = { new: true, runValidators: true };
-  const { name, email, avatar, isActive } = req.body;
+  const { username, email, avatar, isArchived } = req.body;
   const { files } = req;
 
   if (!token || !targetUser) {
@@ -131,7 +132,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
         sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
       }
     }
-  } else if (name || isActive) {
+  } else if (username || isArchived) {
     const userData = await User.findByIdAndUpdate(userId, req.body, options);
     sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData });
   } else {
@@ -146,8 +147,9 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
   const { newPassword, oldPassword } = req.body;
 
   if (oldPassword) {
-    const token = getUserIdByToken(req.cookies["hookloop-token"]);
+    const token = getUserIdByToken(req.cookies[HOOKLOOP_TOKEN]);
     const { userId } = token as { userId: string };
+
     const targetUser = await User.findById(userId).select("+password");
     const isPasswordCorrect = await bcrypt.compare(oldPassword, targetUser?.password || "");
 
@@ -158,14 +160,11 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
       });
     } else {
       const options = { new: true, runValidators: true };
-      const securedPassword = await bcrypt.hash(newPassword, 12);
-      const selectedUser = await User.findById(userId).lean();
-      if (selectedUser) {
-        selectedUser.password = securedPassword;
 
-        const newData = await User.findByIdAndUpdate(userId, { password: selectedUser.password }, options);
-        sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
-      }
+      const securedPassword = await bcrypt.hash(newPassword, 12);
+      const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, options);
+
+      sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
     }
   }
 };
