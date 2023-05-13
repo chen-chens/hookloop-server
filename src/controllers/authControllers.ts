@@ -44,7 +44,7 @@ const logout = async (req: Request, res: Response) => {
 
   const { id } = req.body.user;
   const updateUser = await User.findByIdAndUpdate(id, { lastActiveTime: Date.now() }, options);
-  res.clearCookie(HOOKLOOP_TOKEN);
+  res.clearCookie(HOOKLOOP_TOKEN, { secure: true, sameSite: "none" });
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_OUT, {
     username: updateUser?.username,
     lastActiveTime: updateUser?.lastActiveTime,
