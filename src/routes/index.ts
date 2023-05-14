@@ -5,10 +5,8 @@ import v1Routes from "./v1";
 
 const router = Router();
 
-router.get("/", (req, res) => {
+router.get("/", (_req, res) => {
   console.log("Hello World!");
-  console.log("*".repeat(20));
-  console.log("req.cookies", req.cookies);
   res.cookie("WHERE_AM_I", "WHERE_AM_I", { expires: new Date(Date.now() + 24 * 2 * 60 * 60 * 1000) });
   res.send("Hello World!");
 });
