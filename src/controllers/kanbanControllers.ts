@@ -41,12 +41,12 @@ export default {
         const newKanban = await Kanban.create({
           key,
           name,
-          workspace: workspaceId,
+          workspaceId,
         });
         sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
           key: newKanban.key,
           name: newKanban.name,
-          workspaceId: newKanban.workspace,
+          workspaceId: newKanban.workspaceId,
           listOrder: newKanban.listOrder,
           isArchived: newKanban.isArchived,
         });

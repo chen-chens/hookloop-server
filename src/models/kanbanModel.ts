@@ -18,7 +18,7 @@ const kanbanSchema = new Schema(
       minlength: 2,
       maxLength: 100,
     },
-    workspace: {
+    workspaceId: {
       type: Schema.Types.ObjectId,
       ref: "Workspace",
       required: true,
