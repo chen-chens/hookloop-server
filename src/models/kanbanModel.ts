@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const kanbanSchema = new Schema(
   {
-    id: {
+    key: {
       type: String,
       required: true,
       unique: true,
@@ -23,7 +23,7 @@ const kanbanSchema = new Schema(
       ref: "Workspace",
       required: true,
     },
-    cardLists: [
+    listOrder: [
       {
         type: Schema.Types.ObjectId,
         ref: "List",
