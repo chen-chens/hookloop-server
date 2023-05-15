@@ -4,7 +4,7 @@ import { forwardCustomError } from "@/middlewares";
 import { Kanban } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
-import { getDbById, updateDbById } from "@/utils/mongoDB";
+import mongoDbHandler from "@/utils/mongoDbHandler";
 
 export default {
   createKanban: async (req: Request, res: Response, next: NextFunction) => {
@@ -61,7 +61,7 @@ export default {
         error: "Kanban's id is required.",
       });
     } else {
-      getDbById("Kanban", Kanban, { id }, { _id: 0 }, res, next);
+      mongoDbHandler.getDb("Kanban", Kanban, { id }, { _id: 0 }, res, next);
     }
   },
   renameKanban: async (req: Request, res: Response, next: NextFunction) => {
@@ -78,7 +78,7 @@ export default {
         error: "kanban's name is required.",
       });
     } else {
-      updateDbById("Kanban", Kanban, { id }, { name }, { _id: 0 }, res, next);
+      mongoDbHandler.updateDb("Kanban", Kanban, { id }, { name }, { _id: 0 }, res, next);
     }
   },
   archiveKanban: async (req: Request, res: Response, next: NextFunction) => {
@@ -95,7 +95,7 @@ export default {
         error: "isArchived is required.",
       });
     } else {
-      updateDbById("Kanban", Kanban, { id }, { isArchived }, { _id: 0 }, res, next);
+      mongoDbHandler.updateDb("Kanban", Kanban, { id }, { isArchived }, { _id: 0 }, res, next);
     }
   },
   pinKanban: async (req: Request, res: Response, next: NextFunction) => {
@@ -112,7 +112,7 @@ export default {
         error: "isPinned is required.",
       });
     } else {
-      updateDbById("Kanban", Kanban, { id }, { isPinned }, { _id: 0 }, res, next);
+      mongoDbHandler.updateDb("Kanban", Kanban, { id }, { isPinned }, { _id: 0 }, res, next);
     }
   },
 };

@@ -4,14 +4,7 @@ import { forwardCustomError } from "@/middlewares";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
-async function getDbById(
-  modelName: string,
-  model: any,
-  query: any,
-  projection: any,
-  res: Response,
-  next: NextFunction,
-) {
+async function getDb(modelName: string, model: any, query: any, projection: any, res: Response, next: NextFunction) {
   const target = await model.findOne(query, projection);
   if (!target) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
@@ -24,7 +17,7 @@ async function getDbById(
   }
 }
 
-async function updateDbById(
+async function updateDb(
   modelName: string,
   model: any,
   query: any,
@@ -50,4 +43,4 @@ async function updateDbById(
   }
 }
 
-export { getDbById, updateDbById };
+export default { getDb, updateDb };
