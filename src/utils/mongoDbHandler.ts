@@ -5,7 +5,9 @@ import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
 async function getDb(modelName: string, model: any, query: any, projection: any, res: Response, next: NextFunction) {
-  const target = await model.findOne(query, projection);
+  const target = await model.findOne(query, projection).catch((err: Error) => {
+    console.log("MongoDb GET error: ", err);
+  });
   if (!target) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
       error: `${modelName} not found.`,
@@ -26,8 +28,10 @@ async function updateDb(
   res: Response,
   next: NextFunction,
 ) {
-  const updateResult = await model.updateOne(query, updateData);
-  if (!updateResult.matchedCount) {
+  const updateResult = await model.updateOne(query, updateData).catch((err: Error) => {
+    console.log("MongoDb UPDATE error: ", err);
+  });
+  if (!updateResult || !updateResult.matchedCount) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
       error: `${modelName} not found.`,
     });
