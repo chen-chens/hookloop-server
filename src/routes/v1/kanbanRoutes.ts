@@ -7,7 +7,8 @@ const router = Router();
 
 router.post("/", asyncWrapper(kanbanControllers.createKanban));
 router.get("/:key", asyncWrapper(kanbanControllers.getKanbanByKey));
-router.patch("/:key/rename", asyncWrapper(kanbanControllers.renameKanban));
+router.patch("/:key/name", asyncWrapper(kanbanControllers.renameKanban));
+router.patch("/:key/key", asyncWrapper(kanbanControllers.modifyKanbanKey));
 router.patch("/:key/archive", asyncWrapper(kanbanControllers.archiveKanban));
 router.patch("/:key/pin", asyncWrapper(kanbanControllers.pinKanban));
 

@@ -56,7 +56,7 @@ export default {
   getKanbanByKey: async (req: Request, res: Response, next: NextFunction) => {
     const { key } = req.params;
     if (!key) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
         field: "key",
         error: "Kanban's key is required.",
       });
@@ -64,16 +64,47 @@ export default {
       mongoDbHandler.getDb("Kanban", Kanban, { key }, { _id: 0 }, res, next);
     }
   },
+  modifyKanbanKey: async (req: Request, res: Response, next: NextFunction) => {
+    const { key } = req.params;
+    const { newKey } = req.body;
+    if (!key) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "key",
+        error: "Kanban's key is required.",
+      });
+    } else if (newKey.indexOf(" ") > -1) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "key",
+        error: "space is not allowed in key.",
+      });
+    } else {
+      const updateResult = await Kanban.updateOne({ key }, { key: newKey });
+      if (!updateResult.matchedCount) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+          error: `Kanban not found.`,
+        });
+      } else {
+        const target = await Kanban.findOne({ key: newKey }, { _id: 0 });
+        if (!target) {
+          forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+        } else {
+          sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+            target,
+          });
+        }
+      }
+    }
+  },
   renameKanban: async (req: Request, res: Response, next: NextFunction) => {
     const { key } = req.params;
     const { name } = req.body;
     if (!key) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "key",
         error: "Kanban's key is required.",
       });
     } else if (!name) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "name",
         error: "kanban's name is required.",
       });
@@ -85,12 +116,12 @@ export default {
     const { key } = req.params;
     const { isArchived } = req.body;
     if (!key) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "key",
         error: "Kanban's key is required.",
       });
     } else if (Object.keys(req.body).indexOf("isArchived") < 0) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "isArchived",
         error: "isArchived is required.",
       });
@@ -102,12 +133,12 @@ export default {
     const { key } = req.params;
     const { isPinned } = req.body;
     if (!key) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "key",
         error: "Kanban's key is required.",
       });
     } else if (Object.keys(req.body).indexOf("isPinned") < 0) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "isPinned",
         error: "isPinned is required.",
       });
