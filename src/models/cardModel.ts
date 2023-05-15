@@ -62,6 +62,7 @@ const cardSchema = new Schema(
     ],
     isArchived: {
       type: Boolean,
+      default: false,
     },
   },
   {
