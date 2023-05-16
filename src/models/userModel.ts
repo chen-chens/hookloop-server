@@ -1,6 +1,18 @@
 import mongoose, { Schema } from "mongoose";
 
-const userSchema = new Schema(
+// 定義 User 模型的介面
+export interface IUser extends Document {
+  id: string;
+  email: string;
+  username: string;
+  password: string;
+  avatar: string;
+  isArchived: boolean;
+  lastActiveTime: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+const userSchema = new Schema<IUser>(
   {
     email: {
       type: String,
@@ -44,6 +56,6 @@ const userSchema = new Schema(
   },
 );
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model<IUser>("User", userSchema);
 
 export default User;
