@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
 import { Workspace } from "@/models";
+import { IUser } from "@/models/userModel";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
@@ -10,8 +11,7 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
 };
 
 const createWorkspace = async (req: Request, res: Response) => {
-  // res.json(req.body.user);
-  const { id } = req.body.user;
+  const { id } = req.user as IUser;
   const { name } = req.body;
 
   const newWorkspace = await Workspace.create({
@@ -45,7 +45,7 @@ const deleteUserFromWorkspace = async (req: Request, res: Response, next: NextFu
 };
 
 const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunction) => {
-  const { id } = req.body.user;
+  const { id } = req.user as IUser;
 
   if (!id) {
     forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_GET_DATA, {
