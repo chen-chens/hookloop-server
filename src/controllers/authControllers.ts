@@ -2,16 +2,15 @@ import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
-import HOOKLOOP_TOKEN from "@/config/const";
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
+import { IUser } from "@/models/userModel";
 import { ApiResults, IDecodedToken, StatusCode } from "@/types";
 import { getJwtToken, sendSuccessResponse } from "@/utils";
 import setCookie from "@/utils/setCookie";
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
-  // (2) send token: 後端 塞 cookie
   const { email, password } = req.body;
   const targetUser = await User.findOne({ email }).select("+password");
   const comparePasswordResult = await bcrypt.compare(password, targetUser?.password || "");
@@ -42,9 +41,9 @@ const logout = async (req: Request, res: Response) => {
 
   const options = { new: true, runValidators: true };
 
-  const { id } = req.body.user;
+  const { id } = req.user as IUser;
   const updateUser = await User.findByIdAndUpdate(id, { lastActiveTime: Date.now() }, options);
-  res.clearCookie(HOOKLOOP_TOKEN, { secure: true, sameSite: "none" });
+  // res.clearCookie(HOOKLOOP_TOKEN, { secure: true, sameSite: "none" });
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_OUT, {
     username: updateUser?.username,
     lastActiveTime: updateUser?.lastActiveTime,
@@ -77,11 +76,11 @@ const verifyUserToken = async (req: Request, res: Response, next: NextFunction) 
   // (1) 從 header 中拿 token
   // (2) 驗證 token 有沒有過期
   const bearerToken = req.headers.authorization;
-  if (!bearerToken) {
+  const token = bearerToken?.split(" ")[1];
+  if (!token) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.TOKEN_IS_NULL);
     return;
   }
-  const token = bearerToken.split(" ")[1];
   const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
   const { userId } = decode as IDecodedToken;
   const targetUser = await User.findById(userId);
