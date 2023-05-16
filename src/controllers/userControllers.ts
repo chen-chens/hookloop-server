@@ -8,7 +8,6 @@ import { User, Workspace } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { getJwtToken, getUserIdByToken, sendSuccessResponse } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
-import setCookie from "@/utils/setCookie";
 
 const getAllUsers = async (_: Request, res: Response) => {
   const users = await User.find();
@@ -82,9 +81,9 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
     email,
     password: securedPassword,
     avatar,
+    lastActiveTime: Date.now(),
   });
   const token = getJwtToken(newUser.id!);
-  setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
     token,
     username: newUser.username,
