@@ -74,13 +74,14 @@ const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const verifyUserToken = async (req: Request, res: Response, next: NextFunction) => {
-  // (1) 從 cookie 中拿 token
+  // (1) 從 header 中拿 token
   // (2) 驗證 token 有沒有過期
-  const token = req.cookies[HOOKLOOP_TOKEN];
-  if (!token) {
+  const bearerToken = req.headers.authorization;
+  if (!bearerToken) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.TOKEN_IS_NULL);
     return;
   }
+  const token = bearerToken.split(" ")[1];
   const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
   const { userId } = decode as IDecodedToken;
   const targetUser = await User.findById(userId);
