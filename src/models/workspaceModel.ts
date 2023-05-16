@@ -10,7 +10,7 @@ const workspaceSchema = new Schema(
       minlength: 2,
       maxLength: 100,
     },
-    manager: {
+    owner: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -27,7 +27,7 @@ const workspaceSchema = new Schema(
         ref: "Kanban",
       },
     ],
-    isClosed: {
+    isArchived: {
       type: Boolean,
       default: false,
     },
