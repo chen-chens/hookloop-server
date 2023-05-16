@@ -63,30 +63,29 @@ export default {
     }
   },
   moveList: async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    const { listOrder } = req.body;
-    if (!listOrder) {
+    const { kanbanId, listOrder } = req.body;
+    if (!kanbanId) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "kanbanId",
+        error: "kanbanId is required.",
+      });
+    } else if (!listOrder) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "listOrder",
         error: "listOrder is required.",
       });
     } else {
-      const listData = await List.findOne({ _id: id }).catch((err: Error) => {
+      const kanbanData = await Kanban.findOne({ _id: kanbanId }).catch((err: Error) => {
         console.log("MongoDb UPDATE error: ", err);
-        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
-          error: `List not found.`,
-        });
       });
-      if (!listData) {
+      if (!kanbanData) {
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
-          error: `List not found.`,
+          error: `Kanban not found.`,
         });
       } else {
-        const kanbanUpdateResult = await Kanban.updateOne({ _id: listData.kanbanId }, { listOrder }).catch(
-          (err: Error) => {
-            console.log("MongoDb UPDATE Kanban error: ", err);
-          },
-        );
+        const kanbanUpdateResult = await Kanban.updateOne({ _id: kanbanId }, { listOrder }).catch((err: Error) => {
+          console.log("MongoDb UPDATE error: ", err);
+        });
         if (!kanbanUpdateResult || !kanbanUpdateResult.matchedCount) {
           forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
         } else {
