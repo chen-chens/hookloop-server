@@ -2,13 +2,11 @@ import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
 import fileupload from "express-fileupload";
 
-import HOOKLOOP_TOKEN from "@/config/const";
 import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { getJwtToken, getUserIdByToken, sendSuccessResponse } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
-import setCookie from "@/utils/setCookie";
 
 const getAllUsers = async (_: Request, res: Response) => {
   const users = await User.find();
@@ -18,7 +16,8 @@ const getAllUsers = async (_: Request, res: Response) => {
 };
 
 const getUserById = async (req: Request, res: Response, next: NextFunction) => {
-  const token = getUserIdByToken(req.cookies[HOOKLOOP_TOKEN]);
+  const bearerToken = req.headers.authorization;
+  const token = bearerToken ? getUserIdByToken(bearerToken.split(" ")[1]) : "";
 
   const { userId } = token as { userId: string };
   const targetUser = await User.findById(userId);
@@ -46,7 +45,9 @@ const deleteAllUsers = async (_: Request, res: Response) => {
 };
 
 const deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
-  const token = getUserIdByToken(req.cookies[HOOKLOOP_TOKEN]);
+  const bearerToken = req.headers.authorization;
+  const token = bearerToken ? getUserIdByToken(bearerToken.split(" ")[1]) : "";
+
   const { userId } = token as { userId: string };
   const targetUser = await User.findById(userId);
 
@@ -82,9 +83,9 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
     email,
     password: securedPassword,
     avatar,
+    lastActiveTime: Date.now(),
   });
   const token = getJwtToken(newUser.id!);
-  setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
     token,
     username: newUser.username,
@@ -92,7 +93,9 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
-  const token = getUserIdByToken(req.cookies[HOOKLOOP_TOKEN]);
+  const bearerToken = req.headers.authorization;
+  const token = bearerToken ? getUserIdByToken(bearerToken.split(" ")[1]) : "";
+
   const { userId } = token as { userId: string };
   const targetUser = await User.findById(userId);
 
@@ -147,7 +150,9 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
   const { newPassword, oldPassword } = req.body;
 
   if (oldPassword) {
-    const token = getUserIdByToken(req.cookies[HOOKLOOP_TOKEN]);
+    const bearerToken = req.headers.authorization;
+    const token = bearerToken ? getUserIdByToken(bearerToken.split(" ")[1]) : "";
+
     const { userId } = token as { userId: string };
 
     const targetUser = await User.findById(userId).select("+password");

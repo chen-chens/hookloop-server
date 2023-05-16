@@ -16,7 +16,7 @@ const {
 
 const router = Router();
 
-router.get("/me", asyncWrapper(getWorkspacesByUserId));
+router.get("/me", verifyTokenMiddleware, asyncWrapper(getWorkspacesByUserId));
 router.get("/:id", asyncWrapper(getWorkspacesById));
 router.post("", verifyTokenMiddleware, asyncWrapper(createWorkspace));
 router.patch("/:id", asyncWrapper(updateWorkspaceById));

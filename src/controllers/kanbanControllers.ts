@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
-import { Kanban } from "@/models";
+import { Kanban, Workspace } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
@@ -144,6 +144,22 @@ export default {
       });
     } else {
       mongoDbHandler.updateDb("Kanban", Kanban, { key }, { isPinned }, { _id: 0 }, res, next);
+    }
+  },
+  getKanbanMembers: async (req: Request, res: Response, next: NextFunction) => {
+    const { key } = req.params;
+    const kanbanData = await Kanban.findOne({ key });
+    if (!kanbanData) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+        error: `Kanban not found.`,
+      });
+    } else {
+      const worksoaceData = await Workspace.findOne({ _id: kanbanData.workspaceId });
+      if (!worksoaceData) {
+        forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+      } else {
+        res.json(worksoaceData.members);
+      }
     }
   },
 };

@@ -2,16 +2,13 @@ import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
-import HOOKLOOP_TOKEN from "@/config/const";
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
 import { ApiResults, IDecodedToken, StatusCode } from "@/types";
 import { getJwtToken, sendSuccessResponse } from "@/utils";
-import setCookie from "@/utils/setCookie";
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
-  // (2) send token: 後端 塞 cookie
   const { email, password } = req.body;
   const targetUser = await User.findOne({ email }).select("+password");
   const comparePasswordResult = await bcrypt.compare(password, targetUser?.password || "");
@@ -29,25 +26,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     return;
   }
   const token = getJwtToken(targetUser.id);
-  setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
     token,
     username: targetUser.username,
-  });
-};
-
-const logout = async (req: Request, res: Response) => {
-  // (1) 清掉 cookie
-  // (2) 更新 User lastActive
-
-  const options = { new: true, runValidators: true };
-
-  const { id } = req.body.user;
-  const updateUser = await User.findByIdAndUpdate(id, { lastActiveTime: Date.now() }, options);
-  res.clearCookie(HOOKLOOP_TOKEN, { secure: true, sameSite: "none" });
-  sendSuccessResponse(res, ApiResults.SUCCESS_LOG_OUT, {
-    username: updateUser?.username,
-    lastActiveTime: updateUser?.lastActiveTime,
   });
 };
 
@@ -74,9 +55,10 @@ const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const verifyUserToken = async (req: Request, res: Response, next: NextFunction) => {
-  // (1) 從 cookie 中拿 token
+  // (1) 從 header 中拿 token
   // (2) 驗證 token 有沒有過期
-  const token = req.cookies[HOOKLOOP_TOKEN];
+  const bearerToken = req.headers.authorization;
+  const token = bearerToken?.split(" ")[1];
   if (!token) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.TOKEN_IS_NULL);
     return;
@@ -93,7 +75,6 @@ const verifyUserToken = async (req: Request, res: Response, next: NextFunction) 
 
 export default {
   login,
-  logout,
   forgetPassword,
   verifyPassword,
   verifyEmail,
