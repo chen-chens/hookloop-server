@@ -4,6 +4,7 @@ import fileupload from "express-fileupload";
 
 import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
+import { IUser } from "@/models/userModel";
 import { ApiResults, StatusCode } from "@/types";
 import { getJwtToken, getUserIdByToken, sendSuccessResponse } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
@@ -15,26 +16,14 @@ const getAllUsers = async (_: Request, res: Response) => {
   });
 };
 
-const getUserById = async (req: Request, res: Response, next: NextFunction) => {
-  const bearerToken = req.headers.authorization;
-  const token = bearerToken ? getUserIdByToken(bearerToken.split(" ")[1]) : "";
+const getUserById = async (req: Request, res: Response) => {
+  const { id } = req.user as IUser;
+  const workspaceData = await Workspace.find({ members: id });
 
-  const { userId } = token as { userId: string };
-  const targetUser = await User.findById(userId);
-
-  if (!token || !targetUser) {
-    forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_GET_DATA, {
-      field: "userId",
-      error: "The user is not existing!",
-    });
-  } else if (token && targetUser) {
-    const workspaceData = await Workspace.find({ members: userId });
-
-    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-      userData: targetUser,
-      workspaceData,
-    });
-  }
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+    userData: req.user,
+    workspaceData,
+  });
 };
 
 const deleteAllUsers = async (_: Request, res: Response) => {
