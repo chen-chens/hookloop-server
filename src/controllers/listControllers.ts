@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
-import { List } from "@/models";
+import { Kanban, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
@@ -60,6 +60,39 @@ export default {
       });
     } else {
       mongoDbHandler.updateDb("List", List, { _id: id }, { isArchived }, {}, res, next);
+    }
+  },
+  moveList: async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const { listOrder } = req.body;
+    if (!listOrder) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "listOrder",
+        error: "listOrder is required.",
+      });
+    } else {
+      const listData = await List.findOne({ _id: id }).catch((err: Error) => {
+        console.log("MongoDb UPDATE error: ", err);
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+          error: `List not found.`,
+        });
+      });
+      if (!listData) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+          error: `List not found.`,
+        });
+      } else {
+        const kanbanUpdateResult = await Kanban.updateOne({ _id: listData.kanbanId }, { listOrder }).catch(
+          (err: Error) => {
+            console.log("MongoDb UPDATE Kanban error: ", err);
+          },
+        );
+        if (!kanbanUpdateResult || !kanbanUpdateResult.matchedCount) {
+          forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+        } else {
+          sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE);
+        }
+      }
     }
   },
 };
