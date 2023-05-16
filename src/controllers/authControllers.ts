@@ -4,10 +4,8 @@ import jwt from "jsonwebtoken";
 
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
-import { IUser } from "@/models/userModel";
 import { ApiResults, IDecodedToken, StatusCode } from "@/types";
 import { getJwtToken, sendSuccessResponse } from "@/utils";
-import setCookie from "@/utils/setCookie";
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
@@ -28,25 +26,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     return;
   }
   const token = getJwtToken(targetUser.id);
-  setCookie(res, token);
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
     token,
     username: targetUser.username,
-  });
-};
-
-const logout = async (req: Request, res: Response) => {
-  // (1) 清掉 cookie
-  // (2) 更新 User lastActive
-
-  const options = { new: true, runValidators: true };
-
-  const { id } = req.user as IUser;
-  const updateUser = await User.findByIdAndUpdate(id, { lastActiveTime: Date.now() }, options);
-  // res.clearCookie(HOOKLOOP_TOKEN, { secure: true, sameSite: "none" });
-  sendSuccessResponse(res, ApiResults.SUCCESS_LOG_OUT, {
-    username: updateUser?.username,
-    lastActiveTime: updateUser?.lastActiveTime,
   });
 };
 
@@ -93,7 +75,6 @@ const verifyUserToken = async (req: Request, res: Response, next: NextFunction) 
 
 export default {
   login,
-  logout,
   forgetPassword,
   verifyPassword,
   verifyEmail,
