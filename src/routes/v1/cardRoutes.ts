@@ -8,5 +8,6 @@ const router = Router();
 router.post("/", asyncWrapper(cardControllers.createCard));
 router.get("/:id", asyncWrapper(cardControllers.getCardById));
 router.patch("/:id/archive", asyncWrapper(cardControllers.archiveCard));
+router.patch("/move", asyncWrapper(cardControllers.moveCard));
 
 export default router;
