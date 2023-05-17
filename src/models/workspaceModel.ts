@@ -38,6 +38,14 @@ const workspaceSchema = new Schema(
   },
 );
 
+// 加入 WorkspaceMember 資訊：
+workspaceSchema.virtual("membersRole", {
+  ref: "WorkspaceMember",
+  localField: "_id",
+  foreignField: "workspaceId",
+  justOne: false,
+  options: { select: "userId role" },
+});
 const Workspace = mongoose.model("Workspace", workspaceSchema);
 
 export default Workspace;

@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { forwardCustomError } from "@/middlewares";
 import { Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
+import WorkspaceMember from "@/models/workspaceMemberModel";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
@@ -19,8 +20,14 @@ const createWorkspace = async (req: Request, res: Response) => {
     owner: id,
     members: [],
   });
+  const newWorkspaceMember = await WorkspaceMember.create({
+    workspaceId: newWorkspace.id,
+    userId: id,
+    role: "Admin",
+  });
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
     workspace: newWorkspace,
+    role: newWorkspaceMember.role,
   });
 };
 
