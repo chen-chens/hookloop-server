@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
+// import validator from "validator";
 import { forwardCustomError } from "@/middlewares";
 import { Card, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
@@ -9,10 +10,10 @@ import mongoDbHandler from "@/utils/mongoDbHandler";
 export default {
   createCard: async (req: Request, res: Response, next: NextFunction) => {
     const { name, kanbanId } = req.body;
-    if (!name) {
+    if (!name || name.length > 50) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
         field: "name",
-        error: "Card's name is required.",
+        error: "Card's name is required and should not exceed 50 characters.",
       });
     } else if (!kanbanId) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
@@ -29,12 +30,90 @@ export default {
   },
   getCardById: async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    mongoDbHandler.getDb("Card", Card, { _id: id }, {}, res, next);
+    const card = await Card.findOne({ _id: id, isArchived: false })
+      .populate("reporter", "id username avatar")
+      .populate("assignee", "id username avatar")
+      .populate({
+        path: "comment",
+        select: "id currentContent createAt updateAt",
+        match: { isArchived: false },
+        options: { sort: { createdAt: -1 } },
+        populate: {
+          path: "userId",
+          select: "id username avatar",
+        },
+      });
+    if (!card) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
+        field: "card",
+        error: "Card not found or archived.",
+      });
+    } else {
+      sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, card);
+    }
   },
+  updateCard: async (req: Request, res: Response, next: NextFunction) => {
+    // const { id } = req.params;
+    const {
+      name,
+      description,
+      reporter,
+      assignee,
+      targetStartDate,
+      targetEndDate,
+      actualStartDate,
+      actualEndDate,
+      priority,
+      status,
+      tag,
+      webLink,
+    } = req.body;
+    if (name.length > 50) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "name",
+        error: "Card's name should not exceed 50 characters.",
+      });
+    }
+    if (description.length > 500) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "description",
+        error: "Card's description should not exceed 500 characters.",
+      });
+    }
+    if (priority !== "Low" || priority !== "Medium" || priority !== "High") {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "priority",
+        error: "Card's priority should be Low, Medium or High.",
+      });
+    }
+    if (status !== "Pending" || status !== "In Progress" || status !== "Done") {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "status",
+        error: "Card's status should be Pending, In Progress or Done.",
+      });
+    }
+
+    const updateData = {
+      ...(name && { name }),
+      ...(description && { description }),
+      ...(reporter && { reporter }),
+      ...(assignee && { assignee }),
+      ...(targetStartDate && { targetStartDate }),
+      ...(targetEndDate && { targetEndDate }),
+      ...(actualStartDate && { actualStartDate }),
+      ...(actualEndDate && { actualEndDate }),
+      ...(priority && { priority }),
+      ...(status && { status }),
+      ...(tag && { tag }),
+      ...(webLink && { webLink }),
+    };
+    console.log("updateData", updateData);
+  },
+
   archiveCard: async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const { isArchived } = req.body;
-    if (Object.keys(req.body).indexOf("isArchived") < 0) {
+    if (!isArchived) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "isArchived",
         error: "isArchived is required.",
