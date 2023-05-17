@@ -1,10 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 
-// import validator from "validator";
 import { forwardCustomError } from "@/middlewares";
 import { Card, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
-import { sendSuccessResponse } from "@/utils";
+import { getCardValidationErrors, sendSuccessResponse } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
 export default {
@@ -53,7 +52,7 @@ export default {
     }
   },
   updateCard: async (req: Request, res: Response, next: NextFunction) => {
-    // const { id } = req.params;
+    const { id } = req.params;
     const {
       name,
       description,
@@ -68,46 +67,49 @@ export default {
       tag,
       webLink,
     } = req.body;
-    if (name.length > 50) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "name",
-        error: "Card's name should not exceed 50 characters.",
-      });
-    }
-    if (description.length > 500) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "description",
-        error: "Card's description should not exceed 500 characters.",
-      });
-    }
-    if (priority !== "Low" || priority !== "Medium" || priority !== "High") {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "priority",
-        error: "Card's priority should be Low, Medium or High.",
-      });
-    }
-    if (status !== "Pending" || status !== "In Progress" || status !== "Done") {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "status",
-        error: "Card's status should be Pending, In Progress or Done.",
-      });
-    }
 
-    const updateData = {
-      ...(name && { name }),
-      ...(description && { description }),
-      ...(reporter && { reporter }),
-      ...(assignee && { assignee }),
-      ...(targetStartDate && { targetStartDate }),
-      ...(targetEndDate && { targetEndDate }),
-      ...(actualStartDate && { actualStartDate }),
-      ...(actualEndDate && { actualEndDate }),
-      ...(priority && { priority }),
-      ...(status && { status }),
-      ...(tag && { tag }),
-      ...(webLink && { webLink }),
-    };
-    console.log("updateData", updateData);
+    const cardError = getCardValidationErrors(req.body);
+    if (cardError) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "card",
+        error: cardError,
+      });
+    } else {
+      let updatedWebLink = webLink;
+      if (webLink) {
+        updatedWebLink = webLink.map((webLinkItem: any) => {
+          if (!webLinkItem.name) {
+            return {
+              ...webLinkItem,
+              name: webLinkItem.url,
+            };
+          }
+          return webLinkItem;
+        });
+      }
+      mongoDbHandler.updateDb(
+        "Card",
+        Card,
+        { _id: id },
+        {
+          name,
+          description,
+          reporter,
+          assignee,
+          targetStartDate,
+          targetEndDate,
+          actualStartDate,
+          actualEndDate,
+          priority,
+          status,
+          tag,
+          updatedWebLink,
+        },
+        {},
+        res,
+        next,
+      );
+    }
   },
 
   archiveCard: async (req: Request, res: Response, next: NextFunction) => {

@@ -52,7 +52,6 @@ const cardSchema = new Schema(
       {
         type: Schema.Types.ObjectId,
         ref: "Tag",
-        maxLength: 10,
       },
     ],
     webLink: [
