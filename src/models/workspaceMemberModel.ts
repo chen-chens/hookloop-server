@@ -14,7 +14,7 @@ const workspaceMemberSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["Admin", "Member"],
+      enum: ["Admin", "Member", "Owner"],
       default: "Member",
     },
   },
@@ -23,6 +23,14 @@ const workspaceMemberSchema = new Schema(
     versionKey: false,
   },
 );
+
+workspaceMemberSchema.virtual("WorkspaceMemberWithPlan", {
+  ref: "Plan",
+  localField: "userId",
+  foreignField: "userId",
+  justOne: true,
+  options: { select: "userId name endAt" },
+});
 
 const WorkspaceMember = mongoose.model("WorkspaceMember", workspaceMemberSchema);
 
