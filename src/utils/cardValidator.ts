@@ -1,7 +1,29 @@
 import mongoose from "mongoose";
 import validator from "validator";
 
-const getCardValidationErrors = (cardData: any) => {
+import { ValidationFn } from "@/types";
+
+import { aggregateErrors, mongoIdsValidator, mongoIdValidator } from "./validationHelper";
+
+const createCard = (req: any) => {
+  let field: string = "";
+  let error: string = "";
+  const { name } = req.body;
+  if (!name || name.length > 50) {
+    field += name;
+    error += "Card's name is required and should not exceed 50 characters.";
+  }
+  const kanbanIdResult = mongoIdValidator(req, "kanbanId");
+
+  return aggregateErrors([{ field, error }, kanbanIdResult]);
+};
+
+const updateCard: ValidationFn = (req) => {
+  let errorMessage: string = "";
+  const idValidationError = mongoIdsValidator(req);
+  if (idValidationError) {
+    return idValidationError;
+  }
   const {
     name,
     description,
@@ -15,8 +37,7 @@ const getCardValidationErrors = (cardData: any) => {
     status,
     tag,
     webLink,
-  } = cardData;
-  let errorMessage: string = "";
+  } = req.body;
 
   if (name && !validator.isLength(name, { min: 1, max: 50 })) {
     errorMessage += "Name must be between 1 and 30 characters. \n";
@@ -69,6 +90,13 @@ const getCardValidationErrors = (cardData: any) => {
       }
     });
   }
-  return errorMessage;
+  return errorMessage ? { field: "card", error: errorMessage } : null;
 };
-export default getCardValidationErrors;
+
+export default {
+  createCard,
+  // getCardById,
+  updateCard,
+  // archiveCard,
+  // moveCard,
+};
