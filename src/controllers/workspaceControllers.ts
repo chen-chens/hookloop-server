@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
+import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
 import { Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
@@ -8,7 +9,26 @@ import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
 const getWorkspacesById = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req, res, next);
+  const { id } = req.body;
+  const targetWorkspace = await WorkspaceMember.findOne({ workspaceId: id }).populate(["workspace", "user"]).exec();
+  if (!targetWorkspace) {
+    forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_TO_GET_DATA, {
+      field: "id",
+      error: "The workspace is not existing!",
+    });
+    return;
+  }
+
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+    id: targetWorkspace.workspaceId,
+    workspaceName: targetWorkspace.workspace?.name,
+    kanbans: targetWorkspace.workspace?.kanbans,
+    members: targetWorkspace.workspace?.memberIds.map((memberId) => ({
+      userId: memberId,
+      username: targetWorkspace.user?.username,
+      role: targetWorkspace.role,
+    })),
+  });
 };
 
 const createWorkspace = async (req: Request, res: Response) => {
@@ -40,7 +60,22 @@ const updateWorkspaceById = async (req: Request, res: Response, next: NextFuncti
 };
 
 const closeWorkspaceById = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req, res, next);
+  const { id } = req.body;
+
+  const updateResult = await Workspace.findByIdAndUpdate({ _id: id }, { isArchived: true }, dbOptions);
+  if (!updateResult) {
+    forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_UPDATE, {
+      field: "id",
+      error: "The workspace is not existing!",
+    });
+    return;
+  }
+
+  sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+    id: updateResult.id,
+    workspaceName: updateResult.name,
+    isArchived: updateResult.isArchived,
+  });
 };
 
 const getAvailableUsersByWorkspaceId = async (req: Request, res: Response, next: NextFunction) => {
