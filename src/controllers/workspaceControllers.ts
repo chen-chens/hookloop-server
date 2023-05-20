@@ -4,8 +4,9 @@ import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
 import { Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
-import WorkspaceMember from "@/models/workspaceMemberModel";
+import WorkspaceMember, { IWorkspaceMember } from "@/models/workspaceMemberModel";
 import { ApiResults, StatusCode } from "@/types";
+import { IRequestMembers } from "@/types/requestMembers";
 import { sendSuccessResponse } from "@/utils";
 
 const getWorkspacesById = async (req: Request, res: Response, next: NextFunction) => {
@@ -31,31 +32,63 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
   });
 };
 
-const createWorkspace = async (req: Request, res: Response) => {
-  const { id, username } = req.user as IUser;
-  const { name } = req.body;
+interface CreateWorkspaceRequest extends Request {
+  body: {
+    name: string;
+    members: IRequestMembers[];
+  };
+}
+const createWorkspace = async (req: CreateWorkspaceRequest, res: Response, next: NextFunction) => {
+  const { name, members } = req.body;
+
+  if (!name) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "name",
+      error: "The workspace name is required!",
+    });
+    return;
+  }
+  if (!members || (members && members.length === 0)) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "members",
+      error: "The members is required!",
+    });
+    return;
+  }
 
   const newWorkspace = new Workspace({ name });
-  const newWorkspaceMember = new WorkspaceMember({
-    workspaceId: newWorkspace.id,
-    userId: id,
-    role: "Owner",
+  const newWorkspaceMembers: IWorkspaceMember[] = members.map((member: IRequestMembers) => {
+    const newWorkspaceMember = new WorkspaceMember({
+      workspaceId: newWorkspace.id,
+      userId: member.userId,
+      role: member.role,
+    });
+    newWorkspace.memberIds.push(newWorkspaceMember.id);
+
+    return newWorkspaceMember;
   });
-  newWorkspace.memberIds.push(newWorkspaceMember.id);
-  const [newWorkspaceResult, newWorkspaceMemberResult] = await Promise.all([
+
+  const [newWorkspaceResult, ...newWorkspaceMembersResults] = await Promise.all([
     newWorkspace.save(),
-    newWorkspaceMember.save(),
+    ...newWorkspaceMembers.map((newWorkspaceMember) => newWorkspaceMember.save()),
   ]);
+
+  console.log("newWorkspaceMembersResult: ", newWorkspaceMembersResults);
 
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
     id: newWorkspaceResult.id,
     workspaceName: newWorkspaceResult.name,
     kanbans: newWorkspaceResult.kanbans,
-    members: [{ userId: newWorkspaceMemberResult.userId, username, role: newWorkspaceMemberResult.role }],
+    members: newWorkspaceMembersResults.map((newWorkspaceMembersResult) => ({
+      userId: newWorkspaceMembersResult.userId,
+      role: newWorkspaceMembersResult.role,
+    })),
+    // members: [{ userId: newWorkspaceOwnerResult.userId, username, role: newWorkspaceOwnerResult.role }],
   });
 };
 
 const updateWorkspaceById = async (req: Request, res: Response, next: NextFunction) => {
+  // const { name, memberIds, kanbans }
   console.log(req, res, next);
 };
 
