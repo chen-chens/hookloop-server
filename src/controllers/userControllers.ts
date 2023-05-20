@@ -7,19 +7,13 @@ import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
 import { ApiResults, IQueryUsersRequest, StatusCode } from "@/types";
-import { getJwtToken, getUserIdByToken, sendSuccessResponse } from "@/utils";
+import { filteredUndefinedConditions, getJwtToken, getUserIdByToken, sendSuccessResponse } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
 
 const getUsers = async (req: IQueryUsersRequest, res: Response, next: NextFunction) => {
-  const { email } = req.body;
-  if (!email) {
-    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
-      field: "email",
-      error: "The email is required!",
-    });
-  }
-
-  const targetUsers = await User.find({ email, isArchived: false });
+  const { email, isArchived } = req.body;
+  const queryConditions = filteredUndefinedConditions({ email, isArchived });
+  const targetUsers = await User.find(queryConditions);
   if (!targetUsers) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
       field: "email",

@@ -88,7 +88,6 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
       userId: newWorkspaceMembersResult.userId,
       role: newWorkspaceMembersResult.role,
     })),
-    // members: [{ userId: newWorkspaceOwnerResult.userId, username, role: newWorkspaceOwnerResult.role }],
   });
 };
 
