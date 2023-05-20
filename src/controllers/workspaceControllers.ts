@@ -5,7 +5,7 @@ import { forwardCustomError } from "@/middlewares";
 import { Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
 import WorkspaceMember, { IWorkspaceMember } from "@/models/workspaceMemberModel";
-import { ApiResults, IRequestMembers, IWorkspaceRequest, StatusCode } from "@/types";
+import { ApiResults, IRequestMembers, IWorkspaceRequest, RoleType, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
 const getWorkspacesById = async (req: Request, res: Response, next: NextFunction) => {
@@ -32,12 +32,9 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
 };
 
 const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: NextFunction) => {
-  const { name, members } = req.body;
+  const { workspaceName, members } = req.body;
 
-  const uniqueMemberIds = new Set(members.map((member) => member.userId));
-  const hasDuplicateUserId = members.length > uniqueMemberIds.size;
-
-  if (!name) {
+  if (!workspaceName) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
       field: "name",
       error: "The workspace name is required!",
@@ -51,6 +48,9 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
     });
     return;
   }
+
+  const uniqueMemberIds = new Set(members.map((member) => member.userId));
+  const hasDuplicateUserId = members.length > uniqueMemberIds.size;
   if (hasDuplicateUserId) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
       field: "userId",
@@ -59,11 +59,16 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
     return;
   }
 
-  // for (const member of members) {
-  //   const existingMember = await Work
-  // }
+  const hasInvalidRole = members.some((member) => !Object.values(RoleType).includes(member.role));
+  if (hasInvalidRole) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "role",
+      error: "Invalid RoleType ! Please check again! ",
+    });
+    return;
+  }
 
-  const newWorkspace = new Workspace({ name });
+  const newWorkspace = new Workspace({ workspaceName });
   const newWorkspaceMembers: IWorkspaceMember[] = members.map((member: IRequestMembers) => {
     const newWorkspaceMember = new WorkspaceMember({
       workspaceId: newWorkspace.id,
@@ -91,9 +96,90 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
   });
 };
 
-const updateWorkspaceById = async (req: Request, res: Response, next: NextFunction) => {
-  // const { name, memberIds, kanbans }
-  console.log(req, res, next);
+const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: NextFunction) => {
+  const { workspaceName, members, workspaceId } = req.body;
+
+  if (!workspaceId) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "workspaceId",
+      error: "The workspaceId is required!",
+    });
+    return;
+  }
+
+  if (workspaceName) {
+    const updateResult = await Workspace.findByIdAndUpdate({ _id: workspaceId }, { name: workspaceName }, dbOptions);
+    if (!updateResult) {
+      forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_UPDATE, {
+        field: "workspaceId",
+        error: "The workspace is not existing!",
+      });
+    } else {
+      sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+        id: updateResult.id,
+        workspaceName: updateResult.name,
+      });
+    }
+    return;
+  }
+
+  if (members && members.length > 0) {
+    const uniqueMemberIds = new Set(members.map((member) => member.userId));
+    const hasDuplicateUserId = members.length > uniqueMemberIds.size;
+    if (hasDuplicateUserId) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+        field: "userId",
+        error: "The user role should be unique !",
+      });
+      return;
+    }
+
+    const hasInvalidRole = members.some((member) => !Object.values(RoleType).includes(member.role));
+    if (hasInvalidRole) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+        field: "role",
+        error: "Invalid RoleType ! Please check again! ",
+      });
+      return;
+    }
+
+    const targetWorkspace = await Workspace.findOne({ _id: workspaceId });
+
+    if (!targetWorkspace) {
+      forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_UPDATE, {
+        field: "workspaceId",
+        error: "The workspace is not existing!",
+      });
+      return;
+    }
+
+    members.forEach(async (member) => {
+      const existingMember = await WorkspaceMember.findOne({ workspaceId, userId: member.userId });
+      if (existingMember) {
+        existingMember.role = member.role;
+        await existingMember.save();
+      } else {
+        const newWorkspaceMember = new WorkspaceMember({
+          workspaceId,
+          userId: member.userId,
+          role: member.role,
+        });
+        await newWorkspaceMember.save();
+        targetWorkspace.memberIds.push(newWorkspaceMember.id);
+      }
+    });
+
+    await targetWorkspace.save();
+    sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+      id: targetWorkspace.id,
+      workspaceName: targetWorkspace.name,
+    });
+  }
+
+  forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+    field: "",
+    error: "Invalid Update! Please input revised values!",
+  });
 };
 
 const closeWorkspaceById = async (req: Request, res: Response, next: NextFunction) => {
