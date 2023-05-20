@@ -4,8 +4,11 @@ import StatusCode from "./statusCode";
 export interface IDataType {
   [key: string]: any;
 }
-
-export interface ICustomErrorInterface extends Error {
+export interface IErrorData {
+  field: string;
+  error: string;
+}
+export interface ICustomError extends Error {
   statusCode: StatusCode;
   status: ApiStatus;
   data?: IDataType;
