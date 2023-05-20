@@ -3,4 +3,4 @@ export { getJwtToken, getUserIdByToken } from "./getJwtToken";
 export { sendErrorResponse, sendSuccessResponse } from "./responseHelper";
 export { default as responsePattern } from "./responsePattern";
 export { default as validatePassword } from "./validatePassword";
-export { aggregateErrors, mongoIdsValidator, mongoIdValidator } from "./validationHelper";
+export { aggregateErrors, validateFields, validateFieldsAndGetErrorData } from "./validationHelper";

@@ -6,8 +6,7 @@ import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const createCard = async (req: Request, res: Response, _next: NextFunction) => {
+const createCard = async (req: Request, res: Response, _: NextFunction) => {
   const { name, kanbanId } = req.body;
   const newCard = await Card.create({
     name,
@@ -97,14 +96,7 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
 const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const { isArchived } = req.body;
-  if (!isArchived) {
-    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-      field: "isArchived",
-      error: "isArchived is required.",
-    });
-  } else {
-    mongoDbHandler.updateDb("Card", Card, { _id: id }, { isArchived }, {}, res, next);
-  }
+  mongoDbHandler.updateDb("Card", Card, { _id: id }, { isArchived }, {}, res, next);
 };
 
 const moveCard = async (req: Request, res: Response, next: NextFunction) => {

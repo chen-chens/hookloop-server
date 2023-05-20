@@ -10,7 +10,7 @@ router.post("/", validate(cardValidator.createCard), asyncWrapper(cardController
 router.get("/:id", validate(cardValidator.getCardById), asyncWrapper(cardControllers.getCardById));
 router.patch("/:id", validate(cardValidator.updateCard), asyncWrapper(cardControllers.updateCard));
 router.patch("/:id/archive", validate(cardValidator.archiveCard), asyncWrapper(cardControllers.archiveCard));
-router.patch("/move", validate(cardValidator.moveCard), asyncWrapper(cardControllers.moveCard));
+router.patch("/move", asyncWrapper(cardControllers.moveCard));
 // router.post("/:cardId/attachment", asyncWrapper(cardControllers.addAttachment));
 // router.get("/:cardId/attachment/:attahmentId", asyncWrapper(cardControllers.getAttachment));
 // router.delete("/:cardId/attachment/:attahmentId", asyncWrapper(cardControllers.deleteAttachment));
