@@ -5,8 +5,7 @@ import { forwardCustomError } from "@/middlewares";
 import { Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
 import WorkspaceMember, { IWorkspaceMember } from "@/models/workspaceMemberModel";
-import { ApiResults, StatusCode } from "@/types";
-import { IRequestMembers } from "@/types/requestMembers";
+import { ApiResults, IRequestMembers, IWorkspaceRequest, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
 const getWorkspacesById = async (req: Request, res: Response, next: NextFunction) => {
@@ -32,14 +31,11 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
   });
 };
 
-interface CreateWorkspaceRequest extends Request {
-  body: {
-    name: string;
-    members: IRequestMembers[];
-  };
-}
-const createWorkspace = async (req: CreateWorkspaceRequest, res: Response, next: NextFunction) => {
+const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: NextFunction) => {
   const { name, members } = req.body;
+
+  const uniqueMemberIds = new Set(members.map((member) => member.userId));
+  const hasDuplicateUserId = members.length > uniqueMemberIds.size;
 
   if (!name) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
@@ -55,6 +51,17 @@ const createWorkspace = async (req: CreateWorkspaceRequest, res: Response, next:
     });
     return;
   }
+  if (hasDuplicateUserId) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "userId",
+      error: "The user role should be unique !",
+    });
+    return;
+  }
+
+  // for (const member of members) {
+  //   const existingMember = await Work
+  // }
 
   const newWorkspace = new Workspace({ name });
   const newWorkspaceMembers: IWorkspaceMember[] = members.map((member: IRequestMembers) => {
@@ -72,8 +79,6 @@ const createWorkspace = async (req: CreateWorkspaceRequest, res: Response, next:
     newWorkspace.save(),
     ...newWorkspaceMembers.map((newWorkspaceMember) => newWorkspaceMember.save()),
   ]);
-
-  console.log("newWorkspaceMembersResult: ", newWorkspaceMembersResults);
 
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
     id: newWorkspaceResult.id,

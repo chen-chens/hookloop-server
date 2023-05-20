@@ -6,15 +6,27 @@ import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
-import { ApiResults, StatusCode } from "@/types";
+import { ApiResults, IQueryUsersRequest, StatusCode } from "@/types";
 import { getJwtToken, getUserIdByToken, sendSuccessResponse } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
 
-const getAllUsers = async (_: Request, res: Response) => {
-  const users = await User.find();
-  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-    users,
-  });
+const getUsers = async (req: IQueryUsersRequest, res: Response, next: NextFunction) => {
+  const { email } = req.body;
+  if (!email) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
+      field: "email",
+      error: "The email is required!",
+    });
+  }
+
+  const targetUsers = await User.find({ email, isArchived: false });
+  if (!targetUsers) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
+      field: "email",
+      error: "The email is not existing!",
+    });
+  }
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, targetUsers);
 };
 
 const getUserById = async (req: Request, res: Response) => {
@@ -160,7 +172,7 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
 };
 
 export default {
-  getAllUsers,
+  getUsers,
   getUserById,
   createUser,
   updateUser,

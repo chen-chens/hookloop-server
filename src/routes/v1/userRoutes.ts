@@ -7,7 +7,7 @@ import { asyncWrapper, verifyTokenMiddleware, verifyUserInputMiddleware } from "
 const router = Router();
 router.use(fileupload());
 
-router.get("", asyncWrapper(userControllers.getAllUsers));
+router.get("", verifyTokenMiddleware, asyncWrapper(userControllers.getUsers));
 router.get("/me", verifyTokenMiddleware, asyncWrapper(userControllers.getUserById));
 router.post("", verifyUserInputMiddleware, asyncWrapper(userControllers.createUser));
 router.patch("/me", asyncWrapper(userControllers.updateUser));

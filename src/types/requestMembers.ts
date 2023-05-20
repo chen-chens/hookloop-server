@@ -1,6 +1,7 @@
 import RoleType from "./roleType";
 
-export interface IRequestMembers {
+interface IRequestMembers {
   userId: string;
   role: RoleType;
 }
+export default IRequestMembers;
