@@ -11,10 +11,12 @@ const listSchema = new Schema(
       ref: "Kanban",
       required: true,
     },
-    cardOrder: {
-      type: [Schema.Types.ObjectId],
-      ref: "Card",
-    },
+    cardOrder: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Card",
+      },
+    ],
     isArchived: {
       type: Boolean,
       default: false,

@@ -5,6 +5,7 @@ const cardSchema = new Schema(
     name: {
       type: String,
       required: true,
+      maxLength: 50,
     },
     kanbanId: {
       type: Schema.Types.ObjectId,
@@ -13,15 +14,18 @@ const cardSchema = new Schema(
     },
     description: {
       type: String,
+      maxLength: 500,
     },
     reporter: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    assignee: {
-      type: [Schema.Types.ObjectId],
-      ref: "User",
-    },
+    assignee: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     targetStartDate: {
       type: Date,
     },
@@ -44,20 +48,35 @@ const cardSchema = new Schema(
       enum: ["Pending", "In Progress", "Done"],
       default: "Pending",
     },
-    tag: {
-      type: [Schema.Types.ObjectId],
-      ref: "Tag",
-    },
+    tag: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Tag",
+        maxLength: 10,
+      },
+    ],
     webLink: [
       {
-        name: String,
+        name: {
+          type: String,
+          maxLength: 30,
+        },
         url: String,
       },
     ],
     attachment: [
       {
-        name: String,
+        name: {
+          type: String,
+          maxLength: 30,
+        },
         url: String,
+      },
+    ],
+    comment: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Comment",
       },
     ],
     isArchived: {
