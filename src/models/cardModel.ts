@@ -72,12 +72,6 @@ const cardSchema = new Schema(
         url: String,
       },
     ],
-    comment: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Comment",
-      },
-    ],
     isArchived: {
       type: Boolean,
       default: false,
@@ -86,8 +80,25 @@ const cardSchema = new Schema(
   {
     timestamps: true, // generate : createdAt, updatedAt
     versionKey: false,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   },
 );
 
+cardSchema.virtual("cardComment", {
+  ref: "CardComment",
+  localField: "_id",
+  foreignField: "cardId",
+});
+cardSchema.virtual("cardHistory", {
+  ref: "CardHistory",
+  localField: "_id",
+  foreignField: "cardId",
+});
+cardSchema.virtual("kanbanTag", {
+  ref: "Tag",
+  localField: "kanbanId",
+  foreignField: "kanbanId",
+});
 const Card = mongoose.model("Card", cardSchema);
 export default Card;

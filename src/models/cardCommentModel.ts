@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-const commentSchema = new Schema(
+const cardCommentSchema = new Schema(
   {
     currentContent: {
       type: String,
@@ -37,5 +37,5 @@ const commentSchema = new Schema(
   },
 );
 
-const Comment = mongoose.model("Comment", commentSchema);
-export default Comment;
+const CardComment = mongoose.model("CardComment", cardCommentSchema);
+export default CardComment;
