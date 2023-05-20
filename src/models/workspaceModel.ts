@@ -1,5 +1,11 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 
+export interface IWorkspace extends Document {
+  name: string;
+  memberIds: Types.ObjectId[];
+  kanbans: Types.ObjectId[];
+  isArchived: boolean;
+}
 const workspaceSchema = new Schema(
   {
     name: {
@@ -10,18 +16,13 @@ const workspaceSchema = new Schema(
       minlength: 2,
       maxLength: 100,
     },
-    owner: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    members: [
+    memberIds: [
       {
         type: Schema.Types.ObjectId,
-        ref: "User",
+        ref: "WorkspaceMember",
       },
     ],
-    kanban: [
+    kanbans: [
       {
         type: Schema.Types.ObjectId,
         ref: "Kanban",
@@ -38,14 +39,6 @@ const workspaceSchema = new Schema(
   },
 );
 
-// 加入 WorkspaceMember 資訊：
-workspaceSchema.virtual("membersRole", {
-  ref: "WorkspaceMember",
-  localField: "_id",
-  foreignField: "workspaceId",
-  justOne: false,
-  options: { select: "userId role" },
-});
-const Workspace = mongoose.model("Workspace", workspaceSchema);
+const Workspace = mongoose.model<IWorkspace>("Workspace", workspaceSchema);
 
 export default Workspace;

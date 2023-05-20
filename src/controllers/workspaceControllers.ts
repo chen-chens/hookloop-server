@@ -12,22 +12,26 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
 };
 
 const createWorkspace = async (req: Request, res: Response) => {
-  const { id } = req.user as IUser;
+  const { id, username } = req.user as IUser;
   const { name } = req.body;
 
-  const newWorkspace = await Workspace.create({
-    name,
-    owner: id,
-    members: [],
-  });
-  const newWorkspaceMember = await WorkspaceMember.create({
+  const newWorkspace = new Workspace({ name });
+  const newWorkspaceMember = new WorkspaceMember({
     workspaceId: newWorkspace.id,
     userId: id,
-    role: "Admin",
+    role: "Owner",
   });
+  newWorkspace.memberIds.push(newWorkspaceMember.id);
+  const [newWorkspaceResult, newWorkspaceMemberResult] = await Promise.all([
+    newWorkspace.save(),
+    newWorkspaceMember.save(),
+  ]);
+
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
-    workspace: newWorkspace,
-    role: newWorkspaceMember.role,
+    id: newWorkspaceResult.id,
+    workspaceName: newWorkspaceResult.name,
+    kanbans: newWorkspaceResult.kanbans,
+    members: [{ userId: newWorkspaceMemberResult.userId, username, role: newWorkspaceMemberResult.role }],
   });
 };
 
@@ -60,12 +64,18 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
       error: "The user is not existing!",
     });
   } else {
-    const targetWorkspaces = await Workspace.find({
-      $or: [{ owner: id }, { members: id }],
-    });
-    sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
-      workspace: targetWorkspaces,
-    });
+    const targetWorkspaces = await WorkspaceMember.find({ userId: id }).populate(["workspace", "user"]).exec();
+    const responseData = targetWorkspaces.map((item) => ({
+      id: item.workspaceId,
+      workspaceName: item.workspace?.name,
+      kanbans: item.workspace?.kanbans,
+      members: item.workspace?.memberIds.map((memberId) => ({
+        userId: memberId,
+        username: item.user?.username,
+        role: item.role,
+      })),
+    }));
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, responseData);
   }
 };
 

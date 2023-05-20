@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
-import { Kanban, Workspace } from "@/models";
+import { Kanban } from "@/models";
+import WorkspaceMember from "@/models/workspaceMemberModel";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
@@ -154,11 +155,19 @@ export default {
         error: `Kanban not found.`,
       });
     } else {
-      const worksoaceData = await Workspace.findOne({ _id: kanbanData.workspaceId });
+      const worksoaceData = await WorkspaceMember.findOne({ workspaceId: kanbanData.workspaceId }).populate([
+        "workspace",
+        "user",
+      ]);
       if (!worksoaceData) {
         forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
       } else {
-        res.json(worksoaceData.members);
+        const membersData = worksoaceData.workspace?.memberIds.map((memberId) => ({
+          userId: memberId,
+          username: worksoaceData.user?.username,
+          role: worksoaceData.role,
+        }));
+        res.json(membersData);
       }
     }
   },
