@@ -38,6 +38,7 @@ export const forwardCustomError = (
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler = (err: CustomError | any, req: Request, res: Response, _: NextFunction) => {
   console.log("errorHandler");
+  console.log("==============err=================\n", err, "\n==============end=================");
   if (err instanceof CustomError) {
     console.log("CustomError");
     sendErrorResponse(err, res);
@@ -51,6 +52,9 @@ export const errorHandler = (err: CustomError | any, req: Request, res: Response
     if (err.code === 11000) {
       console.log("err.code === 11000");
       customError = new CustomError(StatusCode.INTERNAL_SERVER_ERROR, ApiResults.FAIL_CREATE, {}, ApiStatus.ERROR);
+    } else if (err.name === "TypeError") {
+      console.log("Validator type error");
+      customError = new CustomError(StatusCode.BAD_REQUEST, ApiResults.VALIDATOR_TYPE_ERROR, {}, ApiStatus.ERROR);
     } else {
       console.log("other error");
       console.error(err);
