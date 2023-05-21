@@ -155,17 +155,17 @@ export default {
         error: `Kanban not found.`,
       });
     } else {
-      const worksoaceData = await WorkspaceMember.findOne({ workspaceId: kanbanData.workspaceId }).populate([
+      const worksoaceData = await WorkspaceMember.find({ workspaceId: kanbanData.workspaceId }).populate([
         "workspace",
         "user",
       ]);
       if (!worksoaceData) {
         forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
       } else {
-        const membersData = worksoaceData.workspace?.memberIds.map((memberId) => ({
-          userId: memberId,
-          username: worksoaceData.user?.username,
-          role: worksoaceData.role,
+        const membersData = worksoaceData.map((item) => ({
+          userId: item.userId,
+          username: item.user?.username,
+          role: item.role,
         }));
         res.json(membersData);
       }
