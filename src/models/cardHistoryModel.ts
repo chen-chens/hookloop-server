@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-const historySchema = new Schema(
+const cardHistorySchema = new Schema(
   {
     cardId: {
       type: Schema.Types.ObjectId,
@@ -48,5 +48,5 @@ const historySchema = new Schema(
   },
 );
 
-const History = mongoose.model("History", historySchema);
-export default History;
+const CardHistory = mongoose.model("CardHistory", cardHistorySchema);
+export default CardHistory;
