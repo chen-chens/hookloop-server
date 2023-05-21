@@ -1,5 +1,11 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
+export interface IWorkspace extends Document {
+  name: string;
+  memberIds: Types.ObjectId[];
+  kanbans: Types.ObjectId[];
+  isArchived: boolean;
+}
 const workspaceSchema = new Schema(
   {
     name: {
