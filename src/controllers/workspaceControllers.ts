@@ -1,43 +1,213 @@
 import { NextFunction, Request, Response } from "express";
 
+import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
 import { Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
-import { ApiResults, StatusCode } from "@/types";
+import WorkspaceMember, { IWorkspaceMember } from "@/models/workspaceMemberModel";
+import { ApiResults, IRequestMembers, IWorkspaceRequest, RoleType, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
 const getWorkspacesById = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req, res, next);
+  const { workspaceId } = req.body;
+  const targetWorkspaceMembers = await WorkspaceMember.find({ workspaceId }).populate(["workspace", "user"]).exec();
+  if (!targetWorkspaceMembers) {
+    forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_TO_GET_DATA, {
+      field: "id",
+      error: "The workspace is not existing!",
+    });
+    return;
+  }
+  const [targetWorkspaceMember] = targetWorkspaceMembers;
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+    workspaceId: targetWorkspaceMember.workspaceId,
+    workspaceName: targetWorkspaceMember.workspace?.name,
+    updatedAt: targetWorkspaceMember.workspace?.updatedAt,
+    isArchived: targetWorkspaceMember.workspace?.isArchived,
+    kanbans: targetWorkspaceMember.workspace?.kanbans,
+    members: targetWorkspaceMembers.map((workspaceMember) => ({
+      userId: workspaceMember.userId,
+      username: workspaceMember.user?.username,
+      role: workspaceMember.role,
+    })),
+  });
 };
 
-const createWorkspace = async (req: Request, res: Response) => {
-  const { id } = req.user as IUser;
-  const { name } = req.body;
+const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: NextFunction) => {
+  const { workspaceName, members } = req.body;
 
-  const newWorkspace = await Workspace.create({
-    name,
-    owner: id,
-    members: [],
+  if (!workspaceName) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "workspaceName",
+      error: "The workspace name is required!",
+    });
+    return;
+  }
+  if (!members || (members && members.length === 0)) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "members",
+      error: "The members is required!",
+    });
+    return;
+  }
+
+  const uniqueMemberIds = new Set(members.map((member) => member.userId));
+  const hasDuplicateUserId = members.length > uniqueMemberIds.size;
+  if (hasDuplicateUserId) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "userId",
+      error: "The user role should be unique !",
+    });
+    return;
+  }
+
+  const hasInvalidRole = members.some((member) => !Object.values(RoleType).includes(member.role));
+  if (hasInvalidRole) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "role",
+      error: "Invalid RoleType ! Please check again! ",
+    });
+    return;
+  }
+
+  const newWorkspace = new Workspace({ name: workspaceName });
+  const newWorkspaceMembers: IWorkspaceMember[] = members.map((member: IRequestMembers) => {
+    const newWorkspaceMember = new WorkspaceMember({
+      workspaceId: newWorkspace.id,
+      userId: member.userId,
+      role: member.role,
+    });
+    newWorkspace.memberIds.push(newWorkspaceMember.userId);
+
+    return newWorkspaceMember;
   });
+
+  const [newWorkspaceResult, ...newWorkspaceMembersResults] = await Promise.all([
+    newWorkspace.save(),
+    ...newWorkspaceMembers.map((newWorkspaceMember) => newWorkspaceMember.save()),
+  ]);
+
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
-    workspace: newWorkspace,
+    workspaceId: newWorkspaceResult.id,
+    workspaceName: newWorkspaceResult.name,
+    kanbans: newWorkspaceResult.kanbans,
+    members: newWorkspaceMembersResults.map((newWorkspaceMembersResult) => ({
+      userId: newWorkspaceMembersResult.userId,
+      role: newWorkspaceMembersResult.role,
+    })),
   });
 };
 
-const updateWorkspaceById = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req, res, next);
+const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: NextFunction) => {
+  const { workspaceName, members, workspaceId } = req.body;
+
+  if (workspaceName) {
+    const updateResult = await Workspace.findByIdAndUpdate({ _id: workspaceId }, { name: workspaceName }, dbOptions);
+    if (!updateResult) {
+      forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_UPDATE, {
+        field: "workspaceId",
+        error: "The workspace is not existing!",
+      });
+    } else {
+      sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+        workspaceId: updateResult.id,
+        workspaceName: updateResult.name,
+      });
+    }
+    return;
+  }
+
+  if (members && members.length > 0) {
+    const uniqueMemberIds = new Set(members.map((member) => member.userId));
+    const hasDuplicateUserId = members.length > uniqueMemberIds.size;
+    if (hasDuplicateUserId) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "userId",
+        error: "The user role should be unique !",
+      });
+      return;
+    }
+
+    const hasInvalidRole = members.some((member) => !Object.values(RoleType).includes(member.role));
+    if (hasInvalidRole) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "role",
+        error: "Invalid RoleType! Please check again! ",
+      });
+      return;
+    }
+    const hasOwnerRequest = members.some((member) => member.role === RoleType.OWNER);
+    if (hasOwnerRequest) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "role",
+        error: "Invalid Request! Owner is unique!",
+      });
+      return;
+    }
+
+    const targetWorkspace = await Workspace.findOne({ _id: workspaceId });
+    if (!targetWorkspace) {
+      forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_UPDATE, {
+        field: "workspaceId",
+        error: "The workspace is not existing!",
+      });
+      return;
+    }
+
+    members.forEach(async (member) => {
+      const existingMember = await WorkspaceMember.findOne({ workspaceId, userId: member.userId });
+      if (existingMember) {
+        existingMember.role = member.role;
+        await existingMember.save();
+      } else {
+        const newWorkspaceMember = new WorkspaceMember({
+          workspaceId,
+          userId: member.userId,
+          role: member.role,
+        });
+        await newWorkspaceMember.save();
+        targetWorkspace.memberIds.push(newWorkspaceMember.userId);
+      }
+    });
+
+    await targetWorkspace.save();
+    const updatedWorkspaceMembers = await WorkspaceMember.find({ workspaceId }).populate(["workspace", "user"]).exec();
+    const [updatedWorkspaceMember] = updatedWorkspaceMembers;
+    sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+      workspaceId: updatedWorkspaceMember.workspace?.id,
+      workspaceName: updatedWorkspaceMember.workspace?.name,
+      // members: updatedWorkspaceMembers.map((workspaceMember) => ({
+      //   userId: workspaceMember.userId,
+      //   username: workspaceMember.user?.username,
+      //   role: workspaceMember.role,
+      // })),
+    });
+    return;
+  }
+
+  forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+    field: "",
+    error: "Invalid Request! Please input revised values!",
+  });
 };
 
 const closeWorkspaceById = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req, res, next);
-};
+  const { id } = req.body;
 
-const getAvailableUsersByWorkspaceId = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req, res, next);
-};
+  const updateResult = await Workspace.findByIdAndUpdate({ _id: id }, { isArchived: true }, dbOptions);
+  if (!updateResult) {
+    forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_UPDATE, {
+      field: "id",
+      error: "The workspace is not existing!",
+    });
+    return;
+  }
 
-const addPinnedByWorkspaceId = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req, res, next);
+  sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+    workspaceId: updateResult.id,
+    workspaceName: updateResult.name,
+    isArchived: updateResult.isArchived,
+  });
 };
 
 const deleteUserFromWorkspace = async (req: Request, res: Response, next: NextFunction) => {
@@ -53,12 +223,21 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
       error: "The user is not existing!",
     });
   } else {
-    const targetWorkspaces = await Workspace.find({
-      $or: [{ owner: id }, { members: id }],
-    });
-    sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
-      workspace: targetWorkspaces,
-    });
+    const targetWorkspaces = await WorkspaceMember.find({ userId: id }).populate(["workspace", "user"]).exec();
+    const responseData = targetWorkspaces.map((item) => ({
+      workspaceId: item.workspaceId,
+      workspaceName: item.workspace?.name,
+      updatedAt: item.workspace?.updatedAt,
+      isArchived: item.workspace?.isArchived,
+      kanbans: item.workspace?.kanbans,
+      members: item.workspace?.memberIds.map((memberId) => ({
+        userId: memberId,
+        username: item.user?.username,
+        isArchived: item.user?.isArchived,
+        role: item.role,
+      })),
+    }));
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, responseData);
   }
 };
 
@@ -67,8 +246,6 @@ export default {
   createWorkspace,
   updateWorkspaceById,
   closeWorkspaceById,
-  getAvailableUsersByWorkspaceId,
-  addPinnedByWorkspaceId,
   deleteUserFromWorkspace,
   getWorkspacesByUserId,
 };

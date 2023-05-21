@@ -1,10 +1,12 @@
-import mongoose, { Schema, Types } from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 
 export interface IWorkspace extends Document {
   name: string;
   memberIds: Types.ObjectId[];
   kanbans: Types.ObjectId[];
   isArchived: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 const workspaceSchema = new Schema(
   {
@@ -16,18 +18,13 @@ const workspaceSchema = new Schema(
       minlength: 2,
       maxLength: 100,
     },
-    owner: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    members: [
+    memberIds: [
       {
         type: Schema.Types.ObjectId,
-        ref: "User",
+        ref: "WorkspaceMember",
       },
     ],
-    kanban: [
+    kanbans: [
       {
         type: Schema.Types.ObjectId,
         ref: "Kanban",
@@ -44,6 +41,6 @@ const workspaceSchema = new Schema(
   },
 );
 
-const Workspace = mongoose.model("Workspace", workspaceSchema);
+const Workspace = mongoose.model<IWorkspace>("Workspace", workspaceSchema);
 
 export default Workspace;
