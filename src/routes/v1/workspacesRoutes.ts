@@ -12,7 +12,6 @@ const {
   createWorkspace,
   updateWorkspaceById,
   closeWorkspaceById,
-  getAvailableUsersByWorkspaceId,
   deleteUserFromWorkspace,
   getWorkspacesByUserId,
 } = workspaceControllers;
@@ -30,8 +29,5 @@ router.delete(
   verifyWorkspaceEditAuth,
   asyncWrapper(deleteUserFromWorkspace),
 );
-
-// 待確認:
-router.get("/:id/availableUsers", asyncWrapper(getAvailableUsersByWorkspaceId));
 
 export default router;
