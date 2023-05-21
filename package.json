@@ -23,6 +23,7 @@
   "author": "Ariean, Emi, Joanna, Jason, Yuna, Yun",
   "license": "MIT",
   "dependencies": {
+    "@types/ws": "^8.5.4",
     "axios": "^1.4.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
@@ -34,6 +35,7 @@
     "mongoose": "^7.0.4",
     "morgan": "^1.10.0",
     "validator": "^13.9.0",
+    "ws": "^8.13.0",
     "zod": "^3.21.4"
   },
   "devDependencies": {

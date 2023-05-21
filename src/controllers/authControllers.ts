@@ -28,7 +28,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   const token = getJwtToken(targetUser.id);
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
     token,
-    username: targetUser.username,
+    user: targetUser,
   });
 };
 

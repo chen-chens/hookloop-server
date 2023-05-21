@@ -1,8 +1,5 @@
-import { ApiStatus } from "@/types";
+import { ApiStatus, IDataType } from "@/types";
 
-interface IDataType {
-  [key: string]: any;
-}
 const responsePattern = (statusType: ApiStatus, message: string, data: IDataType) => {
   const pattern = {
     status: statusType,

@@ -1,12 +1,9 @@
 import ApiResults from "./apiResults";
 import ApiStatus from "./apiStatus";
-import { ICustomErrorInterface, IDataType } from "./customErrorInterface";
+import { ICustomError, IDataType } from "./customErrorInterface";
 import StatusCode from "./statusCode";
 
-// DISCUSS: classes 資料夾放置位置?
-// 這裡的custom error是用來包裝原本的error，並且加上一些自己的屬性
-
-class CustomError extends Error implements ICustomErrorInterface {
+class CustomError extends Error implements ICustomError {
   statusCode: StatusCode;
 
   status: ApiStatus;

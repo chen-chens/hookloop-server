@@ -1,60 +1,80 @@
 import { NextFunction, Request, Response } from "express";
 
-// import validator from "validator";
 import { forwardCustomError } from "@/middlewares";
 import { Card, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
-export default {
-  createCard: async (req: Request, res: Response, next: NextFunction) => {
-    const { name, kanbanId } = req.body;
-    if (!name || name.length > 50) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
-        field: "name",
-        error: "Card's name is required and should not exceed 50 characters.",
-      });
-    } else if (!kanbanId) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
-        field: "kanbanId",
-        error: "kanbanId is required.",
-      });
-    } else {
-      const newCard = await Card.create({
-        name,
-        kanbanId,
-      });
-      sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newCard);
-    }
-  },
-  getCardById: async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    const card = await Card.findOne({ _id: id, isArchived: false })
-      .populate("reporter", "id username avatar")
-      .populate("assignee", "id username avatar")
-      .populate({
-        path: "comment",
-        select: "id currentContent createAt updateAt",
-        match: { isArchived: false },
-        options: { sort: { createdAt: -1 } },
-        populate: {
-          path: "userId",
-          select: "id username avatar",
-        },
-      });
-    if (!card) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
-        field: "card",
-        error: "Card not found or archived.",
-      });
-    } else {
-      sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, card);
-    }
-  },
-  updateCard: async (req: Request, res: Response, next: NextFunction) => {
-    // const { id } = req.params;
-    const {
+const createCard = async (req: Request, res: Response, _: NextFunction) => {
+  const { name, kanbanId } = req.body;
+  const newCard = await Card.create({
+    name,
+    kanbanId,
+  });
+  sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newCard);
+};
+
+const getCardById = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const card = await Card.findOne({ _id: id, isArchived: false })
+    .populate("reporter", "id username avatar")
+    .populate("assignee", "id username avatar")
+    .populate("tag", "id name color")
+    .populate({
+      path: "cardComment",
+      select: "id currentContent createdAt updatedAt",
+      match: { isArchived: false },
+      options: { sort: { createdAt: -1 } },
+      populate: {
+        path: "userId",
+        select: "id username avatar",
+      },
+    });
+  if (!card) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
+      field: "card",
+      error: "Card not found or archived.",
+    });
+  } else {
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, card);
+  }
+};
+
+const updateCard = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const {
+    name,
+    description,
+    reporter,
+    assignee,
+    targetStartDate,
+    targetEndDate,
+    actualStartDate,
+    actualEndDate,
+    priority,
+    status,
+    tag,
+    webLink,
+  } = req.body;
+
+  let updatedWebLink = webLink;
+  if (webLink) {
+    updatedWebLink = webLink.map((webLinkItem: any) => {
+      if (!webLinkItem.name) {
+        return {
+          ...webLinkItem,
+          name: webLinkItem.url,
+        };
+      }
+      return webLinkItem;
+    });
+  }
+  mongoDbHandler.updateDb(
+    "Card",
+    Card,
+    { _id: id },
+    {
       name,
       description,
       reporter,
@@ -66,117 +86,81 @@ export default {
       priority,
       status,
       tag,
-      webLink,
-    } = req.body;
-    if (name.length > 50) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "name",
-        error: "Card's name should not exceed 50 characters.",
-      });
-    }
-    if (description.length > 500) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "description",
-        error: "Card's description should not exceed 500 characters.",
-      });
-    }
-    if (priority !== "Low" || priority !== "Medium" || priority !== "High") {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "priority",
-        error: "Card's priority should be Low, Medium or High.",
-      });
-    }
-    if (status !== "Pending" || status !== "In Progress" || status !== "Done") {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "status",
-        error: "Card's status should be Pending, In Progress or Done.",
-      });
-    }
+      updatedWebLink,
+    },
+    {},
+    res,
+    next,
+  );
+};
+const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const { isArchived } = req.body;
+  mongoDbHandler.updateDb("Card", Card, { _id: id }, { isArchived }, {}, res, next);
+};
 
-    const updateData = {
-      ...(name && { name }),
-      ...(description && { description }),
-      ...(reporter && { reporter }),
-      ...(assignee && { assignee }),
-      ...(targetStartDate && { targetStartDate }),
-      ...(targetEndDate && { targetEndDate }),
-      ...(actualStartDate && { actualStartDate }),
-      ...(actualEndDate && { actualEndDate }),
-      ...(priority && { priority }),
-      ...(status && { status }),
-      ...(tag && { tag }),
-      ...(webLink && { webLink }),
-    };
-    console.log("updateData", updateData);
-  },
-
-  archiveCard: async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    const { isArchived } = req.body;
-    if (!isArchived) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "isArchived",
-        error: "isArchived is required.",
+const moveCard = async (req: Request, res: Response, next: NextFunction) => {
+  const { oldListId, newListId, oldCardOrder, newCardOrder } = req.body;
+  if (!oldListId) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "oldListId",
+      error: "oldListId is required.",
+    });
+  } else if (!newListId) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "newListId",
+      error: "newListId is required.",
+    });
+  } else if (!oldCardOrder) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "oldCardOrder",
+      error: "oldCardOrder is required.",
+    });
+  } else if (!newCardOrder) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "newCardOrder",
+      error: "newCardOrder is required.",
+    });
+  } else {
+    const oldListData = await List.findOne({ _id: oldListId }).catch((err: Error) => {
+      console.log("MongoDb UPDATE error: ", err);
+    });
+    const newListData = await List.findOne({ _id: newListId }).catch((err: Error) => {
+      console.log("MongoDb UPDATE error: ", err);
+    });
+    if (!oldListData) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+        error: `oldList not found.`,
+      });
+    } else if (!newListData) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+        error: `newList not found.`,
       });
     } else {
-      mongoDbHandler.updateDb("Card", Card, { _id: id }, { isArchived }, {}, res, next);
-    }
-  },
-  moveCard: async (req: Request, res: Response, next: NextFunction) => {
-    const { oldListId, newListId, oldCardOrder, newCardOrder } = req.body;
-    if (!oldListId) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "oldListId",
-        error: "oldListId is required.",
-      });
-    } else if (!newListId) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "newListId",
-        error: "newListId is required.",
-      });
-    } else if (!oldCardOrder) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "oldCardOrder",
-        error: "oldCardOrder is required.",
-      });
-    } else if (!newCardOrder) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "newCardOrder",
-        error: "newCardOrder is required.",
-      });
-    } else {
-      const oldListData = await List.findOne({ _id: oldListId }).catch((err: Error) => {
-        console.log("MongoDb UPDATE error: ", err);
-      });
-      const newListData = await List.findOne({ _id: newListId }).catch((err: Error) => {
-        console.log("MongoDb UPDATE error: ", err);
-      });
-      if (!oldListData) {
-        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
-          error: `oldList not found.`,
-        });
-      } else if (!newListData) {
-        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
-          error: `newList not found.`,
-        });
-      } else {
-        try {
-          const oldListUpdateResult = await List.updateOne({ _id: oldListId }, { cardOrder: oldCardOrder });
-          const newListUpdateResult = await List.updateOne({ _id: newListId }, { cardOrder: newCardOrder });
-          if (
-            !oldListUpdateResult ||
-            !oldListUpdateResult.matchedCount ||
-            !newListUpdateResult ||
-            !newListUpdateResult.matchedCount
-          ) {
-            forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
-          } else {
-            sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE);
-          }
-        } catch (error) {
-          console.log("MongoDb UPDATE List error: ", error);
+      try {
+        const oldListUpdateResult = await List.updateOne({ _id: oldListId }, { cardOrder: oldCardOrder });
+        const newListUpdateResult = await List.updateOne({ _id: newListId }, { cardOrder: newCardOrder });
+        if (
+          !oldListUpdateResult ||
+          !oldListUpdateResult.matchedCount ||
+          !newListUpdateResult ||
+          !newListUpdateResult.matchedCount
+        ) {
+          forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+        } else {
+          sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE);
         }
+      } catch (error) {
+        console.log("MongoDb UPDATE List error: ", error);
       }
     }
-  },
+  }
+};
+
+export default {
+  createCard,
+  getCardById,
+  updateCard,
+  archiveCard,
+  moveCard,
 };
