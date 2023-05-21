@@ -50,7 +50,7 @@ workspaceMemberSchema.virtual("user", {
   localField: "userId",
   foreignField: "_id",
   justOne: true,
-  options: { select: "username" },
+  options: { select: "username isArchived" },
 });
 // workspaceMemberSchema.virtual("WorkspaceMemberWithPlan", {
 //   ref: "Plan",

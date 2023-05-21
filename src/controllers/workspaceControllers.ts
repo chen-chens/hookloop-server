@@ -10,7 +10,14 @@ import { sendSuccessResponse } from "@/utils";
 
 const getWorkspacesById = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.body;
-  const targetWorkspace = await WorkspaceMember.findOne({ workspaceId: id }).populate(["workspace", "user"]).exec();
+  const targetWorkspace = await Workspace.findOne({ _id: id })
+    .populate({
+      path: "WorkspaceMember",
+      select: "workspaceId userId role",
+    })
+    .exec();
+  console.log("🚀 ~ file: workspaceControllers.ts:18 ~ targetWorkspace ~ targetWorkspace:", targetWorkspace);
+  // const targetWorkspaceMembers = await WorkspaceMember.find({ workspaceId: id }).populate(["workspace", "user"]).exec();
   if (!targetWorkspace) {
     forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_TO_GET_DATA, {
       field: "id",
@@ -19,16 +26,33 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
     return;
   }
 
+  // sendSuccessResponse(
+  //   res,
+  //   ApiResults.SUCCESS_GET_DATA,
+  //   targetWorkspaceMembers.map((workspaceMember) => ({
+  //     id: workspaceMember.workspaceId,
+  //     workspaceName: workspaceMember.workspace?.name,
+  //     updatedAt: workspaceMember.workspace?.updatedAt,
+  //     isArchived: workspaceMember.workspace?.isArchived,
+  //     kanbans: workspaceMember.workspace?.kanbans,
+  //     members: {
+  //       userId: workspaceMember.userId,
+  //       username: workspaceMember.user?.username,
+  //       role: workspaceMember.role,
+  //     },
+  //   })),
+  // );
+
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-    id: targetWorkspace.workspaceId,
-    workspaceName: targetWorkspace.workspace?.name,
-    updatedAt: targetWorkspace.workspace?.updatedAt,
-    isArchived: targetWorkspace.workspace?.isArchived,
-    kanbans: targetWorkspace.workspace?.kanbans,
-    members: targetWorkspace.workspace?.memberIds.map((memberId) => ({
+    id: targetWorkspace.id,
+    workspaceName: targetWorkspace.name,
+    updatedAt: targetWorkspace.updatedAt,
+    isArchived: targetWorkspace.isArchived,
+    kanbans: targetWorkspace.kanbans,
+    members: targetWorkspace.memberIds.map((memberId) => ({
       userId: memberId,
-      username: targetWorkspace.user?.username,
-      role: targetWorkspace.role,
+      // username: targetWorkspace.user?.username,
+      // role: targetWorkspace.WorkspaceMember,
     })),
   });
 };
@@ -38,7 +62,7 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
 
   if (!workspaceName) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
-      field: "name",
+      field: "workspaceName",
       error: "The workspace name is required!",
     });
     return;
@@ -70,7 +94,7 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
     return;
   }
 
-  const newWorkspace = new Workspace({ workspaceName });
+  const newWorkspace = new Workspace({ name: workspaceName });
   const newWorkspaceMembers: IWorkspaceMember[] = members.map((member: IRequestMembers) => {
     const newWorkspaceMember = new WorkspaceMember({
       workspaceId: newWorkspace.id,
@@ -229,6 +253,7 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
       members: item.workspace?.memberIds.map((memberId) => ({
         userId: memberId,
         username: item.user?.username,
+        isArchived: item.user?.isArchived,
         role: item.role,
       })),
     }));
