@@ -19,19 +19,17 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
     return;
   }
   const [targetWorkspaceMember] = targetWorkspaceMembers;
-  const members = targetWorkspaceMember.workspace?.memberIds.map((memberId) => ({
-    userId: memberId,
-    username: targetWorkspaceMember.user?.username,
-    role: targetWorkspaceMember.role,
-  }));
-
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
     workspaceId: targetWorkspaceMember.workspaceId,
     workspaceName: targetWorkspaceMember.workspace?.name,
     updatedAt: targetWorkspaceMember.workspace?.updatedAt,
     isArchived: targetWorkspaceMember.workspace?.isArchived,
     kanbans: targetWorkspaceMember.workspace?.kanbans,
-    members,
+    members: targetWorkspaceMembers.map((workspaceMember) => ({
+      userId: workspaceMember.userId,
+      username: workspaceMember.user?.username,
+      role: workspaceMember.role,
+    })),
   });
 };
 
@@ -168,15 +166,23 @@ const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: 
           role: member.role,
         });
         await newWorkspaceMember.save();
-        targetWorkspace.memberIds.push(newWorkspaceMember.id);
+        targetWorkspace.memberIds.push(newWorkspaceMember.userId);
       }
     });
 
     await targetWorkspace.save();
+    const updatedWorkspaceMembers = await WorkspaceMember.find({ workspaceId }).populate(["workspace", "user"]).exec();
+    const [updatedWorkspaceMember] = updatedWorkspaceMembers;
     sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
-      workspaceId: targetWorkspace.id,
-      workspaceName: targetWorkspace.name,
+      workspaceId: updatedWorkspaceMember.workspace?.id,
+      workspaceName: updatedWorkspaceMember.workspace?.name,
+      // members: updatedWorkspaceMembers.map((workspaceMember) => ({
+      //   userId: workspaceMember.userId,
+      //   username: workspaceMember.user?.username,
+      //   role: workspaceMember.role,
+      // })),
     });
+    return;
   }
 
   forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
