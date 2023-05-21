@@ -7,24 +7,25 @@ const createCard: ValidationFn = (req) => {
     {
       field: "name",
       fieldName: "Card Name",
-      rules: [{ type: "exist" }, { type: "lengthRange", min: 1, max: 50 }],
+      rules: [{ type: "fieldExist" }, { type: "lengthRange", min: 1, max: 50 }],
     },
-    { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "exist" }, { type: "objectId" }] },
+    { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
 
 const getCardById: ValidationFn = (req) => {
   const valFields: ValField[] = [
-    { field: "id", fieldName: "Card Id", rules: [{ type: "exist" }, { type: "paramId" }, { type: "objectId" }] },
+    { field: "id", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
 
 const updateCard: ValidationFn = (req) => {
   const valFields: ValField[] = [
-    { field: "name", fieldName: "Card Name", rules: [{ type: "lengthRange", min: 1, max: 50 }] },
-    { field: "description", fieldName: "Description", rules: [{ type: "maxLength", max: 500 }] },
+    { field: "id", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "name", fieldName: "Card Name", rules: [{ type: "string" }, { type: "lengthRange", min: 1, max: 50 }] },
+    { field: "description", fieldName: "Description", rules: [{ type: "string" }, { type: "maxLength", max: 500 }] },
     { field: "reporter", fieldName: "Reporter", rules: [{ type: "objectId" }] },
     { field: "assignee", fieldName: "Assignee", rules: [{ type: "objectIdArray" }] },
     { field: "targetStartDate", fieldName: "Target start date", rules: [{ type: "date" }] },
@@ -46,8 +47,8 @@ const updateCard: ValidationFn = (req) => {
 
 const archiveCard: ValidationFn = (req) => {
   const valFields: ValField[] = [
-    { field: "id", fieldName: "Card Id", rules: [{ type: "exist" }, { type: "paramId" }, { type: "objectId" }] },
-    { field: "isArchived", fieldName: "Is Archived", rules: [{ type: "exist" }] },
+    { field: "id", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }, { type: "objectId" }] },
+    { field: "isArchived", fieldName: "Is Archived", rules: [{ type: "fieldExist" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };

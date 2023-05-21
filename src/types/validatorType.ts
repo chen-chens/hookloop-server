@@ -10,17 +10,19 @@ export type ValidationFn = (req: Request) => ValErrorData | null;
 export type ValReturn = ValErrorData | null;
 
 export type ValType =
+  | "paramExist"
+  | "fieldExist"
   | "paramId"
   | "objectId"
-  | "exist"
-  | "lengthRange"
-  | "maxLength"
+  | "date"
+  | "url"
+  | "string"
   | "array"
   | "objectIdArray"
-  | "date"
-  | "enum"
-  | "url"
-  | "urlArray";
+  | "urlArray"
+  | "lengthRange"
+  | "maxLength"
+  | "enum";
 
 export type ValRule = {
   type: ValType;
