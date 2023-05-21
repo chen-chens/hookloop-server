@@ -23,6 +23,23 @@ const getUsers = async (req: IQueryUsersRequest, res: Response, next: NextFuncti
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, targetUsers);
 };
 
+// workspace 用來搜尋使用者
+const getMember = async (req: Request, res: Response) => {
+  const { email } = req.params;
+
+  const members = await User.find({
+    // regex: 只要 User Schema 的 email 部分包含 req.params.email 就回傳資料
+    // options.i: 用來忽略大小寫搜尋
+    email: { $regex: email, $options: "i" },
+    // username 欄位存在才回傳
+    username: { $ne: null },
+  }).select("email avatar username"); // 只回傳 {email, avatar, username} 給前端
+
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+    members,
+  });
+};
+
 const getUserById = async (req: Request, res: Response) => {
   const { id } = req.user as IUser;
   const workspaceData = await Workspace.find({ members: id });
@@ -167,6 +184,7 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
 
 export default {
   getUsers,
+  getMember,
   getUserById,
   createUser,
   updateUser,
