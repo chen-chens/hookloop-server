@@ -20,7 +20,12 @@ const verifyWorkspaceEditAuthMiddleware = async (req: IWorkspaceRequest, _: Resp
   }
 
   const checkUpdateAuth = await WorkspaceMember.findOne({ workspaceId, userId: id });
-  if (!checkUpdateAuth || (checkUpdateAuth.role !== "Owner" && checkUpdateAuth.role !== "Admin")) {
+  const isArchivedReq = req.url === "/:id/isArchived";
+  if (
+    !checkUpdateAuth ||
+    (isArchivedReq && checkUpdateAuth.role !== "Owner") ||
+    (checkUpdateAuth.role !== "Owner" && checkUpdateAuth.role !== "Admin")
+  ) {
     return forwardCustomError(next, StatusCode.FORBIDDEN, ApiResults.FAIL_UPDATE, {
       field: "role",
       error: "Permission denied!",

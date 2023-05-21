@@ -5,6 +5,8 @@ export interface IWorkspace extends Document {
   memberIds: Types.ObjectId[];
   kanbans: Types.ObjectId[];
   isArchived: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 const workspaceSchema = new Schema(
   {

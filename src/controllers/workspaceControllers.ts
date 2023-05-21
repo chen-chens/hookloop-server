@@ -22,6 +22,8 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
     id: targetWorkspace.workspaceId,
     workspaceName: targetWorkspace.workspace?.name,
+    updatedAt: targetWorkspace.workspace?.updatedAt,
+    isArchived: targetWorkspace.workspace?.isArchived,
     kanbans: targetWorkspace.workspace?.kanbans,
     members: targetWorkspace.workspace?.memberIds.map((memberId) => ({
       userId: memberId,
@@ -119,7 +121,7 @@ const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: 
     const uniqueMemberIds = new Set(members.map((member) => member.userId));
     const hasDuplicateUserId = members.length > uniqueMemberIds.size;
     if (hasDuplicateUserId) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "userId",
         error: "The user role should be unique !",
       });
@@ -128,15 +130,22 @@ const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: 
 
     const hasInvalidRole = members.some((member) => !Object.values(RoleType).includes(member.role));
     if (hasInvalidRole) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "role",
-        error: "Invalid RoleType ! Please check again! ",
+        error: "Invalid RoleType! Please check again! ",
+      });
+      return;
+    }
+    const hasOwnerRequest = members.some((member) => member.role === RoleType.OWNER);
+    if (hasOwnerRequest) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "role",
+        error: "Invalid Request! Owner is unique!",
       });
       return;
     }
 
     const targetWorkspace = await Workspace.findOne({ _id: workspaceId });
-
     if (!targetWorkspace) {
       forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_UPDATE, {
         field: "workspaceId",
@@ -170,7 +179,7 @@ const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: 
 
   forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
     field: "",
-    error: "Invalid Update! Please input revised values!",
+    error: "Invalid Request! Please input revised values!",
   });
 };
 
@@ -214,6 +223,8 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
     const responseData = targetWorkspaces.map((item) => ({
       id: item.workspaceId,
       workspaceName: item.workspace?.name,
+      updatedAt: item.workspace?.updatedAt,
+      isArchived: item.workspace?.isArchived,
       kanbans: item.workspace?.kanbans,
       members: item.workspace?.memberIds.map((memberId) => ({
         userId: memberId,

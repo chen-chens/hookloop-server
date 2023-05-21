@@ -9,6 +9,8 @@ export interface IWorkspaceMember extends Document {
   role: "Admin" | "Member" | "Owner";
   workspace?: IWorkspace;
   user?: IUser;
+  createdAt: Date;
+  updatedAt: Date;
 }
 const workspaceMemberSchema = new Schema(
   {
@@ -41,7 +43,7 @@ workspaceMemberSchema.virtual("workspace", {
   localField: "workspaceId",
   foreignField: "_id",
   justOne: true,
-  options: { select: "name memberIds kanbans isArchived" },
+  options: { select: "name memberIds kanbans isArchived updatedAt" },
 });
 workspaceMemberSchema.virtual("user", {
   ref: "User",
