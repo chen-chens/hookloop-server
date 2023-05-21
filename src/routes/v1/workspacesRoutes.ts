@@ -1,7 +1,11 @@
 import { Router } from "express";
 
 import { workspaceControllers } from "@/controllers";
-import { asyncWrapper, verifyTokenMiddleware } from "@/middlewares";
+import {
+  asyncWrapper,
+  verifyTokenMiddleware as verifyToken,
+  verifyWorkspaceEditAuthMiddleware as verifyWorkspaceEditAuth,
+} from "@/middlewares";
 
 const {
   getWorkspacesById,
@@ -9,22 +13,25 @@ const {
   updateWorkspaceById,
   closeWorkspaceById,
   getAvailableUsersByWorkspaceId,
-  addPinnedByWorkspaceId,
   deleteUserFromWorkspace,
   getWorkspacesByUserId,
 } = workspaceControllers;
 
 const router = Router();
 
-router.get("/me", verifyTokenMiddleware, asyncWrapper(getWorkspacesByUserId));
-router.get("/:id", verifyTokenMiddleware, asyncWrapper(getWorkspacesById));
-router.post("", verifyTokenMiddleware, asyncWrapper(createWorkspace));
-router.patch("/:id", verifyTokenMiddleware, asyncWrapper(updateWorkspaceById));
-router.patch("/:id/isArchived", verifyTokenMiddleware, asyncWrapper(closeWorkspaceById));
+router.get("/me", verifyToken, asyncWrapper(getWorkspacesByUserId));
+router.get("/:id", verifyToken, asyncWrapper(getWorkspacesById));
+router.post("", verifyToken, asyncWrapper(createWorkspace));
+router.patch("/:id", verifyToken, verifyWorkspaceEditAuth, asyncWrapper(updateWorkspaceById));
+router.patch("/:id/isArchived", verifyToken, verifyWorkspaceEditAuth, asyncWrapper(closeWorkspaceById));
+router.delete(
+  "/:workspaceId/members/:memberId",
+  verifyToken,
+  verifyWorkspaceEditAuth,
+  asyncWrapper(deleteUserFromWorkspace),
+);
 
-// 待確認的 API：看 User, Workspace Schema 怎麼關聯
+// 待確認:
 router.get("/:id/availableUsers", asyncWrapper(getAvailableUsersByWorkspaceId));
-router.put("/:id/isPinned", asyncWrapper(addPinnedByWorkspaceId));
-router.delete("/:workspaceId/members/:memberId", asyncWrapper(deleteUserFromWorkspace));
 
 export default router;

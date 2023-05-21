@@ -99,14 +99,6 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
 const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: NextFunction) => {
   const { workspaceName, members, workspaceId } = req.body;
 
-  if (!workspaceId) {
-    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-      field: "workspaceId",
-      error: "The workspaceId is required!",
-    });
-    return;
-  }
-
   if (workspaceName) {
     const updateResult = await Workspace.findByIdAndUpdate({ _id: workspaceId }, { name: workspaceName }, dbOptions);
     if (!updateResult) {
@@ -205,10 +197,6 @@ const getAvailableUsersByWorkspaceId = async (req: Request, res: Response, next:
   console.log(req, res, next);
 };
 
-const addPinnedByWorkspaceId = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req, res, next);
-};
-
 const deleteUserFromWorkspace = async (req: Request, res: Response, next: NextFunction) => {
   console.log(req, res, next);
 };
@@ -243,7 +231,6 @@ export default {
   updateWorkspaceById,
   closeWorkspaceById,
   getAvailableUsersByWorkspaceId,
-  addPinnedByWorkspaceId,
   deleteUserFromWorkspace,
   getWorkspacesByUserId,
 };
