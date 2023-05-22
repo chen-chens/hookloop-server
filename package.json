@@ -34,6 +34,7 @@
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.4",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "validator": "^13.9.0",
     "ws": "^8.13.0",
     "zod": "^3.21.4"
@@ -48,6 +49,7 @@
     "@types/express-fileupload": "^1.4.1",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/mongoose": "^5.11.97",
+    "@types/multer": "^1.4.7",
     "@types/node": "^18.15.11",
     "@types/validator": "^13.7.15",
     "@typescript-eslint/eslint-plugin": "^5.59.0",

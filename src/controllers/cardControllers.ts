@@ -158,10 +158,14 @@ const moveCard = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const addAttachment = async (req: Request, res: Response, next: NextFunction) => {
+  console.log(req.file, res, next);
+};
 export default {
   createCard,
   getCardById,
   updateCard,
   archiveCard,
   moveCard,
+  addAttachment,
 };

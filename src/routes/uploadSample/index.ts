@@ -34,7 +34,8 @@ router.post(
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
     } else {
       // fileHandler.filePost() 每次只處理一個檔案
-      const validFile = files[Object.keys(files)[0]] as fileupload.UploadedFile;
+      // const validFile = files[Object.keys(files)[0]] as fileupload.UploadedFile;
+      const validFile = null;
       if (!validFile) {
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
       } else {
@@ -57,7 +58,9 @@ router.patch(
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
     } else {
       // fileHandler.filePost() 只接受一個檔案，該檔案會覆蓋同個 fileId 的檔案
-      const validFile = files[Object.keys(files)[0]] as fileupload.UploadedFile;
+      // BUG: 使用 multer 套件型別打架
+      // const validFile = files[Object.keys(files as object)[0]] as fileupload.UploadedFile;
+      const validFile = null;
       if (!validFile) {
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
       } else {

@@ -19,6 +19,9 @@ const validate = (validationFn: ValidationFn, apiMethod: string) => {
     case "DELETE":
       apiResults = ApiResults.FAIL_DELETE;
       break;
+    case "UPLOAD":
+      apiResults = ApiResults.FAIL_UPLOAD;
+      break;
     default:
       apiResults = ApiResults.UNEXPECTED_ERROR;
       break;

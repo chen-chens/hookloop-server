@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
-import fileupload from "express-fileupload";
 
+// BUG: 使用 multer 套件型別打架
+// import fileupload from "express-fileupload";
 import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
@@ -133,7 +134,11 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     if (!files || !Object.keys(files).length) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
     } else {
-      const validFile = files[Object.keys(files)[0]] as fileupload.UploadedFile;
+      // INFO: 改用 multer 套件處理上傳檔案驗證
+      let validFile = null;
+      if (req.file) {
+        validFile = req.file;
+      }
       if (!validFile) {
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
       } else {

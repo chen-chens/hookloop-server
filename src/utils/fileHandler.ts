@@ -39,13 +39,9 @@ const fileGetMeta = async (fileId: string, next: NextFunction) => {
   return false;
 };
 
-const filePost = async (file: fileupload.UploadedFile, next: NextFunction) => {
-  // 檢查檔案大小
-  if (file.size > maxFileSize) {
-    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
-    return null;
-  }
-
+// INFO: 改用 multer 套件處理上傳檔案驗證
+const filePost = async (file: any, _: NextFunction) => {
+  console.log("Post:", file);
   const { key } = getKeys();
   const { mimetype } = file;
   const response = await axios({
