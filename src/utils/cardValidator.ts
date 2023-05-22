@@ -55,8 +55,7 @@ const archiveCard: ValidationFn = (req) => {
 
 const addAttachment: ValidationFn = (req) => {
   const valFields: ValField[] = [
-    { field: "id", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "attachment", fieldName: "Attachment", rules: [{ type: "fieldExist" }] },
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };

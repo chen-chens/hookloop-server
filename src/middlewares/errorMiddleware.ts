@@ -60,7 +60,6 @@ export const errorHandler = (err: CustomError | any, req: Request, res: Response
       customError = new CustomError(StatusCode.BAD_REQUEST, ApiResults.VALIDATOR_TYPE_ERROR, {}, ApiStatus.ERROR);
     } else {
       console.log("other error");
-      console.error(err);
       console.error("err.name:", err.name);
       customError = new CustomError(StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR, {}, ApiStatus.ERROR);
     }
