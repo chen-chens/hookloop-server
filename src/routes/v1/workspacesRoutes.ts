@@ -23,11 +23,6 @@ router.get("/:id", verifyToken, asyncWrapper(getWorkspacesById));
 router.post("", verifyToken, asyncWrapper(createWorkspace));
 router.patch("/:id", verifyToken, verifyWorkspaceEditAuth, asyncWrapper(updateWorkspaceById));
 router.patch("/:id/isArchived", verifyToken, verifyWorkspaceEditAuth, asyncWrapper(closeWorkspaceById));
-router.delete(
-  "/:workspaceId/members/:memberId",
-  verifyToken,
-  verifyWorkspaceEditAuth,
-  asyncWrapper(deleteUserFromWorkspace),
-);
+router.delete("/:workspaceId/member", verifyToken, verifyWorkspaceEditAuth, asyncWrapper(deleteUserFromWorkspace));
 
 export default router;
