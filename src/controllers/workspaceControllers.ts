@@ -5,7 +5,14 @@ import { forwardCustomError } from "@/middlewares";
 import { Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
 import WorkspaceMember, { IWorkspaceMember } from "@/models/workspaceMemberModel";
-import { ApiResults, IRequestMembers, IWorkspaceRequest, RoleType, StatusCode } from "@/types";
+import {
+  ApiResults,
+  IDeleteUserFromWorkspaceRequest,
+  IRequestMembers,
+  IWorkspaceRequest,
+  RoleType,
+  StatusCode,
+} from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
 const getWorkspacesById = async (req: Request, res: Response, next: NextFunction) => {
@@ -210,8 +217,43 @@ const closeWorkspaceById = async (req: Request, res: Response, next: NextFunctio
   });
 };
 
-const deleteUserFromWorkspace = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req, res, next);
+const deleteUserFromWorkspace = async (req: IDeleteUserFromWorkspaceRequest, res: Response, next: NextFunction) => {
+  const { workspaceId, memberId } = req.body;
+  if (!workspaceId) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_DELETE, {
+      field: "",
+      error: "The workspaceId is required!",
+    });
+    return;
+  }
+  if (!memberId) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_DELETE, {
+      field: "memberId",
+      error: "The memberId is required!",
+    });
+    return;
+  }
+
+  const targetWorkspaceMember = await WorkspaceMember.findOne({ workspaceId, userId: memberId });
+  if (!targetWorkspaceMember) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_DELETE, {
+      field: "",
+      error: "The member is not existing in this workspace!",
+    });
+    return;
+  }
+
+  const isTargetMemberWithOwnerType = !!(targetWorkspaceMember.role === RoleType.OWNER);
+  if (isTargetMemberWithOwnerType) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_DELETE, {
+      field: "",
+      error: "The owner can't be removed!",
+    });
+    return;
+  }
+
+  await WorkspaceMember.findOneAndDelete({ workspaceId, userId: memberId });
+  sendSuccessResponse(res, ApiResults.SUCCESS_DELETE);
 };
 
 const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunction) => {
