@@ -3,6 +3,7 @@ export { default as ApiStatus } from "./apiStatus";
 export { default as CustomError } from "./customError";
 export { ICustomError, IDataType } from "./customErrorInterface";
 export { IDecodedToken } from "./decodedToken";
+export { default as IDeleteUserFromWorkspaceRequest } from "./deleteUserFromWorkspaceRequest";
 export { default as IQueryUsersRequest } from "./queryUsersRequest";
 export { default as IRequestMembers } from "./requestMembers";
 export { default as RoleType } from "./roleType";
