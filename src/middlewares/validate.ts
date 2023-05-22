@@ -31,6 +31,7 @@ const validate = (validationFn: ValidationFn, apiMethod: string) => {
     if (validationError) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, apiResults, validationError);
     } else {
+      console.log("Validation passed.");
       next();
     }
   };

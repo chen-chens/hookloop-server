@@ -14,6 +14,7 @@ router.patch("/move", asyncWrapper(cardControllers.moveCard));
 router.post(
   "/:cardId/attachment",
   validate(cardValidator.addAttachment, "UPLOAD"),
+  // .single("file") 限制處理單一檔案，但若無檔案不會報錯
   verifyUploadAttachmentMiddleware.single("file"),
   asyncWrapper(cardControllers.addAttachment),
 );

@@ -1,7 +1,5 @@
 import { Router } from "express";
 
-// BUG: 使用 multer 套件
-// import fileupload from "express-fileupload";
 import { userControllers } from "@/controllers";
 import {
   asyncWrapper,
@@ -11,7 +9,6 @@ import {
 } from "@/middlewares";
 
 const router = Router();
-// router.use(fileupload());
 
 router.get("", verifyToken, asyncWrapper(userControllers.getUsers));
 router.get("/me", verifyToken, asyncWrapper(userControllers.getUserById));

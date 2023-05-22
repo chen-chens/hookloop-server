@@ -1,8 +1,6 @@
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
 
-// BUG: 使用 multer 套件型別打架
-// import fileupload from "express-fileupload";
 import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
@@ -112,8 +110,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   const targetUser = await User.findById(userId);
 
   const { username, email, avatar, isArchived } = req.body;
-  const { files } = req;
-
+  const { file } = req;
   if (!token || !targetUser) {
     forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_GET_DATA, {
       field: "userId",
@@ -124,17 +121,16 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
       field: "email",
       error: "Email cannot be changed!",
     });
-  } else if (avatar || files) {
+  } else if (avatar || file) {
     if (avatar) {
       // for testing purpose (remove avatar)
       const data = await User.findByIdAndUpdate(userId, { avatar: "" }, dbOptions);
       sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: data });
     }
-
-    if (!files || !Object.keys(files).length) {
+    if (!file || !Object.keys(file).length) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
     } else {
-      // INFO: 改用 multer 套件處理上傳檔案驗證
+      // INFO: 改用 multer 套件處理上傳檔案驗證，僅一筆檔案
       let validFile = null;
       if (req.file) {
         validFile = req.file;

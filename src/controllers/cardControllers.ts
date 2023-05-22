@@ -4,6 +4,7 @@ import { forwardCustomError } from "@/middlewares";
 import { Card, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
+import fileHandler from "@/utils/fileHandler";
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
 const createCard = async (req: Request, res: Response, _: NextFunction) => {
@@ -159,7 +160,31 @@ const moveCard = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const addAttachment = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req.file, res, next);
+  const { file } = req;
+  if (!file) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "file",
+      error: "File is required.",
+    });
+  } else {
+    const uploadedFileMeta = await fileHandler.filePost(file, next);
+    console.log("uploadedFileMeta: ", uploadedFileMeta);
+    if (!uploadedFileMeta) {
+      forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+    } else {
+      const { cardId } = req.params;
+      const { fileId, url } = uploadedFileMeta;
+      const { originalname, size, mimetype } = file;
+      const attachment = {
+        name: originalname,
+        url,
+        fileId,
+        size,
+        mimetype,
+      };
+      mongoDbHandler.updateDb("Card", Card, { _id: cardId }, { attachment }, {}, res, next);
+    }
+  }
 };
 export default {
   createCard,

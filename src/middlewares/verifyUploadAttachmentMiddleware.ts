@@ -5,12 +5,14 @@ import statusCode from "@/types/statusCode";
 import { generateErrorData } from "@/utils";
 
 const verifyUpLoadAttachmentMiddleware = multer({
+  // 設定暫存到檔案系統，或可用 memoryStorage 存儲在伺服器的記憶體中(但會消耗更多的記憶體資源)
   dest: "uploads/",
+  // 限制檔案大小
   limits: {
     fileSize: 1000 * 1000,
   },
+  // 驗證檔案類型
   fileFilter: (req, file, cb) => {
-    console.log("where im i===============================================");
     const acceptedMimetypes = [
       "application/pdf",
       "application/msword",
