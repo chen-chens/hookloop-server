@@ -65,11 +65,11 @@ const cardSchema = new Schema(
     ],
     attachment: [
       {
-        name: {
-          type: String,
-          maxLength: 30,
-        },
+        name: String,
         url: String,
+        fileId: String,
+        size: Number,
+        mimeType: String,
       },
     ],
     isArchived: {

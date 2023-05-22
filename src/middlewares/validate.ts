@@ -19,6 +19,9 @@ const validate = (validationFn: ValidationFn, apiMethod: string) => {
     case "DELETE":
       apiResults = ApiResults.FAIL_DELETE;
       break;
+    case "UPLOAD":
+      apiResults = ApiResults.FAIL_UPLOAD;
+      break;
     default:
       apiResults = ApiResults.UNEXPECTED_ERROR;
       break;
@@ -28,6 +31,7 @@ const validate = (validationFn: ValidationFn, apiMethod: string) => {
     if (validationError) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, apiResults, validationError);
     } else {
+      console.log("Validation passed.");
       next();
     }
   };

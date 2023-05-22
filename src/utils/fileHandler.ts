@@ -1,7 +1,8 @@
 import axios from "axios";
 import { NextFunction } from "express";
-import fileupload from "express-fileupload";
+import * as fs from "fs";
 
+// import fileupload from "express-fileupload";
 import { forwardCustomError } from "@/middlewares";
 import { ApiResults, StatusCode } from "@/types";
 
@@ -39,19 +40,17 @@ const fileGetMeta = async (fileId: string, next: NextFunction) => {
   return false;
 };
 
-const filePost = async (file: fileupload.UploadedFile, next: NextFunction) => {
-  // 檢查檔案大小
-  if (file.size > maxFileSize) {
-    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
-    return null;
-  }
+// INFO: 改用 multer 套件處理上傳檔案驗證
+const filePost = async (file: any, _: NextFunction) => {
+  const fileContent = fs.readFileSync(file.path);
+  // 取得暫存區檔案內容
 
   const { key } = getKeys();
   const { mimetype } = file;
   const response = await axios({
     method: "post",
     url: `https://www.filestackapi.com/api/store/S3`,
-    data: file.data,
+    data: fileContent,
     headers: { "Content-type": mimetype },
     params: { key },
   });
@@ -66,12 +65,26 @@ const filePost = async (file: fileupload.UploadedFile, next: NextFunction) => {
       size: data.size,
       type: data.mimetype,
     };
+    fs.unlink(file.path, (err) => {
+      if (err) {
+        console.error(`Error: ${err}`);
+      } else {
+        console.log("File deleted successfully");
+      }
+    });
     return fileData;
   }
+  fs.unlink(file.path, (err) => {
+    if (err) {
+      console.error(`Error: ${err}`);
+    } else {
+      console.log("File deleted successfully");
+    }
+  });
   return false;
 };
 
-const filePatch = async (fileId: string, file: fileupload.UploadedFile, next: NextFunction) => {
+const filePatch = async (fileId: string, file: any, next: NextFunction) => {
   // 檢查檔案大小
   if (file.size > maxFileSize) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
