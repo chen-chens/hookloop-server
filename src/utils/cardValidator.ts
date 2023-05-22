@@ -39,7 +39,7 @@ const updateCard: ValidationFn = (req) => {
       rules: [{ type: "enum", enumArray: ["Pending", "In Progress", "Done"] }],
     },
     { field: "tag", fieldName: "Tag", rules: [{ type: "objectIdArray" }] },
-    { field: "webLink", fieldName: "Web link", rules: [{ type: "urlArray" }] },
+    { field: "webLink", fieldName: "Web link", rules: [{ type: "array" }] },
   ];
 
   return validateFieldsAndGetErrorData(req, valFields);
@@ -53,9 +53,18 @@ const archiveCard: ValidationFn = (req) => {
   return validateFieldsAndGetErrorData(req, valFields);
 };
 
+const addAttachment: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "id", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "attachment", fieldName: "Attachment", rules: [{ type: "fieldExist" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+
 export default {
   createCard,
   getCardById,
   updateCard,
   archiveCard,
+  addAttachment,
 };

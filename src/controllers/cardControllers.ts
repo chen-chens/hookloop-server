@@ -86,13 +86,14 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
       priority,
       status,
       tag,
-      updatedWebLink,
+      webLink: updatedWebLink,
     },
     {},
     res,
     next,
   );
 };
+
 const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const { isArchived } = req.body;
