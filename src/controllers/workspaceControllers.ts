@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 
 import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
-import { Workspace } from "@/models";
+import { User, Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
 import WorkspaceMember, { IWorkspaceMember } from "@/models/workspaceMemberModel";
 import {
@@ -85,7 +85,7 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
       role: member.role,
     });
     newWorkspace.memberIds.push(newWorkspaceMember.userId);
-
+    console.log("newWorkspaceMember = ", newWorkspaceMember);
     return newWorkspaceMember;
   });
 
@@ -107,7 +107,9 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
 
 const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: NextFunction) => {
   const { workspaceName, members, workspaceId } = req.body;
-
+  console.log("workspaceName = ", workspaceName);
+  console.log("members = ", members);
+  console.log("workspaceId = ", workspaceId);
   if (workspaceName) {
     const updateResult = await Workspace.findByIdAndUpdate({ _id: workspaceId }, { name: workspaceName }, dbOptions);
     if (!updateResult) {
@@ -265,20 +267,40 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
       error: "The user is not existing!",
     });
   } else {
+    // 使用使用者ID查詢目標工作區成員資料
     const targetWorkspaces = await WorkspaceMember.find({ userId: id }).populate(["workspace", "user"]).exec();
-    const responseData = targetWorkspaces.map((item) => ({
-      workspaceId: item.workspaceId,
-      workspaceName: item.workspace?.name,
-      updatedAt: item.workspace?.updatedAt,
-      isArchived: item.workspace?.isArchived,
-      kanbans: item.workspace?.kanbans,
-      members: item.workspace?.memberIds.map((memberId) => ({
-        userId: memberId,
-        username: item.user?.username,
-        isArchived: item.user?.isArchived,
-        role: item.role,
-      })),
-    }));
+
+    // 並行處理每個工作區的成員資料查詢
+    const responseData = await Promise.all(
+      targetWorkspaces.map(async (item) => {
+        // 查詢並處理每個成員的使用者資料
+        const members = await Promise.all(
+          Array.from(item.workspace?.memberIds || [], async (memberId) => {
+            const memberData = await User.findById(memberId);
+            const roleData = await WorkspaceMember.find({ userId: memberId, workspaceId: item.workspaceId });
+            // console.log("roleData = ", roleData);
+            return {
+              userId: memberId,
+              username: memberData?.username,
+              isArchived: memberData?.isArchived,
+              // role: item.role,
+              role: roleData[0].role,
+            };
+          }),
+        );
+
+        return {
+          workspaceId: item.workspaceId,
+          workspaceName: item.workspace?.name,
+          updatedAt: item.workspace?.updatedAt,
+          isArchived: item.workspace?.isArchived,
+          kanbans: item.workspace?.kanbans,
+          members,
+        };
+      }),
+    );
+
+    // 回傳成功回應以及查詢到的資料
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, responseData);
   }
 };
