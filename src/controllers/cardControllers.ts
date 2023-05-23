@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
-import { Card, List } from "@/models";
+import { Card, CardComment, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
@@ -24,8 +24,8 @@ const getCardById = async (req: Request, res: Response, next: NextFunction) => {
     .populate("tag", "id name color")
     .populate({
       path: "cardComment",
-      select: "_id currentContent createdAt updatedAt",
-      match: { isArchived: false },
+      select: "_id currentComment userId updatedAt",
+      match: { isArchived: false, isEdited: false },
       options: { sort: { createdAt: -1 } },
       populate: {
         path: "userId",
@@ -71,28 +71,21 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
       return webLinkItem;
     });
   }
-  mongoDbHandler.updateDb(
-    "Card",
-    Card,
-    { _id: id },
-    {
-      name,
-      description,
-      reporter,
-      assignee,
-      targetStartDate,
-      targetEndDate,
-      actualStartDate,
-      actualEndDate,
-      priority,
-      status,
-      tag,
-      webLink: updatedWebLink,
-    },
-    {},
-    res,
-    next,
-  );
+  const updatedFields = {
+    name,
+    description,
+    reporter,
+    assignee,
+    targetStartDate,
+    targetEndDate,
+    actualStartDate,
+    actualEndDate,
+    priority,
+    status,
+    tag,
+    webLink: updatedWebLink,
+  };
+  mongoDbHandler.updateDb("Card", Card, { _id: id }, updatedFields, {}, res, next);
 };
 
 const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
@@ -175,7 +168,7 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
       const { cardId } = req.params;
       const { fileId, url } = uploadedFileMeta;
       const { originalname, size, mimetype } = file;
-      const attachment = {
+      const updatedFields = {
         name: originalname,
         url,
         fileId,
@@ -183,7 +176,7 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
         mimetype,
       };
       // 提醒前端使用 fileId
-      mongoDbHandler.updateDb("Card", Card, { _id: cardId }, { $push: { attachment } }, {}, res, next);
+      mongoDbHandler.updateDb("Card", Card, { _id: cardId }, { $push: { attachment: updatedFields } }, {}, res, next);
     }
   }
 };
@@ -205,6 +198,37 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
     next,
   );
 };
+const addComment = async (req: Request, res: Response, _: NextFunction) => {
+  const { cardId } = req.params;
+  const { currentComment, userId } = req.body;
+  const updatedFields = { currentComment, userId, cardId };
+  const newComment = await CardComment.create(updatedFields);
+  sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newComment);
+};
+
+const updateComment = async (req: Request, res: Response, next: NextFunction) => {
+  const { cardId, commentId } = req.params;
+  const { currentComment, previousComment, previousCommentTime } = req.body;
+  const replaceData = { currentComment, idEdited: true };
+  const pushData = { previousComment: { content: previousComment, time: previousCommentTime } };
+  mongoDbHandler.updateDb(
+    "CardComment",
+    CardComment,
+    { _id: commentId, cardId },
+    { $set: replaceData, $push: pushData },
+    {},
+    res,
+    next,
+  );
+};
+const archiveComment = async (req: Request, res: Response, next: NextFunction) => {
+  const { cardId, commentId } = req.params;
+  mongoDbHandler.updateDb("CardComment", CardComment, { _id: commentId, cardId }, { isArchived: true }, {}, res, next);
+};
+const getCommentHistory = async (req: Request, res: Response, next: NextFunction) => {
+  const { cardId, commentId } = req.params;
+  mongoDbHandler.getDb("CardComment", CardComment, { _id: commentId, cardId }, {}, res, next);
+};
 export default {
   createCard,
   getCardById,
@@ -213,4 +237,8 @@ export default {
   moveCard,
   addAttachment,
   deleteAttachment,
+  addComment,
+  updateComment,
+  archiveComment,
+  getCommentHistory,
 };
