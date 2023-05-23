@@ -18,7 +18,6 @@ router.post(
   verifyUploadMiddleware.attachment.single("file"),
   asyncWrapper(cardControllers.addAttachment),
 );
-// router.get("/:cardId/attachment/:attahmentId", asyncWrapper(cardControllers.getAttachment));
-// router.delete("/:cardId/attachment/:attahmentId", asyncWrapper(cardControllers.deleteAttachment));
+router.delete("/:cardId/attachment/:attachmentId", asyncWrapper(cardControllers.deleteAttachment));
 
 export default router;

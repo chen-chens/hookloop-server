@@ -55,22 +55,31 @@ const cardSchema = new Schema(
       },
     ],
     webLink: [
-      {
-        name: {
-          type: String,
-          maxLength: 30,
+      new Schema(
+        {
+          name: {
+            type: String,
+            maxLength: 30,
+          },
+          url: String,
         },
-        url: String,
-      },
+        { id: false },
+      ),
     ],
     attachment: [
-      {
-        name: String,
-        url: String,
-        fileId: String,
-        size: Number,
-        mimeType: String,
-      },
+      new Schema(
+        {
+          name: String,
+          url: String,
+          fileId: String,
+          size: Number,
+          mimeType: String,
+        },
+        {
+          id: false,
+          _id: false,
+        },
+      ),
     ],
     isArchived: {
       type: Boolean,
@@ -80,6 +89,7 @@ const cardSchema = new Schema(
   {
     timestamps: true, // generate : createdAt, updatedAt
     versionKey: false,
+    id: false,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   },
