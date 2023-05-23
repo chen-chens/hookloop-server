@@ -3,6 +3,6 @@ import RoleType from "./roleType";
 interface IRequestMembers {
   userId: string;
   role: RoleType;
-  isdelete?: boolean;
+  state?: string;
 }
 export default IRequestMembers;

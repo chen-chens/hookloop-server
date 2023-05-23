@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import mongoose from "mongoose";
 
 import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
@@ -105,9 +106,6 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
     })),
   });
 };
-// console.log("workspaceName = ", workspaceName);
-//   console.log("members = ", members);
-//   console.log("workspaceId = ", workspaceId);
 
 const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: NextFunction) => {
   const { workspaceName, members, workspaceId } = req.body;
@@ -125,7 +123,6 @@ const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: 
         workspaceName: updateResult.name,
       });
     }
-    // return; ??
   }
   console.log("workspaceName 檢查 ok");
   if (members && members.length > 0) {
@@ -162,44 +159,65 @@ const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: 
       });
       return;
     }
-    console.log("要更新的 workspace 存在");
+    console.log("要更新的 workspace 存在", members);
 
-    // 要新增到 workspace 的 member
-    const newmember: any[] = [];
-    await Promise.all(
-      // 遍歷所有 member
-      members.map(async (member) => {
-        // 判斷 member 是否存在
-        const existingMember = await WorkspaceMember.findOne({ workspaceId, userId: member.userId });
-        // 如果存在就只更新 role, 不存在就建立新 workspacemember
-        if (existingMember) {
-          existingMember.role = member.role;
-          await existingMember.save();
-        } else {
-          const newWorkspaceMember = new WorkspaceMember({
-            workspaceId,
-            userId: member.userId,
-            role: member.role,
-          });
-          await newWorkspaceMember.save();
-          // 將新的 member 暫存, 等等更新到 Workspace
-          newmember.push(member.userId);
-        }
-      }),
-    );
+    const bulkOperations = members
+      // 要刪除的就不更新了
+      .filter((member) => member.state !== "delete")
+      .map((member) => ({
+        updateOne: {
+          filter: { workspaceId, userId: member.userId },
+          update: {
+            $set: {
+              role: member.role,
+            },
+          },
+          upsert: true, // 資料庫不存在就新建
+        },
+      }));
+    // 修改 member
+    const result = await WorkspaceMember.bulkWrite(bulkOperations);
 
-    console.log("新增的成員(newmember) = ", newmember);
-    // 更新 workspace member
-    targetWorkspace.memberIds = targetWorkspace.memberIds.concat(newmember);
-    console.log("要更新的 workspace.memberIds = ", targetWorkspace.memberIds);
+    console.log("result = ", result);
+    // foreach
+    // 取出要新建的 member
+    const createMembers = members.filter((member) => member.state === "create").map((member) => member.userId);
+    // const createMembers = members
+    //   .filter((member) => member.state === "create")
+    //   .map((member) => new mongoose.Types.ObjectId(member.userId));
+    console.log("createMembers = ", createMembers);
+    // 取出要刪除的 member
+    // const deleteMembers = members.filter((member) => member.state === "delete").map((member) => member.userId);
+    const deleteMembers = members
+      .filter((member) => member.state === "delete")
+      .map((member) => new mongoose.Types.ObjectId(member.userId).toString());
+    console.log("deleteMembers = ", deleteMembers);
+    // const tmpMemberIds = [...targetWorkspace.memberIds, ...createMembers].reduce((prev, curr) => {
+    //   if (deleteMembers.includes(curr as IRequestMembers["userId"])) {
+    //     return prev;
+    //   }
+    //   (prev as string[]).push(curr as IRequestMembers["userId"]);
+    //   return prev;
+    // }, []);
+    deleteMembers.forEach((item) => console.log(item.toString()));
+    const tmpMemberIds = [...targetWorkspace.memberIds, ...createMembers].reduce((prev, curr) => {
+      const currObjectId = new mongoose.Types.ObjectId(curr).toString();
+      console.log(currObjectId.toString());
+      if (deleteMembers.includes(currObjectId)) {
+        console.log("有ㄚ");
+        return prev;
+      }
+      (prev as string[]).push(curr as IRequestMembers["userId"]);
+      return prev;
+    }, []);
+
+    console.log("tmpMemberIds = ", tmpMemberIds);
+    targetWorkspace.memberIds = tmpMemberIds;
     await targetWorkspace.save();
-
-    const updatedWorkspaceMembers = await WorkspaceMember.find({ workspaceId }).populate(["workspace", "user"]).exec();
-    const [updatedWorkspaceMember] = updatedWorkspaceMembers;
 
     sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
       // workspaceId: updatedWorkspaceMember.workspace?.["_id"],
-      workspaceName: updatedWorkspaceMember.workspace?.name,
+      // workspaceName: updatedWorkspaceMember.workspace?.name,
       // members: updatedWorkspaceMembers.map((workspaceMember) => ({
       //   userId: workspaceMember.userId,
       //   username: workspaceMember.user?.username,
@@ -294,7 +312,7 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
           Array.from(item.workspace?.memberIds || [], async (memberId) => {
             const memberData = await User.findById(memberId);
             const roleData = await WorkspaceMember.find({ userId: memberId, workspaceId: item.workspaceId });
-            console.log("roleData = ", roleData);
+            // console.log("roleData = ", roleData);
             return {
               userId: memberId,
               username: memberData?.username,
@@ -315,7 +333,7 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
         };
       }),
     );
-    console.log("回傳的資料 = ", responseData);
+    // console.log("回傳的資料 = ", responseData);
     // 回傳成功回應以及查詢到的資料
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, responseData);
   }
