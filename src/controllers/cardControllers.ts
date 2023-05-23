@@ -182,7 +182,7 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
         size,
         mimetype,
       };
-      mongoDbHandler.updateDb("Card", Card, { _id: cardId }, { attachment }, {}, res, next);
+      mongoDbHandler.updateDb("Card", Card, { _id: cardId }, { $push: { attachment } }, {}, res, next);
     }
   }
 };
