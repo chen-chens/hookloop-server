@@ -182,9 +182,28 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
         size,
         mimetype,
       };
+      // 提醒前端使用 fileId
       mongoDbHandler.updateDb("Card", Card, { _id: cardId }, { $push: { attachment } }, {}, res, next);
     }
   }
+};
+const deleteAttachment = async (req: Request, res: Response, next: NextFunction) => {
+  // 提醒前端提供 fileId
+  console.log("req.params: ", req.params);
+  const { cardId, attachmentId } = req.params;
+  const successfullyDeleted = fileHandler.fileDelete(attachmentId, next);
+  if (!successfullyDeleted) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_DELETE);
+  }
+  mongoDbHandler.updateDb(
+    "Card",
+    Card,
+    { _id: cardId },
+    { $pull: { attachment: { fileId: attachmentId } } },
+    {},
+    res,
+    next,
+  );
 };
 export default {
   createCard,
@@ -193,4 +212,5 @@ export default {
   archiveCard,
   moveCard,
   addAttachment,
+  deleteAttachment,
 };

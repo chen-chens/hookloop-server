@@ -67,13 +67,19 @@ const cardSchema = new Schema(
       ),
     ],
     attachment: [
-      {
-        name: String,
-        url: String,
-        fileId: String,
-        size: Number,
-        mimeType: String,
-      },
+      new Schema(
+        {
+          name: String,
+          url: String,
+          fileId: String,
+          size: Number,
+          mimeType: String,
+        },
+        {
+          id: false,
+          _id: false,
+        },
+      ),
     ],
     isArchived: {
       type: Boolean,
