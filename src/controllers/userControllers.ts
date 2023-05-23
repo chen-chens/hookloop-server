@@ -137,10 +137,13 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 
 const updatePassword = async (req: Request, res: Response, next: NextFunction) => {
   const { newPassword, oldPassword } = req.body;
+  console.log("Update password start.");
 
   if (oldPassword) {
+    console.log("req.headers.authorization: ", req.headers.authorization);
     const bearerToken = req.headers.authorization;
     const token = bearerToken ? getUserIdByToken(bearerToken.split(" ")[1]) : "";
+    console.log("token: ", token);
 
     const { userId } = token as { userId: string };
 
@@ -159,6 +162,7 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
       const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, options);
 
       sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
+      console.log("Update password end.");
     }
   }
 };
