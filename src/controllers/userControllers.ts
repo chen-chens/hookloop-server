@@ -163,6 +163,13 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
       });
       console.log("newData: ", newData);
 
+      res.setHeader("Access-Control-Allow-Origin", "https://hookloop-client.onrender.com");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+
+      console.log("res: ", res);
+
       sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
       console.log("Update password end.");
     }
