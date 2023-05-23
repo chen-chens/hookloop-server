@@ -50,6 +50,7 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
     });
     return;
   }
+  console.log("workspaceName 檢查ok");
   if (!members || (members && members.length === 0)) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
       field: "members",
@@ -57,7 +58,7 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
     });
     return;
   }
-
+  console.log("members 檢查ok");
   const uniqueMemberIds = new Set(members.map((member) => member.userId));
   const hasDuplicateUserId = members.length > uniqueMemberIds.size;
   if (hasDuplicateUserId) {
@@ -67,7 +68,7 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
     });
     return;
   }
-
+  console.log("members 是否重複 檢查ok");
   const hasInvalidRole = members.some((member) => !Object.values(RoleType).includes(member.role));
   if (hasInvalidRole) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
@@ -104,12 +105,13 @@ const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: Next
     })),
   });
 };
+// console.log("workspaceName = ", workspaceName);
+//   console.log("members = ", members);
+//   console.log("workspaceId = ", workspaceId);
 
 const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: NextFunction) => {
   const { workspaceName, members, workspaceId } = req.body;
-  console.log("workspaceName = ", workspaceName);
-  console.log("members = ", members);
-  console.log("workspaceId = ", workspaceId);
+
   if (workspaceName) {
     const updateResult = await Workspace.findByIdAndUpdate({ _id: workspaceId }, { name: workspaceName }, dbOptions);
     if (!updateResult) {
@@ -123,12 +125,14 @@ const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: 
         workspaceName: updateResult.name,
       });
     }
-    return;
+    // return; ??
   }
-
+  console.log("workspaceName 檢查 ok");
   if (members && members.length > 0) {
     const uniqueMemberIds = new Set(members.map((member) => member.userId));
+    console.log("uniqueMemberIds = ", uniqueMemberIds);
     const hasDuplicateUserId = members.length > uniqueMemberIds.size;
+
     if (hasDuplicateUserId) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "userId",
@@ -145,16 +149,12 @@ const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: 
       });
       return;
     }
-    const hasOwnerRequest = members.some((member) => member.role === RoleType.OWNER);
-    if (hasOwnerRequest) {
-      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "role",
-        error: "Invalid Request! Owner is unique!",
-      });
-      return;
-    }
-
+    // 找到要更新的 workspace
     const targetWorkspace = await Workspace.findOne({ _id: workspaceId });
+
+    console.log("要更新的 workspace = ", targetWorkspace);
+
+    // 檢查要更新的 workspace 是否存在
     if (!targetWorkspace) {
       forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_UPDATE, {
         field: "workspaceId",
@@ -162,28 +162,43 @@ const updateWorkspaceById = async (req: IWorkspaceRequest, res: Response, next: 
       });
       return;
     }
+    console.log("要更新的 workspace 存在");
 
-    members.forEach(async (member) => {
-      const existingMember = await WorkspaceMember.findOne({ workspaceId, userId: member.userId });
-      if (existingMember) {
-        existingMember.role = member.role;
-        await existingMember.save();
-      } else {
-        const newWorkspaceMember = new WorkspaceMember({
-          workspaceId,
-          userId: member.userId,
-          role: member.role,
-        });
-        await newWorkspaceMember.save();
-        targetWorkspace.memberIds.push(newWorkspaceMember.userId);
-      }
-    });
+    // 要新增到 workspace 的 member
+    const newmember: any[] = [];
+    await Promise.all(
+      // 遍歷所有 member
+      members.map(async (member) => {
+        // 判斷 member 是否存在
+        const existingMember = await WorkspaceMember.findOne({ workspaceId, userId: member.userId });
+        // 如果存在就只更新 role, 不存在就建立新 workspacemember
+        if (existingMember) {
+          existingMember.role = member.role;
+          await existingMember.save();
+        } else {
+          const newWorkspaceMember = new WorkspaceMember({
+            workspaceId,
+            userId: member.userId,
+            role: member.role,
+          });
+          await newWorkspaceMember.save();
+          // 將新的 member 暫存, 等等更新到 Workspace
+          newmember.push(member.userId);
+        }
+      }),
+    );
 
+    console.log("新增的成員(newmember) = ", newmember);
+    // 更新 workspace member
+    targetWorkspace.memberIds = targetWorkspace.memberIds.concat(newmember);
+    console.log("要更新的 workspace.memberIds = ", targetWorkspace.memberIds);
     await targetWorkspace.save();
+
     const updatedWorkspaceMembers = await WorkspaceMember.find({ workspaceId }).populate(["workspace", "user"]).exec();
     const [updatedWorkspaceMember] = updatedWorkspaceMembers;
+
     sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
-      workspaceId: updatedWorkspaceMember.workspace?.id,
+      // workspaceId: updatedWorkspaceMember.workspace?.["_id"],
       workspaceName: updatedWorkspaceMember.workspace?.name,
       // members: updatedWorkspaceMembers.map((workspaceMember) => ({
       //   userId: workspaceMember.userId,
@@ -260,16 +275,17 @@ const deleteUserFromWorkspace = async (req: IDeleteUserFromWorkspaceRequest, res
 
 const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.user as IUser;
-
+  console.log("user id = ", id);
   if (!id) {
     forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_GET_DATA, {
       field: "userId",
       error: "The user is not existing!",
     });
   } else {
+    console.log("有傳ID 繼續執行");
     // 使用使用者ID查詢目標工作區成員資料
     const targetWorkspaces = await WorkspaceMember.find({ userId: id }).populate(["workspace", "user"]).exec();
-
+    console.log("使用user id找到的workspace = ", targetWorkspaces.length);
     // 並行處理每個工作區的成員資料查詢
     const responseData = await Promise.all(
       targetWorkspaces.map(async (item) => {
@@ -278,13 +294,13 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
           Array.from(item.workspace?.memberIds || [], async (memberId) => {
             const memberData = await User.findById(memberId);
             const roleData = await WorkspaceMember.find({ userId: memberId, workspaceId: item.workspaceId });
-            // console.log("roleData = ", roleData);
+            console.log("roleData = ", roleData);
             return {
               userId: memberId,
               username: memberData?.username,
               isArchived: memberData?.isArchived,
               // role: item.role,
-              role: roleData[0].role,
+              role: roleData[0]?.role || "",
             };
           }),
         );
@@ -299,7 +315,7 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
         };
       }),
     );
-
+    console.log("回傳的資料 = ", responseData);
     // 回傳成功回應以及查詢到的資料
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, responseData);
   }
