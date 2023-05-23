@@ -55,13 +55,16 @@ const cardSchema = new Schema(
       },
     ],
     webLink: [
-      {
-        name: {
-          type: String,
-          maxLength: 30,
+      new Schema(
+        {
+          name: {
+            type: String,
+            maxLength: 30,
+          },
+          url: String,
         },
-        url: String,
-      },
+        { id: false },
+      ),
     ],
     attachment: [
       {
@@ -80,6 +83,7 @@ const cardSchema = new Schema(
   {
     timestamps: true, // generate : createdAt, updatedAt
     versionKey: false,
+    id: false,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   },
