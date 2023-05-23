@@ -19,5 +19,21 @@ router.post(
   asyncWrapper(cardControllers.addAttachment),
 );
 router.delete("/:cardId/attachment/:attachmentId", asyncWrapper(cardControllers.deleteAttachment));
+router.post("/:cardId/comment", validate(cardValidator.addComment, "CREATE"), asyncWrapper(cardControllers.addComment));
+router.patch(
+  "/:cardId/comment/:commentId",
+  validate(cardValidator.updateComment, "UPDATE"),
 
+  asyncWrapper(cardControllers.updateComment),
+);
+router.patch(
+  "/:cardId/comment/:commentId/archive",
+  validate(cardValidator.archiveComment, "DELETE"),
+  asyncWrapper(cardControllers.archiveComment),
+);
+router.get(
+  "/:cardId/comment/:commentId",
+  validate(cardValidator.getCommentHistory, "READ"),
+  asyncWrapper(cardControllers.getCommentHistory),
+);
 export default router;

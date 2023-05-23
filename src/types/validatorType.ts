@@ -18,6 +18,7 @@ export type ValType =
   | "url"
   | "string"
   | "array"
+  | "boolean"
   | "objectIdArray"
   | "urlArray"
   | "lengthRange"
