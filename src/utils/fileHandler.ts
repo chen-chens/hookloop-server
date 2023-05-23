@@ -55,7 +55,7 @@ const filePost = async (file: any, _: NextFunction) => {
     params: { key },
   });
 
-  console.log("Upload Result:", response);
+  console.log("Upload Result:", response.statusText);
 
   if (response) {
     const { data } = response!;
@@ -65,6 +65,7 @@ const filePost = async (file: any, _: NextFunction) => {
       size: data.size,
       type: data.mimetype,
     };
+    // 刪除暫存區檔案
     fs.unlink(file.path, (err) => {
       if (err) {
         console.error(`Error: ${err}`);
@@ -74,6 +75,7 @@ const filePost = async (file: any, _: NextFunction) => {
     });
     return fileData;
   }
+  // 刪除暫存區檔案
   fs.unlink(file.path, (err) => {
     if (err) {
       console.error(`Error: ${err}`);

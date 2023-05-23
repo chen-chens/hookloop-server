@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { cardControllers } from "@/controllers";
-import { asyncWrapper, validate, verifyUploadAttachmentMiddleware } from "@/middlewares";
+import { asyncWrapper, validate, verifyUploadMiddleware } from "@/middlewares";
 import { cardValidator } from "@/utils";
 
 const router = Router();
@@ -15,7 +15,7 @@ router.post(
   "/:cardId/attachment",
   validate(cardValidator.addAttachment, "UPLOAD"),
   // .single("file") 限制處理單一檔案，但若無檔案不會報錯
-  verifyUploadAttachmentMiddleware.single("file"),
+  verifyUploadMiddleware.attachment.single("file"),
   asyncWrapper(cardControllers.addAttachment),
 );
 // router.get("/:cardId/attachment/:attahmentId", asyncWrapper(cardControllers.getAttachment));
