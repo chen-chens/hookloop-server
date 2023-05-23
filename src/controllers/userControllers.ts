@@ -142,7 +142,6 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
   if (oldPassword) {
     const bearerToken = req.headers.authorization;
     const token = bearerToken ? getUserIdByToken(bearerToken.split(" ")[1]) : "";
-    console.log("token: ", token);
 
     const { userId } = token as { userId: string };
 
@@ -158,17 +157,7 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
       const options = { new: true, runValidators: true };
 
       const securedPassword = await bcrypt.hash(newPassword, 12);
-      const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, options).catch((err) => {
-        console.log("findByIdAndUpdate Error: ", err);
-      });
-      console.log("newData: ", newData);
-
-      res.setHeader("Access-Control-Allow-Origin", "https://hookloop-client.onrender.com");
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
-      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-      res.setHeader("Access-Control-Allow-Credentials", "true");
-
-      console.log("res: ", res);
+      const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, options);
 
       sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
       console.log("Update password end.");
