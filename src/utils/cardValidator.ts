@@ -60,10 +60,52 @@ const addAttachment: ValidationFn = (req) => {
   return validateFieldsAndGetErrorData(req, valFields);
 };
 
+const addComment: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "currentComment", fieldName: "Comment", rules: [{ type: "fieldExist" }, { type: "string" }] },
+    { field: "userId", fieldName: "User Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+const updateComment: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "commentId", fieldName: "Comment Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "currentComment", fieldName: "Comment", rules: [{ type: "fieldExist" }, { type: "string" }] },
+    { field: "previousComment", fieldName: "Previous Comment", rules: [{ type: "fieldExist" }, { type: "string" }] },
+    {
+      field: "previousCommentTime",
+      fieldName: "Previous Comment Time",
+      rules: [{ type: "fieldExist" }, { type: "date" }],
+    },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+const archiveComment: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "commentId", fieldName: "Comment Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "isArchived", fieldName: "Is Archived", rules: [{ type: "fieldExist" }, { type: "boolean" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+const getCommentHistory: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "commentId", fieldName: "Comment Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+
 export default {
   createCard,
   getCardById,
   updateCard,
   archiveCard,
   addAttachment,
+  addComment,
+  updateComment,
+  archiveComment,
+  getCommentHistory,
 };
