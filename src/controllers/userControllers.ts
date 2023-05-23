@@ -140,7 +140,6 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
   console.log("Update password start.");
 
   if (oldPassword) {
-    console.log("req.headers.authorization: ", req.headers.authorization);
     const bearerToken = req.headers.authorization;
     const token = bearerToken ? getUserIdByToken(bearerToken.split(" ")[1]) : "";
     console.log("token: ", token);
@@ -159,7 +158,9 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
       const options = { new: true, runValidators: true };
 
       const securedPassword = await bcrypt.hash(newPassword, 12);
-      const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, options);
+      const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, options).catch((err) => {
+        console.log("findByIdAndUpdate Error: ", err);
+      });
 
       sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
       console.log("Update password end.");
