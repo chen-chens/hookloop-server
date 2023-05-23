@@ -32,10 +32,15 @@ const getMember = async (req: Request, res: Response) => {
     email: { $regex: email, $options: "i" },
     // username 欄位存在才回傳
     username: { $ne: null },
-  }).select("email avatar username"); // 只回傳 {email, avatar, username} 給前端
+  }).select("email avatar username _id"); // 只回傳 {email, avatar, username} 給前端
+
+  const transformedMembers = members.map((member) => {
+    // eslint-disable-next-line no-underscore-dangle
+    return { ...member.toObject(), userId: member._id };
+  });
 
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-    members,
+    members: transformedMembers,
   });
 };
 
