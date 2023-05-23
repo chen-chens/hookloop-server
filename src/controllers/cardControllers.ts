@@ -24,7 +24,7 @@ const getCardById = async (req: Request, res: Response, next: NextFunction) => {
     .populate("tag", "id name color")
     .populate({
       path: "cardComment",
-      select: "_id currentContent createdAt updatedAt",
+      select: "_id currentComment createdAt updatedAt",
       match: { isArchived: false },
       options: { sort: { createdAt: -1 } },
       populate: {
