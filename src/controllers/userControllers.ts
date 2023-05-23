@@ -161,6 +161,7 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
       const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, options).catch((err) => {
         console.log("findByIdAndUpdate Error: ", err);
       });
+      console.log("newData: ", newData);
 
       sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
       console.log("Update password end.");
