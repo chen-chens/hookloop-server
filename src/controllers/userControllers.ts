@@ -159,12 +159,7 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
       const securedPassword = await bcrypt.hash(newPassword, 12);
       const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, options);
 
-      res.json({
-        status: 200,
-        message: ApiResults.SUCCESS_UPDATE,
-        newData,
-      });
-      // sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
+      sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
       console.log("Update password end.");
     }
   }
