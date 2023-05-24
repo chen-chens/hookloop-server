@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { forwardCustomError } from "@/middlewares";
 import { Kanban } from "@/models";
 import WorkspaceMember from "@/models/workspaceMemberModel";
+import Workspace from "@/models/workspaceModel";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
@@ -44,6 +45,17 @@ export default {
           name,
           workspaceId,
         });
+
+        // 找到 kanban 建立在哪個 workspace
+        const targetWorkspace = await Workspace.findOne({ _id: workspaceId });
+        // 如果 workspace 存在就把新建立的 kanban id 寫入資料庫
+        if (targetWorkspace) {
+          // eslint-disable-next-line no-underscore-dangle
+          const kanbans = targetWorkspace?.kanbans.concat([newKanban._id]);
+          targetWorkspace.kanbans = kanbans;
+          await targetWorkspace.save();
+        }
+
         sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
           key: newKanban.key,
           name: newKanban.name,
