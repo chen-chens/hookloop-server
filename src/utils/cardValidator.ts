@@ -59,11 +59,26 @@ const addAttachment: ValidationFn = (req) => {
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
-
+const deleteAttachment: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    {
+      field: "attachmentId",
+      fieldName: "Attachment Id",
+      rules: [{ type: "paramExist" }, { type: "paramId" }],
+    },
+    { field: "delete", fieldName: "Delete attachment", rules: [{ type: "fieldExist" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
 const addComment: ValidationFn = (req) => {
   const valFields: ValField[] = [
     { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "currentComment", fieldName: "Comment", rules: [{ type: "fieldExist" }, { type: "string" }] },
+    {
+      field: "currentComment",
+      fieldName: "Comment",
+      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 500 }],
+    },
     { field: "userId", fieldName: "User Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
@@ -72,8 +87,16 @@ const updateComment: ValidationFn = (req) => {
   const valFields: ValField[] = [
     { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
     { field: "commentId", fieldName: "Comment Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "currentComment", fieldName: "Comment", rules: [{ type: "fieldExist" }, { type: "string" }] },
-    { field: "previousComment", fieldName: "Previous Comment", rules: [{ type: "fieldExist" }, { type: "string" }] },
+    {
+      field: "currentComment",
+      fieldName: "Comment",
+      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 500 }],
+    },
+    {
+      field: "previousComment",
+      fieldName: "Previous Comment",
+      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 500 }],
+    },
     {
       field: "previousCommentTime",
       fieldName: "Previous Comment Time",
@@ -104,6 +127,7 @@ export default {
   updateCard,
   archiveCard,
   addAttachment,
+  deleteAttachment,
   addComment,
   updateComment,
   archiveComment,

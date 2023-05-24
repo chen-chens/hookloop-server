@@ -31,7 +31,7 @@ router.patch(
   asyncWrapper(kanbanControllers.updateTagById),
 );
 router.patch(
-  "/:kanbanId/tag/:tagId/archive",
+  "/:kanbanId/tag/:tagId/isArchived",
   validate(kanbanValidators.archiveTag, "DELETE"),
   asyncWrapper(kanbanControllers.archiveTag),
 );
