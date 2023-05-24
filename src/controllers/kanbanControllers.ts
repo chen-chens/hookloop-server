@@ -171,9 +171,10 @@ export default {
       }
     }
   },
-  getTags: async (req: Request, res: Response, next: NextFunction) => {
+  getTags: async (req: Request, res: Response, _: NextFunction) => {
     const { kanbanId } = req.params;
-    mongoDbHandler.getDb("Tag", Tag, { kanbanId }, {}, res, next);
+    const allTags = await Tag.find({ kanbanId, isArchived: false });
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, allTags);
   },
   createTag: async (req: Request, res: Response, _: NextFunction) => {
     const { kanbanId } = req.params;

@@ -4,7 +4,7 @@ import { validateFieldsAndGetErrorData } from "./validationHelper";
 
 const getTags: ValidationFn = (req) => {
   const valFields: ValField[] = [
-    { field: "kanbanId", fieldName: "kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
@@ -12,17 +12,21 @@ const getTags: ValidationFn = (req) => {
 const createTag: ValidationFn = (req) => {
   const valFields: ValField[] = [
     { field: "kanbanId", fieldName: "kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "name", fieldName: "name", rules: [{ type: "fieldExist" }, { type: "string" }] },
-    { field: "color", fieldName: "color", rules: [{ type: "string" }] },
-    { field: "icon", fieldName: "icon", rules: [{ type: "string" }] },
+    {
+      field: "name",
+      fieldName: "Name",
+      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 50 }],
+    },
+    { field: "color", fieldName: "Color", rules: [{ type: "string" }] },
+    { field: "icon", fieldName: "Icon", rules: [{ type: "string" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
 
 const getTagById: ValidationFn = (req) => {
   const valFields: ValField[] = [
-    { field: "kanbanId", fieldName: "kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "tagId", fieldName: "tag Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "tagId", fieldName: "Tag Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
@@ -30,19 +34,19 @@ const getTagById: ValidationFn = (req) => {
 const updateTagById: ValidationFn = (req) => {
   const valFields: ValField[] = [
     { field: "kanbanId", fieldName: "kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "tagId", fieldName: "tag Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "name", fieldName: "name", rules: [{ type: "string" }] },
-    { field: "color", fieldName: "color", rules: [{ type: "string" }] },
-    { field: "icon", fieldName: "icon", rules: [{ type: "string" }] },
+    { field: "tagId", fieldName: "Tag Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "name", fieldName: "Name", rules: [{ type: "string" }, { type: "lengthRange", min: 1, max: 50 }] },
+    { field: "color", fieldName: "Color", rules: [{ type: "string" }] },
+    { field: "icon", fieldName: "Icon", rules: [{ type: "string" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
 
 const archiveTag: ValidationFn = (req) => {
   const valFields: ValField[] = [
-    { field: "kanbanId", fieldName: "kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "tagId", fieldName: "tag Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "archive", fieldName: "archive", rules: [{ type: "boolean" }] },
+    { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "tagId", fieldName: "Tag Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "isArchived", fieldName: "Is Archived", rules: [{ type: "fieldExist" }, { type: "boolean" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
