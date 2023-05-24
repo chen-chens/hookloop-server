@@ -1,7 +1,8 @@
 import { Router } from "express";
 
 import { kanbanControllers } from "@/controllers";
-import { asyncWrapper } from "@/middlewares";
+import { asyncWrapper, validate } from "@/middlewares";
+import { kanbanValidators } from "@/utils";
 
 const router = Router();
 
@@ -12,5 +13,27 @@ router.patch("/:key/name", asyncWrapper(kanbanControllers.renameKanban));
 router.patch("/:key/key", asyncWrapper(kanbanControllers.modifyKanbanKey));
 router.patch("/:key/archive", asyncWrapper(kanbanControllers.archiveKanban));
 router.patch("/:key/pin", asyncWrapper(kanbanControllers.pinKanban));
+
+router.get("/:kanbanId/tag", validate(kanbanValidators.getTags, "READ"), asyncWrapper(kanbanControllers.getTags));
+router.post(
+  "/:kanbanId/tag",
+  validate(kanbanValidators.createTag, "CREATE"),
+  asyncWrapper(kanbanControllers.createTag),
+);
+router.get(
+  "/:kanbanId/tag/:tagId",
+  validate(kanbanValidators.getTagById, "READ"),
+  asyncWrapper(kanbanControllers.getTagById),
+);
+router.patch(
+  "/:kanbanId/tag/:tagId",
+  validate(kanbanValidators.updateTagById, "UPDATE"),
+  asyncWrapper(kanbanControllers.updateTagById),
+);
+router.patch(
+  "/:kanbanId/tag/:tagId/archive",
+  validate(kanbanValidators.archiveTag, "DELETE"),
+  asyncWrapper(kanbanControllers.archiveTag),
+);
 
 export default router;
