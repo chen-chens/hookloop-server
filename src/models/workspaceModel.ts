@@ -26,7 +26,7 @@ const workspaceSchema = new Schema(
     ],
     kanbans: [
       {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "Kanban",
       },
     ],

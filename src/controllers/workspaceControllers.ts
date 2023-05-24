@@ -6,6 +6,7 @@ import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
 import WorkspaceMember, { IWorkspaceMember } from "@/models/workspaceMemberModel";
+// import { IWorkspace } from "@/models/workspaceModel";
 import {
   ApiResults,
   IDeleteUserFromWorkspaceRequest,
@@ -287,7 +288,7 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
     // console.log("有傳ID 繼續執行");
     // 使用使用者ID查詢目標工作區成員資料
     const targetWorkspaces = await WorkspaceMember.find({ userId: id }).populate(["workspace", "user"]).exec();
-    // console.log("使用user id找到的workspace = ", targetWorkspaces.length);
+    // console.log("使用user id找到的workspace = ", targetWorkspaces);
     // 並行處理每個工作區的成員資料查詢
     const responseData = await Promise.all(
       targetWorkspaces.map(async (item) => {
@@ -296,7 +297,7 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
           Array.from(item.workspace?.memberIds || [], async (memberId) => {
             const memberData = await User.findById(memberId);
             const roleData = await WorkspaceMember.find({ userId: memberId, workspaceId: item.workspaceId });
-            // console.log("roleData = ", roleData);
+
             return {
               userId: memberId,
               username: memberData?.username,
@@ -306,13 +307,15 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
             };
           }),
         );
-
+        const nowWorkspace = await Workspace.findOne({ _id: item.workspaceId }).populate("kanbans");
+        // console.log("nowWorkspace = ", nowWorkspace);
         return {
           workspaceId: item.workspaceId,
           workspaceName: item.workspace?.name,
           updatedAt: item.workspace?.updatedAt,
           isArchived: item.workspace?.isArchived,
-          kanbans: item.workspace?.kanbans,
+          // kanbans: item.workspace?.kanbans,
+          kanbans: nowWorkspace?.kanbans,
           members,
         };
       }),
