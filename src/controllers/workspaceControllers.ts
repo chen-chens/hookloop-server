@@ -15,7 +15,7 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
       error: "Workspace's id is required.",
     });
   } else {
-    mongoDbHandler.getDb("Workspace", Workspace, { _id: id }, null, "kanban", res, next);
+    mongoDbHandler.getDb(res, next, "Workspace", Workspace, { _id: id });
   }
 };
 

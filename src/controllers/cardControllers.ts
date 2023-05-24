@@ -71,6 +71,8 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
     });
   }
   mongoDbHandler.updateDb(
+    res,
+    next,
     "Card",
     Card,
     { _id: id },
@@ -88,15 +90,12 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
       tag,
       updatedWebLink,
     },
-    {},
-    res,
-    next,
   );
 };
 const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const { isArchived } = req.body;
-  mongoDbHandler.updateDb("Card", Card, { _id: id }, { isArchived }, {}, res, next);
+  mongoDbHandler.updateDb(res, next, "Card", Card, { _id: id }, { isArchived });
 };
 
 const moveCard = async (req: Request, res: Response, next: NextFunction) => {

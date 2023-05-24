@@ -5,13 +5,13 @@ import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
 async function getDb(
+  res: Response,
+  next: NextFunction,
   modelName: string,
   model: any,
   query: any,
-  projection: any,
-  populate: any,
-  res: Response,
-  next: NextFunction,
+  projection: any = null,
+  populate: any = null,
 ) {
   const target = await model
     .findOne(query, projection)
@@ -31,13 +31,13 @@ async function getDb(
 }
 
 async function updateDb(
+  res: Response,
+  next: NextFunction,
   modelName: string,
   model: any,
   query: any,
-  updateData: any,
-  projection: any,
-  res: Response,
-  next: NextFunction,
+  updateData: any = null,
+  projection: any = null,
 ) {
   const updateResult = await model.updateOne(query, updateData).catch((err: Error) => {
     console.log("MongoDb UPDATE error: ", err);
