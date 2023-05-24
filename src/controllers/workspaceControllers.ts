@@ -19,6 +19,21 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+const getKanbansByWorkspaceId = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  if (!id) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+      field: "id",
+      error: "Workspace's id is required.",
+    });
+  } else {
+    const result = await mongoDbHandler.getDb(null, next, "Workspace", Workspace, { _id: id });
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+      kanbans: result.kanban,
+    });
+  }
+};
+
 const createWorkspace = async (req: Request, res: Response) => {
   const { id } = req.user as IUser;
   const { name } = req.body;
@@ -80,4 +95,5 @@ export default {
   addPinnedByWorkspaceId,
   deleteUserFromWorkspace,
   getWorkspacesByUserId,
+  getKanbansByWorkspaceId,
 };

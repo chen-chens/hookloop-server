@@ -5,14 +5,14 @@ import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
 async function getDb(
-  res: Response,
+  res: Response | null,
   next: NextFunction,
   modelName: string,
   model: any,
   query: any,
   projection: any = null,
   populate: any = null,
-) {
+): Promise<any | void> {
   const target = await model
     .findOne(query, projection)
     .populate(populate)
@@ -23,11 +23,15 @@ async function getDb(
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
       error: `${modelName} not found.`,
     });
-  } else {
+    return null;
+  }
+  if (res) {
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
       target,
     });
+    return null;
   }
+  return target;
 }
 
 async function updateDb(

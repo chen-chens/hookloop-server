@@ -12,12 +12,14 @@ const {
   addPinnedByWorkspaceId,
   deleteUserFromWorkspace,
   getWorkspacesByUserId,
+  getKanbansByWorkspaceId,
 } = workspaceControllers;
 
 const router = Router();
 
 router.get("/me", verifyTokenMiddleware, asyncWrapper(getWorkspacesByUserId));
 router.get("/:id", asyncWrapper(getWorkspacesById));
+router.get("/:id/kanbans", asyncWrapper(getKanbansByWorkspaceId));
 router.post("", verifyTokenMiddleware, asyncWrapper(createWorkspace));
 router.patch("/:id", asyncWrapper(updateWorkspaceById));
 router.patch("/:id/isArchived", asyncWrapper(closeWorkspaceById));
