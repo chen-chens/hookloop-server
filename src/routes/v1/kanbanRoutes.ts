@@ -14,12 +14,12 @@ router.patch("/:key/key", asyncWrapper(kanbanControllers.modifyKanbanKey));
 router.patch("/:key/archive", asyncWrapper(kanbanControllers.archiveKanban));
 router.patch("/:key/pin", asyncWrapper(kanbanControllers.pinKanban));
 
-router.get("/:kanbanId/tag", validate(kanbanValidators.getTags, "READ"), asyncWrapper(kanbanControllers.getTags));
 router.post(
   "/:kanbanId/tag",
   validate(kanbanValidators.createTag, "CREATE"),
   asyncWrapper(kanbanControllers.createTag),
 );
+router.get("/:kanbanId/tag", validate(kanbanValidators.getTags, "READ"), asyncWrapper(kanbanControllers.getTags));
 router.get(
   "/:kanbanId/tag/:tagId",
   validate(kanbanValidators.getTagById, "READ"),

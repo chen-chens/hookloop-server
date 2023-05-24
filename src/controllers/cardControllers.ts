@@ -21,7 +21,7 @@ const getCardById = async (req: Request, res: Response, next: NextFunction) => {
   const card = await Card.findOne({ _id: id, isArchived: false })
     .populate("reporter", "id username avatar")
     .populate("assignee", "id username avatar")
-    .populate("tag", "id name color")
+    .populate("tag", "id name color icon")
     .populate({
       path: "cardComment",
       select: "_id currentComment userId updatedAt",
