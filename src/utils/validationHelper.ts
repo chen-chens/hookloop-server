@@ -204,3 +204,25 @@ export const validateFieldsAndGetErrorData = (req: Request, valFields: ValField[
   const validationResults = validateFields(req, valFields);
   return aggregateErrors(validationResults);
 };
+
+// function isEmptyValue(value){
+// if(Array.isArray(value)||typeof value==="string"){
+//   return value.length ===0;
+// }else if(value !== null && typeof value === 'object'){
+
+// }
+// }
+// }
+// export const validatorTransport = (schema: any) => {
+//   return (data: any) => {
+//     const schemaFields = Object.keys(schema);
+//     const errors = schemaFields.reduce((error: any, field: any) => {
+//       if (schema[field].isRequired && (!data.hasOwnProperty(field) || isEmptyValue(data[field]))) {
+//         return error.push({ field, error: `${field} is required.` });
+//       }
+//       if (data[field] || data[field] === "") {
+//       }
+//     }, []);
+//     return errors;
+//   };
+// };
