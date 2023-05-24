@@ -35,7 +35,7 @@ export default {
         error: "List's id is required.",
       });
     } else {
-      mongoDbHandler.getDb("List", List, { _id: id }, {}, res, next);
+      mongoDbHandler.getDb("List", List, { _id: id }, null, null, res, next);
     }
   },
   renameList: async (req: Request, res: Response, next: NextFunction) => {

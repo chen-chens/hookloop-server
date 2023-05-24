@@ -5,9 +5,18 @@ import { Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
+import mongoDbHandler from "@/utils/mongoDbHandler";
 
 const getWorkspacesById = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req, res, next);
+  const { id } = req.params;
+  if (!id) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+      field: "id",
+      error: "Workspace's id is required.",
+    });
+  } else {
+    mongoDbHandler.getDb("Workspace", Workspace, { _id: id }, null, "kanban", res, next);
+  }
 };
 
 const createWorkspace = async (req: Request, res: Response) => {

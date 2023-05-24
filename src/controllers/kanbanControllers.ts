@@ -61,7 +61,7 @@ export default {
         error: "Kanban's key is required.",
       });
     } else {
-      mongoDbHandler.getDb("Kanban", Kanban, { key }, { _id: 0 }, res, next);
+      mongoDbHandler.getDb("Kanban", Kanban, { key }, { _id: 0 }, null, res, next);
     }
   },
   modifyKanbanKey: async (req: Request, res: Response, next: NextFunction) => {
