@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
-import { Kanban } from "@/models";
+import { Kanban, Tag } from "@/models";
 import WorkspaceMember from "@/models/workspaceMemberModel";
 import Workspace from "@/models/workspaceModel";
 import { ApiResults, StatusCode } from "@/types";
@@ -182,5 +182,28 @@ export default {
         res.json(membersData);
       }
     }
+  },
+  getTags: async (req: Request, res: Response, next: NextFunction) => {
+    const { kanbanId } = req.params;
+    mongoDbHandler.getDb("Tag", Tag, { kanbanId }, {}, res, next);
+  },
+  createTag: async (req: Request, res: Response, _: NextFunction) => {
+    const { kanbanId } = req.params;
+    const { name, color, icon } = req.body;
+    const newTag = await Tag.create({ kanbanId, name, color, icon });
+    sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newTag);
+  },
+  getTagById: async (req: Request, res: Response, next: NextFunction) => {
+    const { kanbanId, tagId } = req.params;
+    mongoDbHandler.getDb("Tag", Tag, { kanbanId, _id: tagId }, {}, res, next);
+  },
+  updateTagById: async (req: Request, res: Response, next: NextFunction) => {
+    const { kanbanId, tagId } = req.params;
+    const { name, color, icon } = req.body;
+    mongoDbHandler.updateDb("Tag", Tag, { kanbanId, _id: tagId }, { name, color, icon }, {}, res, next);
+  },
+  archiveTag: async (req: Request, res: Response, next: NextFunction) => {
+    const { kanbanId, tagId } = req.params;
+    mongoDbHandler.updateDb("Tag", Tag, { kanbanId, _id: tagId }, { isArchived: true }, {}, res, next);
   },
 };
