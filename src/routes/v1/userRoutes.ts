@@ -11,7 +11,7 @@ router.get("", asyncWrapper(userControllers.getAllUsers));
 router.get("/me", verifyTokenMiddleware, asyncWrapper(userControllers.getUserById));
 router.post("", verifyUserInputMiddleware, asyncWrapper(userControllers.createUser));
 router.patch("/me", asyncWrapper(userControllers.updateUser));
-router.patch("/me/password", asyncWrapper(userControllers.updatePassword));
+router.post("/me/password", asyncWrapper(userControllers.updatePassword));
 
 router.delete("", asyncWrapper(userControllers.deleteAllUsers));
 router.patch("/me/isActive", asyncWrapper(userControllers.deleteUserById));
