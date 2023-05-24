@@ -9,7 +9,11 @@ const router = Router();
 router.post("/", validate(cardValidator.createCard, "CREATE"), asyncWrapper(cardControllers.createCard));
 router.get("/:id", validate(cardValidator.getCardById, "READ"), asyncWrapper(cardControllers.getCardById));
 router.patch("/:id", validate(cardValidator.updateCard, "UPDATE"), asyncWrapper(cardControllers.updateCard));
-router.patch("/:id/archive", validate(cardValidator.archiveCard, "DELETE"), asyncWrapper(cardControllers.archiveCard));
+router.patch(
+  "/:id/isArchived",
+  validate(cardValidator.archiveCard, "DELETE"),
+  asyncWrapper(cardControllers.archiveCard),
+);
 router.patch("/move", asyncWrapper(cardControllers.moveCard));
 router.post(
   "/:cardId/attachment",
@@ -18,7 +22,11 @@ router.post(
   verifyUploadMiddleware.attachment.single("file"),
   asyncWrapper(cardControllers.addAttachment),
 );
-router.delete("/:cardId/attachment/:attachmentId", asyncWrapper(cardControllers.deleteAttachment));
+router.delete(
+  "/:cardId/attachment/:attachmentId",
+  validate(cardValidator.deleteAttachment, "DELETE"),
+  asyncWrapper(cardControllers.deleteAttachment),
+);
 router.post("/:cardId/comment", validate(cardValidator.addComment, "CREATE"), asyncWrapper(cardControllers.addComment));
 router.patch(
   "/:cardId/comment/:commentId",
@@ -27,7 +35,7 @@ router.patch(
   asyncWrapper(cardControllers.updateComment),
 );
 router.patch(
-  "/:cardId/comment/:commentId/archive",
+  "/:cardId/comment/:commentId/isArchived",
   validate(cardValidator.archiveComment, "DELETE"),
   asyncWrapper(cardControllers.archiveComment),
 );
