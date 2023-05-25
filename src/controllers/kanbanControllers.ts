@@ -188,11 +188,15 @@ export default {
     const allTags = await Tag.find({ kanbanId, isArchived: false });
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, allTags);
   },
-  createTag: async (req: Request, res: Response, _: NextFunction) => {
+  createTag: async (req: Request, res: Response, next: NextFunction) => {
     const { kanbanId } = req.params;
     const { name, color, icon } = req.body;
     const newTag = await Tag.create({ kanbanId, name, color, icon });
-    sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newTag);
+    if (!newTag) {
+      forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+    }
+    const allTags = await Tag.find({ kanbanId, isArchived: false });
+    sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, allTags);
   },
   getTagById: async (req: Request, res: Response, next: NextFunction) => {
     const { kanbanId, tagId } = req.params;
@@ -201,10 +205,26 @@ export default {
   updateTagById: async (req: Request, res: Response, next: NextFunction) => {
     const { kanbanId, tagId } = req.params;
     const { name, color, icon } = req.body;
-    mongoDbHandler.updateDb("Tag", Tag, { kanbanId, _id: tagId }, { name, color, icon }, {}, res, next);
+    const newTag = await Tag.findOneAndUpdate({ kanbanId, _id: tagId }, { name, color, icon });
+    if (!newTag) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "tagId",
+        error: "Tag not found.",
+      });
+    }
+    const allTags = await Tag.find({ kanbanId, isArchived: false });
+    sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, allTags);
   },
   archiveTag: async (req: Request, res: Response, next: NextFunction) => {
     const { kanbanId, tagId } = req.params;
-    mongoDbHandler.updateDb("Tag", Tag, { kanbanId, _id: tagId }, { isArchived: true }, {}, res, next);
+    const newTag = await Tag.findOneAndUpdate({ kanbanId, _id: tagId }, { isArchived: true });
+    if (!newTag) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "tagId",
+        error: "Tag not found.",
+      });
+    }
+    const allTags = await Tag.find({ kanbanId, isArchived: false });
+    sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, allTags);
   },
 };
