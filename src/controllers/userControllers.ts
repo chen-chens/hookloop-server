@@ -172,7 +172,9 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
 
     const { userId } = token as { userId: string };
 
-    const targetUser = await User.findById(userId).select("+password");
+    const targetUser = await User.findOne({ _id: userId }).select("+password");
+    console.log("🚀 ~ file: userControllers.ts:170 ~ updatePassword ~ oldPassword:", oldPassword);
+    console.log("🚀 ~ file: userControllers.ts:176 ~ updatePassword ~ targetUser:", targetUser);
     const isPasswordCorrect = await bcrypt.compare(oldPassword, targetUser?.password || "");
 
     if (!isPasswordCorrect) {
