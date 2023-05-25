@@ -182,8 +182,14 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
     } else {
       const securedPassword = await bcrypt.hash(newPassword, 12);
       const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, dbOptions);
+      if (newData) {
+        const newToken = getJwtToken(newData.id);
 
-      sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
+        sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+          token: newToken,
+          username: newData.username,
+        });
+      }
     }
   }
 };
