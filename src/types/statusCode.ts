@@ -1,5 +1,6 @@
 enum StatusCode {
   OK = 200,
+  Created = 201,
   MOVED_PERMANENTLY = 301,
   TEMPORARY_REDIRECT = 307,
   BAD_REQUEST = 400,

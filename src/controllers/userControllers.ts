@@ -1,18 +1,46 @@
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
-import fileupload from "express-fileupload";
 
+import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
 import { IUser } from "@/models/userModel";
-import { ApiResults, StatusCode } from "@/types";
-import { getJwtToken, getUserIdByToken, sendSuccessResponse } from "@/utils";
+import { ApiResults, IQueryUsersRequest, StatusCode } from "@/types";
+import { filteredUndefinedConditions, getJwtToken, getUserIdByToken, sendSuccessResponse } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
 
-const getAllUsers = async (_: Request, res: Response) => {
-  const users = await User.find();
+const getUsers = async (req: IQueryUsersRequest, res: Response, next: NextFunction) => {
+  const { email, isArchived } = req.body;
+  const queryConditions = filteredUndefinedConditions({ email, isArchived });
+  const targetUsers = await User.find(queryConditions);
+  if (!targetUsers) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
+      field: "email",
+      error: "The email is not existing!",
+    });
+  }
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, targetUsers);
+};
+
+// workspace 用來搜尋使用者
+const getMember = async (req: Request, res: Response) => {
+  const { email } = req.params;
+
+  const members = await User.find({
+    // regex: 只要 User Schema 的 email 部分包含 req.params.email 就回傳資料
+    // options.i: 用來忽略大小寫搜尋
+    email: { $regex: email, $options: "i" },
+    // username 欄位存在才回傳
+    username: { $ne: null },
+  }).select("email avatar username _id"); // 只回傳 {email, avatar, username} 給前端
+
+  const transformedMembers = members.map((member) => {
+    // eslint-disable-next-line no-underscore-dangle
+    return { ...member.toObject(), userId: member._id };
+  });
+
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-    users,
+    members: transformedMembers,
   });
 };
 
@@ -46,9 +74,7 @@ const deleteUserById = async (req: Request, res: Response, next: NextFunction) =
       error: "The user is not existing!",
     });
   } else if (token && targetUser) {
-    const options = { new: true, runValidators: true };
-
-    const userData = await User.findByIdAndUpdate(userId, { isArchived: true }, options);
+    const userData = await User.findByIdAndUpdate(userId, { isArchived: true }, dbOptions);
     sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
       userData,
     });
@@ -88,10 +114,8 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   const { userId } = token as { userId: string };
   const targetUser = await User.findById(userId);
 
-  const options = { new: true, runValidators: true };
   const { username, email, avatar, isArchived } = req.body;
-  const { files } = req;
-
+  const { file } = req;
   if (!token || !targetUser) {
     forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_GET_DATA, {
       field: "userId",
@@ -102,17 +126,20 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
       field: "email",
       error: "Email cannot be changed!",
     });
-  } else if (avatar || files) {
+  } else if (avatar || file) {
     if (avatar) {
       // for testing purpose (remove avatar)
-      const data = await User.findByIdAndUpdate(userId, { avatar: "" }, options);
+      const data = await User.findByIdAndUpdate(userId, { avatar: "" }, dbOptions);
       sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: data });
     }
-
-    if (!files || !Object.keys(files).length) {
+    if (!file || !Object.keys(file).length) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
     } else {
-      const validFile = files[Object.keys(files)[0]] as fileupload.UploadedFile;
+      // INFO: 改用 multer 套件處理上傳檔案驗證，僅一筆檔案
+      let validFile = null;
+      if (req.file) {
+        validFile = req.file;
+      }
       if (!validFile) {
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FILE_HANDLER_FAIL);
       } else {
@@ -120,12 +147,12 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
         const uploadedFileMeta = await fileHandler.filePost(validFile, next);
         const { fileId } = uploadedFileMeta as { fileId: string };
 
-        const newData = await User.findByIdAndUpdate(userId, { avatar: fileId }, options);
+        const newData = await User.findByIdAndUpdate(userId, { avatar: fileId }, dbOptions);
         sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
       }
     }
   } else if (username || isArchived) {
-    const userData = await User.findByIdAndUpdate(userId, req.body, options);
+    const userData = await User.findByIdAndUpdate(userId, req.body, dbOptions);
     sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData });
   } else {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
@@ -154,19 +181,23 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
         error: "The password is not correct!",
       });
     } else {
-      const options = { new: true, runValidators: true };
-
       const securedPassword = await bcrypt.hash(newPassword, 12);
-      const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, options);
+      const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, dbOptions);
+      if (newData) {
+        const newToken = getJwtToken(newData.id);
 
-      sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
-      console.log("Update password end.");
+        sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+          token: newToken,
+          username: newData.username,
+        });
+      }
     }
   }
 };
 
 export default {
-  getAllUsers,
+  getUsers,
+  getMember,
   getUserById,
   createUser,
   updateUser,

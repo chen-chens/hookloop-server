@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
-import { Kanban, Workspace } from "@/models";
+import { Kanban, Tag } from "@/models";
+import WorkspaceMember from "@/models/workspaceMemberModel";
+import Workspace from "@/models/workspaceModel";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
@@ -43,6 +45,17 @@ export default {
           name,
           workspaceId,
         });
+
+        // 找到 kanban 建立在哪個 workspace
+        const targetWorkspace = await Workspace.findOne({ _id: workspaceId });
+        // 如果 workspace 存在就把新建立的 kanban id 寫入資料庫
+        if (targetWorkspace) {
+          // eslint-disable-next-line no-underscore-dangle
+          const kanbans = targetWorkspace?.kanbans.concat([newKanban._id]);
+          targetWorkspace.kanbans = kanbans;
+          await targetWorkspace.save();
+        }
+
         sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
           key: newKanban.key,
           name: newKanban.name,
@@ -154,12 +167,44 @@ export default {
         error: `Kanban not found.`,
       });
     } else {
-      const worksoaceData = await Workspace.findOne({ _id: kanbanData.workspaceId });
+      const worksoaceData = await WorkspaceMember.find({ workspaceId: kanbanData.workspaceId }).populate([
+        "workspace",
+        "user",
+      ]);
       if (!worksoaceData) {
         forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
       } else {
-        res.json(worksoaceData.members);
+        const membersData = worksoaceData.map((item) => ({
+          userId: item.userId,
+          username: item.user?.username,
+          role: item.role,
+        }));
+        res.json(membersData);
       }
     }
+  },
+  getTags: async (req: Request, res: Response, _: NextFunction) => {
+    const { kanbanId } = req.params;
+    const allTags = await Tag.find({ kanbanId, isArchived: false });
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, allTags);
+  },
+  createTag: async (req: Request, res: Response, _: NextFunction) => {
+    const { kanbanId } = req.params;
+    const { name, color, icon } = req.body;
+    const newTag = await Tag.create({ kanbanId, name, color, icon });
+    sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newTag);
+  },
+  getTagById: async (req: Request, res: Response, next: NextFunction) => {
+    const { kanbanId, tagId } = req.params;
+    mongoDbHandler.getDb("Tag", Tag, { kanbanId, _id: tagId }, {}, res, next);
+  },
+  updateTagById: async (req: Request, res: Response, next: NextFunction) => {
+    const { kanbanId, tagId } = req.params;
+    const { name, color, icon } = req.body;
+    mongoDbHandler.updateDb("Tag", Tag, { kanbanId, _id: tagId }, { name, color, icon }, {}, res, next);
+  },
+  archiveTag: async (req: Request, res: Response, next: NextFunction) => {
+    const { kanbanId, tagId } = req.params;
+    mongoDbHandler.updateDb("Tag", Tag, { kanbanId, _id: tagId }, { isArchived: true }, {}, res, next);
   },
 };

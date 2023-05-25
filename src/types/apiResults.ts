@@ -14,6 +14,10 @@ enum ApiResults {
   FAIL_TO_SEND_EMAIL = "Failed to send your email !",
   FILE_HANDLER_FAIL = "No file or file size over than 1MB.",
   FILE_NOT_FOUND = "File not found.",
+  FAIL_UPLOAD = "Failed to upload file.",
+  FAIL_UPLOAD_FILE_SIZE = "File size over than 1MB.",
+  FAIL_UPLOAD_IMAGE_SIZE = "Image size over than 500KB.",
+  FAIL_UPLOAD_FILE_TYPE = "File type is not allowed.",
   NOT_FOUND = "Failed to find this page, please check your URL！",
   UNEXPECTED_ERROR = "Unexpected error occurred, please contact the administrator！",
   SUCCESS_LOG_IN = "Log In Successfully！",
@@ -26,6 +30,7 @@ enum ApiResults {
   TOKEN_IS_EXPIRED = "Token is expired! ",
   EMAIL_BEEN_USED = "The email is already existing!",
   EMAIL_NOT_BEEN_USED = "This email has not been used yet.",
+  VALIDATOR_TYPE_ERROR = " Validation fail!",
 }
 
 export default ApiResults;

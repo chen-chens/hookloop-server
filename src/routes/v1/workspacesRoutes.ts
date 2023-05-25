@@ -1,15 +1,17 @@
 import { Router } from "express";
 
 import { workspaceControllers } from "@/controllers";
-import { asyncWrapper, verifyTokenMiddleware } from "@/middlewares";
+import {
+  asyncWrapper,
+  verifyTokenMiddleware as verifyToken,
+  verifyWorkspaceEditAuthMiddleware as verifyWorkspaceEditAuth,
+} from "@/middlewares";
 
 const {
   getWorkspacesById,
   createWorkspace,
   updateWorkspaceById,
   closeWorkspaceById,
-  getAvailableUsersByWorkspaceId,
-  addPinnedByWorkspaceId,
   deleteUserFromWorkspace,
   getWorkspacesByUserId,
   getKanbansByWorkspaceId,
@@ -17,16 +19,12 @@ const {
 
 const router = Router();
 
-router.get("/me", verifyTokenMiddleware, asyncWrapper(getWorkspacesByUserId));
-router.get("/:id", asyncWrapper(getWorkspacesById));
+router.get("/me", verifyToken, asyncWrapper(getWorkspacesByUserId));
+router.get("/:id", verifyToken, asyncWrapper(getWorkspacesById));
 router.get("/:id/kanbans", asyncWrapper(getKanbansByWorkspaceId));
-router.post("", verifyTokenMiddleware, asyncWrapper(createWorkspace));
-router.patch("/:id", asyncWrapper(updateWorkspaceById));
-router.patch("/:id/isArchived", asyncWrapper(closeWorkspaceById));
-
-// 待確認的 API：看 User, Workspace Schema 怎麼關聯
-router.get("/:id/availableUsers", asyncWrapper(getAvailableUsersByWorkspaceId));
-router.put("/:id/isPinned", asyncWrapper(addPinnedByWorkspaceId));
-router.delete("/:workspaceId/members/:memberId", asyncWrapper(deleteUserFromWorkspace));
+router.post("", verifyToken, asyncWrapper(createWorkspace));
+router.patch("/:id", verifyToken, verifyWorkspaceEditAuth, asyncWrapper(updateWorkspaceById));
+router.patch("/:id/isArchived", verifyToken, verifyWorkspaceEditAuth, asyncWrapper(closeWorkspaceById));
+router.delete("/:workspaceId/member", verifyToken, verifyWorkspaceEditAuth, asyncWrapper(deleteUserFromWorkspace));
 
 export default router;

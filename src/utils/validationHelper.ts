@@ -43,7 +43,7 @@ const valObjectIdField = (req: Request, field: string, fieldName: string): ValRe
 
 const valDate = (req: Request, field: string, fieldName: string): ValReturn => {
   const fieldValue = req.body[field];
-  if (fieldValue && !validator.isDate(field)) {
+  if (fieldValue && Number.isNaN(Date.parse(fieldValue))) {
     return generateErrorData(field, `${fieldName} must be a valid date.`);
   }
   return null;
@@ -72,7 +72,13 @@ const valArray = (req: Request, field: string, fieldName: string): ValReturn => 
   }
   return null;
 };
-
+const valboolean = (req: Request, field: string, fieldName: string): ValReturn => {
+  const fieldValue = req.body[field];
+  if (fieldValue && typeof fieldValue !== "boolean") {
+    return generateErrorData(field, `${fieldName} must be a boolean`);
+  }
+  return null;
+};
 const valObjectIdArray = (req: Request, field: string, fieldName: string): ValReturn => {
   const ids = req.body[field];
   if (ids && !Array.isArray(ids)) {
@@ -145,6 +151,8 @@ const getValidators = (req: Request, field: string, fieldName: string, rules: Va
         return valString(req, field, fieldName);
       case "array":
         return valArray(req, field, fieldName);
+      case "boolean":
+        return valboolean(req, field, fieldName);
       case "objectIdArray":
         return valObjectIdArray(req, field, fieldName);
       case "urlArray":

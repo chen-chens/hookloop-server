@@ -10,6 +10,7 @@ const createCard: ValidationFn = (req) => {
       rules: [{ type: "fieldExist" }, { type: "lengthRange", min: 1, max: 50 }],
     },
     { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
+    { field: "listId", fieldName: "List Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
@@ -39,7 +40,7 @@ const updateCard: ValidationFn = (req) => {
       rules: [{ type: "enum", enumArray: ["Pending", "In Progress", "Done"] }],
     },
     { field: "tag", fieldName: "Tag", rules: [{ type: "objectIdArray" }] },
-    { field: "webLink", fieldName: "Web link", rules: [{ type: "urlArray" }] },
+    { field: "webLink", fieldName: "Web link", rules: [{ type: "array" }] },
   ];
 
   return validateFieldsAndGetErrorData(req, valFields);
@@ -53,9 +54,83 @@ const archiveCard: ValidationFn = (req) => {
   return validateFieldsAndGetErrorData(req, valFields);
 };
 
+const addAttachment: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+const deleteAttachment: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    {
+      field: "attachmentId",
+      fieldName: "Attachment Id",
+      rules: [{ type: "paramExist" }, { type: "paramId" }],
+    },
+    { field: "delete", fieldName: "Delete attachment", rules: [{ type: "fieldExist" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+const addComment: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    {
+      field: "currentComment",
+      fieldName: "Comment",
+      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 500 }],
+    },
+    { field: "userId", fieldName: "User Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+const updateComment: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "commentId", fieldName: "Comment Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    {
+      field: "currentComment",
+      fieldName: "Comment",
+      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 500 }],
+    },
+    {
+      field: "previousComment",
+      fieldName: "Previous Comment",
+      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 500 }],
+    },
+    {
+      field: "previousCommentTime",
+      fieldName: "Previous Comment Time",
+      rules: [{ type: "fieldExist" }, { type: "date" }],
+    },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+const archiveComment: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "commentId", fieldName: "Comment Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "isArchived", fieldName: "Is Archived", rules: [{ type: "fieldExist" }, { type: "boolean" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+const getCommentHistory: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+    { field: "commentId", fieldName: "Comment Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+
 export default {
   createCard,
   getCardById,
   updateCard,
   archiveCard,
+  addAttachment,
+  deleteAttachment,
+  addComment,
+  updateComment,
+  archiveComment,
+  getCommentHistory,
 };

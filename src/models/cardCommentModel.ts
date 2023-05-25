@@ -2,11 +2,11 @@ import mongoose, { Schema } from "mongoose";
 
 const cardCommentSchema = new Schema(
   {
-    currentContent: {
+    currentComment: {
       type: String,
       required: true,
     },
-    previousContent: [
+    previousComment: [
       {
         content: String,
         time: Date,
