@@ -7,12 +7,20 @@ import { sendSuccessResponse } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
-const createCard = async (req: Request, res: Response, _: NextFunction) => {
-  const { name, kanbanId } = req.body;
+const createCard = async (req: Request, res: Response, next: NextFunction) => {
+  const { name, kanbanId, listId } = req.body;
   const newCard = await Card.create({
     name,
     kanbanId,
   });
+  const id = "_id";
+  const newList = await List.findOneAndUpdate({ _id: listId }, { $push: { cardOrder: newCard[id] } }, { new: true });
+  if (!newList) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "listId",
+      error: "List not found",
+    });
+  }
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newCard);
 };
 
