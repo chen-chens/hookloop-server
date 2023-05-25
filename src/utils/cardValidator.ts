@@ -10,6 +10,7 @@ const createCard: ValidationFn = (req) => {
       rules: [{ type: "fieldExist" }, { type: "lengthRange", min: 1, max: 50 }],
     },
     { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
+    { field: "listId", fieldName: "List Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
