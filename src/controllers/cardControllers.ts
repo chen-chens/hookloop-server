@@ -93,13 +93,13 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
     tag,
     webLink: updatedWebLink,
   };
-  mongoDbHandler.updateDb("Card", Card, { _id: id }, updatedFields, {}, res, next);
+  mongoDbHandler.updateDb(res, next, "Card", Card, { _id: id }, updatedFields, {});
 };
 
 const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const { isArchived } = req.body;
-  mongoDbHandler.updateDb("Card", Card, { _id: id }, { isArchived }, {}, res, next);
+  mongoDbHandler.updateDb(res, next, "Card", Card, { _id: id }, { isArchived });
 };
 
 const moveCard = async (req: Request, res: Response, next: NextFunction) => {
@@ -184,7 +184,7 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
         mimetype,
       };
       // 提醒前端使用 fileId
-      mongoDbHandler.updateDb("Card", Card, { _id: cardId }, { $push: { attachment: updatedFields } }, {}, res, next);
+      mongoDbHandler.updateDb(res, next, "Card", Card, { _id: cardId }, { $push: { attachment: updatedFields } }, {});
     }
   }
 };
@@ -197,13 +197,13 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_DELETE);
   }
   mongoDbHandler.updateDb(
+    res,
+    next,
     "Card",
     Card,
     { _id: cardId },
     { $pull: { attachment: { fileId: attachmentId } } },
     {},
-    res,
-    next,
   );
 };
 const addComment = async (req: Request, res: Response, _: NextFunction) => {
@@ -220,22 +220,22 @@ const updateComment = async (req: Request, res: Response, next: NextFunction) =>
   const replaceData = { currentComment, idEdited: true };
   const pushData = { previousComment: { content: previousComment, time: previousCommentTime } };
   mongoDbHandler.updateDb(
+    res,
+    next,
     "CardComment",
     CardComment,
     { _id: commentId, cardId },
     { $set: replaceData, $push: pushData },
     {},
-    res,
-    next,
   );
 };
 const archiveComment = async (req: Request, res: Response, next: NextFunction) => {
   const { cardId, commentId } = req.params;
-  mongoDbHandler.updateDb("CardComment", CardComment, { _id: commentId, cardId }, { isArchived: true }, {}, res, next);
+  mongoDbHandler.updateDb(res, next, "CardComment", CardComment, { _id: commentId, cardId }, { isArchived: true }, {});
 };
 const getCommentHistory = async (req: Request, res: Response, next: NextFunction) => {
   const { cardId, commentId } = req.params;
-  mongoDbHandler.getDb("CardComment", CardComment, { _id: commentId, cardId }, {}, res, next);
+  mongoDbHandler.getDb(res, next, "CardComment", CardComment, { _id: commentId, cardId }, {});
 };
 export default {
   createCard,

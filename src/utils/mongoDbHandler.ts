@@ -4,29 +4,44 @@ import { forwardCustomError } from "@/middlewares";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse } from "@/utils";
 
-async function getDb(modelName: string, model: any, query: any, projection: any, res: Response, next: NextFunction) {
-  const target = await model.findOne(query, projection).catch((err: Error) => {
-    console.log("MongoDb GET error: ", err);
-  });
+async function getDb(
+  res: Response | null,
+  next: NextFunction,
+  modelName: string,
+  model: any,
+  query: any,
+  projection: any = null,
+  populate: any = null,
+): Promise<any | void> {
+  const target = await model
+    .findOne(query, projection)
+    .populate(populate)
+    .catch((err: Error) => {
+      console.log("MongoDb GET error: ", err);
+    });
   if (!target) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
       error: `${modelName} not found.`,
     });
-  } else {
+    return null;
+  }
+  if (res) {
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
       target,
     });
+    return null;
   }
+  return target;
 }
 
 async function updateDb(
+  res: Response,
+  next: NextFunction,
   modelName: string,
   model: any,
   query: any,
-  updateData: any,
-  projection: any,
-  res: Response,
-  next: NextFunction,
+  updateData: any = null,
+  projection: any = null,
 ) {
   const updateResult = await model.updateOne(query, updateData).catch((err: Error) => {
     console.log("MongoDb UPDATE error: ", err);

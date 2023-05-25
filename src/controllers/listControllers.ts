@@ -35,7 +35,7 @@ export default {
         error: "List's id is required.",
       });
     } else {
-      mongoDbHandler.getDb("List", List, { _id: id }, {}, res, next);
+      mongoDbHandler.getDb(res, next, "List", List, { _id: id });
     }
   },
   renameList: async (req: Request, res: Response, next: NextFunction) => {
@@ -47,7 +47,7 @@ export default {
         error: "List's name is required.",
       });
     } else {
-      mongoDbHandler.updateDb("List", List, { _id: id }, { name }, {}, res, next);
+      mongoDbHandler.updateDb(res, next, "List", List, { _id: id }, { name });
     }
   },
   archiveList: async (req: Request, res: Response, next: NextFunction) => {
@@ -59,7 +59,7 @@ export default {
         error: "isArchived is required.",
       });
     } else {
-      mongoDbHandler.updateDb("List", List, { _id: id }, { isArchived }, {}, res, next);
+      mongoDbHandler.updateDb(res, next, "List", List, { _id: id }, { isArchived });
     }
   },
   moveList: async (req: Request, res: Response, next: NextFunction) => {
