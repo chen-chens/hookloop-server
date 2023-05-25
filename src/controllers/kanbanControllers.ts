@@ -196,15 +196,15 @@ export default {
   },
   getTagById: async (req: Request, res: Response, next: NextFunction) => {
     const { kanbanId, tagId } = req.params;
-    mongoDbHandler.getDb("Tag", Tag, { kanbanId, _id: tagId }, {}, res, next);
+    mongoDbHandler.getDb(res, next, "Tag", Tag, { kanbanId, _id: tagId }, {});
   },
   updateTagById: async (req: Request, res: Response, next: NextFunction) => {
     const { kanbanId, tagId } = req.params;
     const { name, color, icon } = req.body;
-    mongoDbHandler.updateDb("Tag", Tag, { kanbanId, _id: tagId }, { name, color, icon }, {}, res, next);
+    mongoDbHandler.updateDb(res, next, "Tag", Tag, { kanbanId, _id: tagId }, { name, color, icon }, {});
   },
   archiveTag: async (req: Request, res: Response, next: NextFunction) => {
     const { kanbanId, tagId } = req.params;
-    mongoDbHandler.updateDb("Tag", Tag, { kanbanId, _id: tagId }, { isArchived: true }, {}, res, next);
+    mongoDbHandler.updateDb(res, next, "Tag", Tag, { kanbanId, _id: tagId }, { isArchived: true }, {});
   },
 };
