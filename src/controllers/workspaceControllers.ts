@@ -16,6 +16,7 @@ import {
   StatusCode,
 } from "@/types";
 import { sendSuccessResponse } from "@/utils";
+import mongoDbHandler from "@/utils/mongoDbHandler";
 
 const getWorkspacesById = async (req: Request, res: Response, next: NextFunction) => {
   const { workspaceId } = req.body;
@@ -40,6 +41,20 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
       role: workspaceMember.role,
     })),
   });
+
+const getKanbansByWorkspaceId = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  if (!id) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+      field: "id",
+      error: "Workspace's id is required.",
+    });
+  } else {
+    const result = await mongoDbHandler.getDb(null, next, "Workspace", Workspace, { _id: id });
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+      kanbans: result.kanban,
+    });
+  }
 };
 
 const createWorkspace = async (req: IWorkspaceRequest, res: Response, next: NextFunction) => {
@@ -333,4 +348,5 @@ export default {
   closeWorkspaceById,
   deleteUserFromWorkspace,
   getWorkspacesByUserId,
+  getKanbansByWorkspaceId,
 };

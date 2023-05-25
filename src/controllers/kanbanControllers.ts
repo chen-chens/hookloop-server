@@ -74,7 +74,7 @@ export default {
         error: "Kanban's key is required.",
       });
     } else {
-      mongoDbHandler.getDb("Kanban", Kanban, { key }, { _id: 0 }, res, next);
+      mongoDbHandler.getDb(res, next, "Kanban", Kanban, { key }, { _id: 0 });
     }
   },
   modifyKanbanKey: async (req: Request, res: Response, next: NextFunction) => {
@@ -122,7 +122,7 @@ export default {
         error: "kanban's name is required.",
       });
     } else {
-      mongoDbHandler.updateDb("Kanban", Kanban, { key }, { name }, { _id: 0 }, res, next);
+      mongoDbHandler.updateDb(res, next, "Kanban", Kanban, { key }, { name }, { _id: 0 });
     }
   },
   archiveKanban: async (req: Request, res: Response, next: NextFunction) => {
@@ -139,7 +139,7 @@ export default {
         error: "isArchived is required.",
       });
     } else {
-      mongoDbHandler.updateDb("Kanban", Kanban, { key }, { isArchived }, { _id: 0 }, res, next);
+      mongoDbHandler.updateDb(res, next, "Kanban", Kanban, { key }, { isArchived }, { _id: 0 });
     }
   },
   pinKanban: async (req: Request, res: Response, next: NextFunction) => {
@@ -156,7 +156,7 @@ export default {
         error: "isPinned is required.",
       });
     } else {
-      mongoDbHandler.updateDb("Kanban", Kanban, { key }, { isPinned }, { _id: 0 }, res, next);
+      mongoDbHandler.updateDb(res, next, "Kanban", Kanban, { key }, { isPinned }, { _id: 0 });
     }
   },
   getKanbanMembers: async (req: Request, res: Response, next: NextFunction) => {
