@@ -41,6 +41,7 @@ const getWorkspacesById = async (req: Request, res: Response, next: NextFunction
       role: workspaceMember.role,
     })),
   });
+};
 
 const getKanbansByWorkspaceId = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
