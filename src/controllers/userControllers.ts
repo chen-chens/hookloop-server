@@ -165,10 +165,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 const updatePassword = async (req: Request, res: Response, next: NextFunction) => {
   const { newPassword, oldPassword } = req.body;
   console.log("Update password start.");
-  sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
-          token: "justtestingtoken",
-          username: "justtestingtokenUsername",
-        });
+  
   if (oldPassword) {
     const bearerToken = req.headers.authorization;
     const token = bearerToken ? getUserIdByToken(bearerToken.split(" ")[1]) : "";
