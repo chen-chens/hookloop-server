@@ -68,7 +68,6 @@ const deleteAttachment: ValidationFn = (req) => {
       fieldName: "Attachment Id",
       rules: [{ type: "paramExist" }, { type: "paramId" }],
     },
-    { field: "delete", fieldName: "Delete attachment", rules: [{ type: "fieldExist" }] },
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
