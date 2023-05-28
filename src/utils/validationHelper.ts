@@ -204,3 +204,76 @@ export const validateFieldsAndGetErrorData = (req: Request, valFields: ValField[
   const validationResults = validateFields(req, valFields);
   return aggregateErrors(validationResults);
 };
+
+function isEmptyValue(value: any) {
+  if (Array.isArray(value) || typeof value === "string") {
+    return value.length === 0;
+  }
+  if (value === null || value === undefined) {
+    return true;
+  }
+  return false;
+}
+
+function hasTheRequiredField(data: any, field: any) {
+  return Object.prototype.hasOwnProperty.call(data, field);
+}
+
+export const validatorHelper = (schema: any) => {
+  return (data: any, dataName: string) => {
+    const schemaKeys = Object.keys(schema);
+    const errors = schemaKeys.reduce((error: any, key: any) => {
+      if (schema[key].isRequired && typeof data === "object" && !hasTheRequiredField(data, key)) {
+        error.push(generateErrorData(key, `${dataName} must has ${key} field `));
+      } else if (schema[key].isRequired && isEmptyValue(data[key])) {
+        error.push(generateErrorData(key, `${dataName}.${key} is not allow to be empty`));
+      }
+      if (data[key] !== undefined || data[key] !== null) {
+        error.concat(
+          schema[key].validators.reduce((err: any, validatorSchema: any) => {
+            return err.concat(validatorSchema(data[key], key, dataName));
+          }, []),
+        );
+      }
+      return error;
+    }, []);
+    return errors;
+  };
+};
+
+export const valObject = (rules: any) => {
+  return (data: any, key: any, dataName: any) => {
+    const errors = [];
+    if (typeof data[key] !== "object") {
+      return errors.push(generateErrorData(key, `${dataName} ${key} must be an object`));
+    }
+    const validate = validatorHelper(rules);
+    return validate(data[key], dataName);
+  };
+};
+
+export const valArrayAndItemOrProp = (rules: any) => {
+  return (data: any, key: any, dataName: any) => {
+    const errors: any[] = [];
+    if (!Array.isArray(data)) {
+      return errors.push(generateErrorData(key, `${dataName} ${key} must be an array`));
+    }
+    if (Array.isArray(rules)) {
+      return errors.concat(
+        data.reduce((error, item) => {
+          return error.concat(
+            rules.reduce((err: any, val: any) => {
+              return err.concat(val(item, key, dataName));
+            }, []),
+          );
+        }, []),
+      );
+    }
+    const val = valObject(rules);
+    return errors.concat(
+      data.reduce((error, item) => {
+        return error.concat(val(item, key, dataName));
+      }, []),
+    );
+  };
+};
