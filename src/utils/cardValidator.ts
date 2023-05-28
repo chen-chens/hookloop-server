@@ -60,6 +60,7 @@ const addAttachment: ValidationFn = (req) => {
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
+
 const deleteAttachment: ValidationFn = (req) => {
   const valFields: ValField[] = [
     { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
@@ -71,6 +72,14 @@ const deleteAttachment: ValidationFn = (req) => {
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
+
+const getComments: ValidationFn = (req) => {
+  const valFields: ValField[] = [
+    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
+  ];
+  return validateFieldsAndGetErrorData(req, valFields);
+};
+
 const addComment: ValidationFn = (req) => {
   const valFields: ValField[] = [
     { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
@@ -83,6 +92,7 @@ const addComment: ValidationFn = (req) => {
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
+
 const updateComment: ValidationFn = (req) => {
   const valFields: ValField[] = [
     { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
@@ -105,6 +115,7 @@ const updateComment: ValidationFn = (req) => {
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
+
 const archiveComment: ValidationFn = (req) => {
   const valFields: ValField[] = [
     { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
@@ -113,6 +124,7 @@ const archiveComment: ValidationFn = (req) => {
   ];
   return validateFieldsAndGetErrorData(req, valFields);
 };
+
 const getCommentHistory: ValidationFn = (req) => {
   const valFields: ValField[] = [
     { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
@@ -128,6 +140,7 @@ export default {
   archiveCard,
   addAttachment,
   deleteAttachment,
+  getComments,
   addComment,
   updateComment,
   archiveComment,
