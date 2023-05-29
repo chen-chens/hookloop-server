@@ -11,6 +11,10 @@ export interface IUser extends Document {
   lastActiveTime: Date;
   createdAt: Date;
   updatedAt: Date;
+  resetToken?: {
+    token: string;
+    expiresAt: Date;
+  };
 }
 const userSchema = new Schema<IUser>(
   {
@@ -49,6 +53,13 @@ const userSchema = new Schema<IUser>(
       type: Date,
       default: Date.now,
     },
+    resetToken: {
+      token: String,
+      expiresAt: {
+        type: Date,
+        expires: 0,
+      },
+    },
   },
   {
     timestamps: true, // generate : createdAt, updatedAt
@@ -57,5 +68,6 @@ const userSchema = new Schema<IUser>(
 );
 
 const User = mongoose.model<IUser>("User", userSchema);
+userSchema.index({ "resetToken.expiresAt": 1 }, { expireAfterSeconds: 0 }); // resetToken 在指定時間，自動從 DB 刪除欄位內容
 
 export default User;

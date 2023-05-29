@@ -29,8 +29,10 @@ enum ApiResults {
   TOKEN_IS_NULL = "Token is null. Can't be identitied. Please log in!",
   TOKEN_IS_EXPIRED = "Token is expired! ",
   EMAIL_BEEN_USED = "The email is already existing!",
+  EMAIL_IS_REQUIRE = "The email is required!",
   EMAIL_NOT_BEEN_USED = "This email has not been used yet.",
   VALIDATOR_TYPE_ERROR = " Validation fail!",
+  SEND_RESET_PASSWORD_EMAIL = "Password Reset Email Sent!",
 }
 
 export default ApiResults;

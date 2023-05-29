@@ -1,11 +1,13 @@
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import validator from "validator";
 
+import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
 import { ApiResults, IDecodedToken, StatusCode } from "@/types";
-import { getJwtToken, sendSuccessResponse } from "@/utils";
+import { getJwtToken, sendSuccessResponse, validatePassword } from "@/utils";
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
@@ -41,15 +43,91 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-const forgetPassword = async (req: Request, res: Response) => {
-  console.log(req, res);
-  // (1) 寄出通知信，信內容包含驗證碼
-  // (2) 原網址 email input 改成輸入驗證嗎，並加入失效時間
+const forgetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  const { email } = req.body;
+  if (!validator.isEmail(email || "")) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_SEND_EMAIL, {
+      field: "email",
+      error: "Invalid Email!",
+    });
+    return;
+  }
+
+  const targetUser = await User.findOne({ email });
+  if (!targetUser) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_SEND_EMAIL, {
+      field: "",
+      error: "The member is not existing! ",
+    });
+    return;
+  }
+
+  // (1) 產生短期限 token，存到 DB 之後驗證用。
+  // (2) 寄出通知信，包含一組由信箱、token 組成 url。
+  const tempToken = jwt.sign({ userId: targetUser.id }, process.env.JWT_SECRET_KEY!, { expiresIn: "10m" });
+  const dbClearResetTokenTime = new Date(Date.now() + (10 * 60 + 30) * 1000); // token 設定 10分鐘過期，DB 自動在 10分鐘又30秒 移除 resetToken
+  // const url = process.env.NODE_ENV === "production" ? "https://hookloop-client.onrender.com" : "http://localhost:3000";
+
+  // const resetPasswordUrl = `${url}/resetPassword/${tempToken}`;
+  // console.log("🚀 ~ file: authControllers.ts:73 ~ forgetPassword ~ resetPasswordUrl:", resetPasswordUrl);
+
+  targetUser.resetToken = {
+    token: tempToken,
+    expiresAt: dbClearResetTokenTime,
+  };
+  await targetUser.save();
+
+  // nodemailer
+
+  sendSuccessResponse(res, ApiResults.SEND_RESET_PASSWORD_EMAIL, {
+    title: ApiResults.SEND_RESET_PASSWORD_EMAIL,
+    description: `An email has been sent to your email address: ${email}. Follow the directions in the email to reset your password.`,
+  });
 };
 
-const verifyPassword = async (req: Request, res: Response) => {
-  console.log(req, res);
-  // 驗證：使用者輸入的驗證碼？ 這裡的 Password 是 驗證碼 嗎？(是)
+const verifyPassword = async (req: Request, res: Response, next: NextFunction) => {
+  const { newPassword, resetPasswordToken } = req.body;
+  if (!validatePassword(newPassword || "")) {
+    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "password",
+      error: "Invalid Password! Password must be 8-20 characters and contain only letters and numbers.",
+    });
+  }
+
+  const decode = await jwt.verify(resetPasswordToken, process.env.JWT_SECRET_KEY!);
+  const { userId } = decode as IDecodedToken;
+  const targetUser = await User.findOne({ id: userId });
+  if (!targetUser) {
+    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_SEND_EMAIL, {
+      field: "",
+      error: "The member is not existing! ",
+    });
+  }
+
+  if (resetPasswordToken !== targetUser.resetToken?.token) {
+    return forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_SEND_EMAIL, {
+      field: "",
+      error: "You don't have authorization to reset password! ",
+    });
+  }
+
+  const securedPassword = await bcrypt.hash(newPassword, 12);
+  const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, dbOptions);
+  const newToken = await getJwtToken(userId);
+
+  return sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
+    token: newToken,
+    user: {
+      id: newData?.id,
+      email: newData?.email,
+      username: newData?.username,
+      avatar: newData?.avatar,
+      isArchived: newData?.isArchived,
+      lastActiveTime: newData?.lastActiveTime,
+      createdAt: newData?.createdAt,
+      updatedAt: newData?.updatedAt,
+    },
+  });
 };
 
 const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
