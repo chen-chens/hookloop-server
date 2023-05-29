@@ -96,18 +96,14 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
       console.log(err);
       return forwardCustomError(next, StatusCode.Service_Unavailable, ApiResults.FAIL_TO_SEND_EMAIL, {
         field: "",
-        error: err,
+        error: ApiResults.UNEXPECTED_ERROR,
       });
     }
 
     console.log(info);
     return sendSuccessResponse(res, ApiResults.SEND_RESET_PASSWORD_EMAIL, {
       title: ApiResults.SEND_RESET_PASSWORD_EMAIL,
-      description: `
-        An email has been sent to your email address: ${email}. 
-        Follow the directions in the email to reset your password.
-        Note: The email reset authorization is available for 10 minutes.
-      `,
+      description: `An email has been sent to your email address: ${email}.`,
     });
   });
 };
