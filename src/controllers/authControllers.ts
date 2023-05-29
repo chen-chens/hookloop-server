@@ -8,6 +8,7 @@ import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
 import { ApiResults, IDecodedToken, StatusCode } from "@/types";
 import { getJwtToken, sendSuccessResponse, validatePassword } from "@/utils";
+import sendEmail, { MailOptions } from "@/utils/sendEmail";
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
@@ -66,10 +67,8 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
   // (2) 寄出通知信，包含一組由信箱、token 組成 url。
   const tempToken = jwt.sign({ userId: targetUser.id }, process.env.JWT_SECRET_KEY!, { expiresIn: "10m" });
   const dbClearResetTokenTime = new Date(Date.now() + (10 * 60 + 30) * 1000); // token 設定 10分鐘過期，DB 自動在 10分鐘又30秒 移除 resetToken
-  // const url = process.env.NODE_ENV === "production" ? "https://hookloop-client.onrender.com" : "http://localhost:3000";
-
-  // const resetPasswordUrl = `${url}/resetPassword/${tempToken}`;
-  // console.log("🚀 ~ file: authControllers.ts:73 ~ forgetPassword ~ resetPasswordUrl:", resetPasswordUrl);
+  const url = process.env.NODE_ENV === "production" ? "https://hookloop-client.onrender.com" : "http://localhost:3000";
+  const resetPasswordUrl = `${url}/resetPassword/${tempToken}`;
 
   targetUser.resetToken = {
     token: tempToken,
@@ -78,10 +77,28 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
   await targetUser.save();
 
   // nodemailer
+  const mailConfig: MailOptions = {
+    from: process.env.SMTP_SEND_EMAIL!,
+    to: email,
+    subject: "HOOKLOOP Reset Password",
+    html: `
+      Hi ${targetUser.username}, 
+      <p>A request has been received to change the password for your HOOKLOOP account. Please reset your password in 10 minutes.</p>
+      <a href=${resetPasswordUrl} target="_blank">Reset Password</a>
+
+      <footer>HOOKLOOP</footer>
+    `,
+  };
+
+  await sendEmail(mailConfig);
 
   sendSuccessResponse(res, ApiResults.SEND_RESET_PASSWORD_EMAIL, {
     title: ApiResults.SEND_RESET_PASSWORD_EMAIL,
-    description: `An email has been sent to your email address: ${email}. Follow the directions in the email to reset your password.`,
+    description: `
+      An email has been sent to your email address: ${email}. 
+      Follow the directions in the email to reset your password.
+      Note: The email reset authorization is available for 10 minutes.
+    `,
   });
 };
 
