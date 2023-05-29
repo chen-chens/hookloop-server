@@ -1,14 +1,15 @@
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
 import validator from "validator";
 
 import dbOptions from "@/config/dbOptions";
+import mailTransporter from "@/config/mailTransporter";
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
-import { ApiResults, IDecodedToken, StatusCode } from "@/types";
+import { ApiResults, IDecodedToken, MailOptions, StatusCode } from "@/types";
 import { getJwtToken, sendSuccessResponse, validatePassword } from "@/utils";
-import sendEmail, { MailOptions } from "@/utils/sendEmail";
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
@@ -90,15 +91,24 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
     `,
   };
 
-  await sendEmail(mailConfig);
+  mailTransporter.sendMail(mailConfig, (err: Error | null, info: SMTPTransport.SentMessageInfo) => {
+    if (err) {
+      console.log(err);
+      return forwardCustomError(next, StatusCode.Service_Unavailable, ApiResults.FAIL_TO_SEND_EMAIL, {
+        field: "",
+        error: err,
+      });
+    }
 
-  sendSuccessResponse(res, ApiResults.SEND_RESET_PASSWORD_EMAIL, {
-    title: ApiResults.SEND_RESET_PASSWORD_EMAIL,
-    description: `
-      An email has been sent to your email address: ${email}. 
-      Follow the directions in the email to reset your password.
-      Note: The email reset authorization is available for 10 minutes.
-    `,
+    console.log(info);
+    return sendSuccessResponse(res, ApiResults.SEND_RESET_PASSWORD_EMAIL, {
+      title: ApiResults.SEND_RESET_PASSWORD_EMAIL,
+      description: `
+        An email has been sent to your email address: ${email}. 
+        Follow the directions in the email to reset your password.
+        Note: The email reset authorization is available for 10 minutes.
+      `,
+    });
   });
 };
 
