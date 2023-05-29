@@ -1,108 +1,114 @@
-const generateErrorData = (field: string, error: string) => {
-  return { field, error };
-};
+const generateErrorData = (field: string, error: string) => ({ field, error });
+
+function addErrors(errors: any, newErrors: any) {
+  errors.push(...newErrors);
+}
 
 const valString = (data: any, field: string) => {
-  const errors = [];
-  if (data && typeof data !== "string") {
-    errors.push(generateErrorData(field, `${field} must be a string`));
+  if (data === undefined || typeof data === "string" || data === "") {
+    return [];
   }
-  return errors;
+  return [generateErrorData(field, `${field} must be a string`)];
 };
 
-function isEmptyValue(value: any) {
-  if (Array.isArray(value) || typeof value === "string") {
-    return value.length === 0;
-  }
-  if (value === null || value === undefined) {
-    return true;
-  }
-  return false;
-}
-
-function hasTheRequiredField(data: any, field: any) {
-  return Object.prototype.hasOwnProperty.call(data, field);
-}
-function hasExtraKeys(data: any, schema: any, field: string) {
+function hasExtraKeys(data: any, schema: any, fieldName: string) {
   const schemaKeysSet = new Set(Object.keys(schema));
   const dataKeysSet = new Set(Object.keys(data));
   const extraKeys = Array.from(dataKeysSet).filter((key) => !schemaKeysSet.has(key));
-  const errors = [];
   if (extraKeys.length > 0) {
-    errors.push(
-      generateErrorData(`${field}.${extraKeys[0]}`, `${field} is not allow to have extra keys ${extraKeys.join(",")}`),
-    );
+    return [
+      generateErrorData(
+        `${fieldName}.${extraKeys[0]}`,
+        `${fieldName} is not allow to have extra keys ${extraKeys.join(",")}`,
+      ),
+    ];
   }
-  return errors;
+  return [];
+}
+function hasField(data: any, fieldName: any, key: any) {
+  if (!Object.prototype.hasOwnProperty.call(data, key)) {
+    return [generateErrorData(fieldName, `${fieldName} is required`)];
+  }
+  return [];
+}
+function isEmpty(data: any, fieldNestName: any) {
+  if (((Array.isArray(data) || typeof data === "string") && data.length === 0) || data === null || data === undefined) {
+    return [generateErrorData(fieldNestName, `${fieldNestName} is not allow to be empty`)];
+  }
+  return [];
+}
+
+function checkRequiredFieldForObjects(data: any, fieldName: any, key: any) {
+  if (typeof data === "object" && !Array.isArray(data)) {
+    return [hasField(data, fieldName, key)];
+  }
+  return [];
+}
+function checkEmptyForNonObjects(data: any, fieldName: any) {
+  if (typeof data !== "object" || Array.isArray(data)) {
+    return [isEmpty(data, fieldName)];
+  }
+  return [];
 }
 export const validatorHelper = (schema: any) => {
-  return (data: any, field: string) => {
-    let errors: any[] = [];
+  return (data: any, fieldName: string) => {
+    const errors: any[] = [];
     const schemaKeys = Object.keys(schema);
 
-    errors = errors.concat(hasExtraKeys(data, schema, field));
-    errors = errors.concat(
-      schemaKeys.reduce((error: any, key: any) => {
-        const fieldValSchema = schema[key];
-        const fieldValue = data[key];
-        const fieldNestName = `${field}.${key}`;
-        if (fieldValSchema.isRequired && typeof data === "object" && !hasTheRequiredField(data, key)) {
-          error.push(generateErrorData(fieldNestName, `${fieldNestName} is required`));
-        } else if (fieldValSchema.isRequired && isEmptyValue(fieldValue)) {
-          error.push(generateErrorData(fieldNestName, `${fieldNestName} is not allow to be empty`));
-        }
+    addErrors(errors, hasExtraKeys(data, schema, fieldName));
 
-        if (fieldValue !== undefined || fieldValue !== null) {
-          return error.concat(
-            fieldValSchema.validators.reduce((err: any, validatorSchema: any) => {
-              return err.concat(validatorSchema(fieldValue, `${fieldNestName}`));
-            }, []),
-          );
-        }
-        return error;
-      }, []),
-    );
+    schemaKeys.forEach((key: any) => {
+      const fieldValSchema = schema[key];
+      const fieldValue = data[key];
+      const fieldNestName = `${fieldName}.${key}`;
+      if (fieldValSchema.isRequired) {
+        addErrors(errors, checkRequiredFieldForObjects(data, fieldNestName, key));
+        addErrors(errors, checkEmptyForNonObjects(fieldValue, fieldNestName));
+      }
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        fieldValSchema.validators.forEach((validatorSchema: any) => {
+          addErrors(errors, validatorSchema(fieldValue, `${fieldNestName}`));
+        });
+      }
+    });
+
     return errors;
   };
 };
 
 export const valObject = (rules: any) => {
   return (data: any, field: string) => {
-    const errors: any[] = [];
     if (typeof data !== "object" || Array.isArray(data)) {
-      errors.push(generateErrorData(field, `${field} must be an object`));
-      return errors;
+      return [generateErrorData(field, `${field} must be an object`)];
     }
-    return errors.concat(validatorHelper(rules)(data, `${field}`));
+    return validatorHelper(rules)(data, `${field}`);
   };
 };
 
 export const valArrayAndItemOrProp = (rules: any) => {
   return (data: any, field: string) => {
     const errors: any[] = [];
-    if (!Array.isArray(data)) {
-      errors.push(generateErrorData(field, `${field} must be an array`));
-      return errors;
+    if (data !== undefined && data !== null && !Array.isArray(data)) {
+      return [generateErrorData(field, `${field} must be an array`)];
     }
     if (Array.isArray(rules)) {
-      return errors.concat(
-        data.reduce((error, item) => {
-          return error.concat(
-            rules.reduce((err: any, val: any, index: number) => {
-              return err.concat(val(item, field, `${field}[${index}]`)).map((e: any) => {
-                return generateErrorData(e.field, `${e.error} array`);
-              });
-            }, []),
+      data.forEach((item: any) => {
+        rules.forEach((val: any, index: number) => {
+          addErrors(
+            errors,
+            val(item, field, `${field}[${index}]`).map((e: any) => {
+              return generateErrorData(e.field, `${e.error} array`);
+            }),
           );
-        }, []),
-      );
+        });
+      });
+    } else {
+      const val = valObject(rules);
+      data.forEach((item: any, index: number) => {
+        addErrors(errors, val(item, `${field}[${index}]`));
+      });
     }
-    const val = valObject(rules);
-    return errors.concat(
-      data.reduce((error, item, index: number) => {
-        return error.concat(val(item, `${field}[${index}]`));
-      }, []),
-    );
+    return errors;
   };
 };
 
@@ -144,7 +150,7 @@ const rules = {
         },
         likes: {
           validators: [valArrayAndItemOrProp([valString])],
-          isrequired: true,
+          isRequired: true,
         },
       }),
     ],
