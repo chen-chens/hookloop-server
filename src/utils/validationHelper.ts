@@ -1,5 +1,3 @@
-// Check if the id is a valid mongo id
-
 import { Request } from "express";
 import mongoose from "mongoose";
 import validator from "validator";
