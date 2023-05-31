@@ -74,7 +74,16 @@ export default {
         error: "Kanban's key is required.",
       });
     } else {
-      mongoDbHandler.getDb(res, next, "Kanban", Kanban, { key }, { _id: 0 });
+      // mongoDbHandler.getDb(res, next, "Kanban", Kanban, { _id: key }, { _id: 0 });
+      const kanban = await Kanban.findOne({ _id: key, isArchived: false }).populate("listOrder");
+      if (!kanban) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
+          field: "kanban",
+          error: "kanban not found or archived.",
+        });
+      } else {
+        sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, kanban);
+      }
     }
   },
   modifyKanbanKey: async (req: Request, res: Response, next: NextFunction) => {
