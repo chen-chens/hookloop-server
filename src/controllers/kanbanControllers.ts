@@ -81,7 +81,13 @@ export default {
         Kanban,
         { key, isArchived: false },
         { _id: 0 },
-        "listOrder",
+        {
+          path: "listOrder",
+          populate: {
+            path: "cardOrder",
+            model: "Card",
+          },
+        },
       );
       if (!kanban) {
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
