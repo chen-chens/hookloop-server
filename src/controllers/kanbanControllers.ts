@@ -16,10 +16,10 @@ export default {
         field: "key",
         error: "kanban's key is required.",
       });
-    } else if (key.indexOf(" ") > -1) {
+    } else if (!key.match(/^[0-9a-z-]+$/g)) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
         field: "key",
-        error: "space is not allowed in key.",
+        error: "Key value only allows lowercase English, numbers and `-` symbols.",
       });
     } else if (!name) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
