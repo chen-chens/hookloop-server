@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
-import { Kanban, Tag } from "@/models";
+import { Kanban, List, Tag } from "@/models";
 import WorkspaceMember from "@/models/workspaceMemberModel";
 import Workspace from "@/models/workspaceModel";
 import { ApiResults, StatusCode } from "@/types";
@@ -242,5 +242,75 @@ export default {
     }
     const allTags = await Tag.find({ kanbanId, isArchived: false });
     sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, allTags);
+  },
+  filterKanbanCards: async (req: Request, res: Response, next: NextFunction) => {
+    const { kanbanId } = req.params;
+    const { searchType, reporter, assignee, priority, status, tag } = req.query;
+
+    if (!kanbanId) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "kanbanId",
+        error: "Kanban's kanbanId is required.",
+      });
+    } else if (!searchType) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "searchType",
+        error: "SearchType is required.",
+      });
+    } else {
+      let lists = await mongoDbHandler.getDb(
+        null,
+        next,
+        "List",
+        List,
+        { kanbanId, isArchived: false },
+        { _id: 0 },
+        "cardOrder",
+        true,
+      );
+      const assignees = assignee ? (assignee as string).split(",") : [];
+      const tags = tag ? (tag as string).split(",") : [];
+
+      // 完全符合
+      if (searchType === "fully") {
+        lists = lists.map((list: any) => ({
+          // eslint-disable-next-line no-underscore-dangle
+          ...list._doc,
+          cardOrder: list.cardOrder.filter((card: any) => {
+            return (
+              !card.isArchived &&
+              !(
+                (reporter && card.reporter !== reporter) ||
+                (assignees.length && !assignees.every((assi: any) => card.assignee.includes(assi))) ||
+                (priority && card.priority !== priority) ||
+                (status && card.status !== status) ||
+                (tags.length && !tags.every((t: any) => card.tag.includes(t)))
+              )
+            );
+          }),
+        }));
+      }
+      // 部分符合
+      else {
+        lists = lists.map((list: any) => ({
+          // eslint-disable-next-line no-underscore-dangle
+          ...list._doc,
+          cardOrder: list.cardOrder.filter((card: any) => {
+            return (
+              !card.isArchived &&
+              ((reporter && card.reporter === reporter) ||
+                (assignees.length && assignees.some((assi: any) => card.assignee.includes(assi))) ||
+                (priority && card.priority === priority) ||
+                (status && card.status === status) ||
+                (tags.length && tags.some((t: any) => card.tag.includes(t))))
+            );
+          }),
+        }));
+      }
+      // 過濾卡片數為 0 的 list
+      lists = lists.filter((list: any) => !!list.cardOrder.length);
+
+      sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, lists);
+    }
   },
 };
