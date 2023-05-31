@@ -32,9 +32,9 @@ export default {
         error: "workspaceId is required.",
       });
     } else {
-      const existId = await Kanban.findOne({ key });
+      const existKanban = await Kanban.findOne({ key });
 
-      if (existId) {
+      if (existKanban) {
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
           field: "key",
           error: "key already exists, unique requirement.",
@@ -74,8 +74,15 @@ export default {
         error: "Kanban's key is required.",
       });
     } else {
-      // mongoDbHandler.getDb(res, next, "Kanban", Kanban, { _id: key }, { _id: 0 });
-      const kanban = await Kanban.findOne({ _id: key, isArchived: false }).populate("listOrder");
+      const kanban = await mongoDbHandler.getDb(
+        null,
+        next,
+        "Kanban",
+        Kanban,
+        { key, isArchived: false },
+        { _id: 0 },
+        "listOrder",
+      );
       if (!kanban) {
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
           field: "kanban",
@@ -106,7 +113,7 @@ export default {
           error: `Kanban not found.`,
         });
       } else {
-        const target = await Kanban.findOne({ key: newKey }, { _id: 0 });
+        const target = await mongoDbHandler.getDb(null, next, "Kanban", Kanban, { key: newKey }, { _id: 0 });
         if (!target) {
           forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
         } else {
