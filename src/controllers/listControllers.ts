@@ -24,7 +24,25 @@ export default {
         name,
         kanbanId,
       });
-      sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newList);
+
+      const id = "_id";
+      await Kanban.findOneAndUpdate(
+        { _id: kanbanId },
+        {
+          $push: { listOrder: newList[id] },
+        },
+      );
+
+      const lists = await Kanban.findOne({ _id: kanbanId }).populate("listOrder").select("listOrder");
+      if (!lists) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+          error: `lists not found.`,
+        });
+      } else {
+        sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, lists);
+      }
+
+      // sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newList);
     }
   },
   getListById: async (req: Request, res: Response, next: NextFunction) => {
@@ -86,10 +104,18 @@ export default {
         const kanbanUpdateResult = await Kanban.updateOne({ _id: kanbanId }, { listOrder }).catch((err: Error) => {
           console.log("MongoDb UPDATE error: ", err);
         });
+        console.log("kanbanUpdateResult = ", kanbanUpdateResult);
         if (!kanbanUpdateResult || !kanbanUpdateResult.matchedCount) {
           forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
         } else {
-          sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE);
+          const lists = await Kanban.findOne({ _id: kanbanId }).populate("listOrder").select("listOrder");
+          if (!lists) {
+            forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
+              error: `lists not found.`,
+            });
+          } else {
+            sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, lists);
+          }
         }
       }
     }
