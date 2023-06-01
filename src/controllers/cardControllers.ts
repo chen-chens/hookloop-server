@@ -14,6 +14,18 @@ const createCard = async (req: Request, res: Response, _: NextFunction) => {
     kanbanId,
   });
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newCard);
+  const wss = req.app.get("wss");
+  const { clients } = wss;
+  if (clients[kanbanId]) {
+    clients[kanbanId].forEach((client: any) => {
+      client.send(
+        JSON.stringify({
+          type: "createCard",
+          card: newCard,
+        }),
+      );
+    });
+  }
 };
 
 const getCardById = async (req: Request, res: Response, next: NextFunction) => {

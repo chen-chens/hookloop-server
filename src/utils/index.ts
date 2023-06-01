@@ -6,3 +6,4 @@ export { generateErrorData, sendErrorResponse, sendSuccessResponse } from "./res
 export { default as responsePattern } from "./responsePattern";
 export { default as validatePassword } from "./validatePassword";
 export { aggregateErrors, validateFields, validateFieldsAndGetErrorData } from "./validationHelper";
+export { default as websocket } from "./websocket";
