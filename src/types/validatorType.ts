@@ -1,39 +1,18 @@
 import { Request } from "express";
 
-export type ValErrorData = {
+export interface IErrorData {
   field: string;
   error: string;
-};
+}
 
-export type ValidationFn = (req: Request) => ValErrorData | null;
+export type ValidationForRequest = (req: Request) => IErrorData | null;
 
-export type ValReturn = ValErrorData | null;
+export type ValidatorFn = (data: any, fieldName: string, params?: any) => IErrorData[];
 
-export type ValType =
-  | "paramExist"
-  | "fieldExist"
-  | "paramId"
-  | "objectId"
-  | "date"
-  | "url"
-  | "string"
-  | "array"
-  | "boolean"
-  | "objectIdArray"
-  | "urlArray"
-  | "lengthRange"
-  | "maxLength"
-  | "enum";
-
-export type ValRule = {
-  type: ValType;
-  min?: number;
-  max?: number;
-  enumArray?: string[];
-};
-
-export type ValField = {
-  field: string;
-  fieldName: string;
-  rules: ValRule[];
-};
+export interface ValidatorSchema {
+  [key: string]: {
+    validators: ValidatorFn[];
+    isParams?: boolean;
+    isRequired?: boolean;
+  };
+}

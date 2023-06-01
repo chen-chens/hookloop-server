@@ -1,262 +1,206 @@
-import mongoose from "mongoose";
-import validator from "validator";
+// // Check if the id is a valid mongo id
 
-interface IErrorData {
-  field: string;
-  error: string;
-}
+// import { Request } from "express";
+// import mongoose from "mongoose";
+// import validator from "validator";
 
-type ValidatorFn = (data: any, fieldName: string) => IErrorData[];
+// import { ValErrorData, ValField, ValReturn, ValRule } from "@/types";
 
-function generateErrorData(field: string, error: string): IErrorData {
-  return { field, error: `${field} ${error}` };
-}
+// const generateErrorData = (field: string, error: string): ValErrorData => {
+//   return { field, error };
+// };
 
-function addErrors(errors: IErrorData[], newErrors: IErrorData[]) {
-  errors.push(...newErrors);
-}
+// const valFieldExist = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const fieldValue = req.body[field];
+//   if (!fieldValue) {
+//     return generateErrorData(field, `${fieldName} is required`);
+//   }
+//   return null;
+// };
+// const valParamExist = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const fieldValue = req.params[field];
+//   if (!fieldValue) {
+//     return generateErrorData(field, `${fieldName} is required`);
+//   }
+//   return null;
+// };
 
-function hasExtraKeys(data: any, schema: any, fieldName: string): IErrorData[] {
-  const schemaKeysSet = new Set(Object.keys(schema));
-  const dataKeysSet = new Set(Object.keys(data));
-  const extraKeys = Array.from(dataKeysSet).filter((key) => !schemaKeysSet.has(key));
-  if (extraKeys.length > 0) {
-    return [generateErrorData(`${fieldName}`, `is not allow to have extra keys ${extraKeys.join(",")}`)];
-  }
-  return [];
-}
+// const valObjectIdParam = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const id = req.params[field];
+//   if (id && !mongoose.Types.ObjectId.isValid(id)) {
+//     return generateErrorData(field, `${fieldName} must be a valid ObjectId`);
+//   }
+//   return null;
+// };
 
-function hasField(data: any, fieldName: string, key: string): IErrorData[] {
-  if (!Object.prototype.hasOwnProperty.call(data, key)) {
-    return [generateErrorData(fieldName, "is required")];
-  }
-  return [];
-}
+// const valObjectIdField = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const id = req.body[field];
+//   if (id && !mongoose.Types.ObjectId.isValid(id)) {
+//     return generateErrorData(field, `${fieldName} must be a valid ObjectId`);
+//   }
+//   return null;
+// };
 
-function isEmpty(data: any, fieldName: string): IErrorData[] {
-  if (((Array.isArray(data) || typeof data === "string") && data.length === 0) || data === null || data === undefined) {
-    return [generateErrorData(fieldName, "is not allow to be empty")];
-  }
-  return [];
-}
+// const valDate = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const fieldValue = req.body[field];
+//   if (fieldValue && Number.isNaN(Date.parse(fieldValue))) {
+//     return generateErrorData(field, `${fieldName} must be a valid date.`);
+//   }
+//   return null;
+// };
 
-function checkRequiredFieldForObjects(data: any, fieldName: string, key: string): IErrorData[] {
-  if (typeof data === "object" && !Array.isArray(data)) {
-    return hasField(data, fieldName, key);
-  }
-  return [];
-}
+// const valUrl = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const fieldValue = req.body[field];
+//   if (fieldValue && !validator.isURL(fieldValue)) {
+//     return generateErrorData(field, `${fieldName} must be a valid URL.`);
+//   }
+//   return null;
+// };
 
-function checkEmptyForNonObjects(data: any, fieldName: string): IErrorData[] {
-  if (typeof data !== "object" || Array.isArray(data)) {
-    return isEmpty(data, fieldName);
-  }
-  return [];
-}
+// const valString = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const fieldValue = req.body[field];
+//   if (fieldValue && typeof fieldValue !== "string") {
+//     return generateErrorData(field, `${fieldName} must be a string`);
+//   }
+//   return null;
+// };
 
-function checkFieldNotExist(data: any) {
-  if (data === null || data === undefined) {
-    return true;
-  }
-  return false;
-}
+// const valArray = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const fieldValue = req.body[field];
+//   if (fieldValue && !Array.isArray(fieldValue)) {
+//     return generateErrorData(field, `${fieldName} must be an array`);
+//   }
+//   return null;
+// };
+// const valboolean = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const fieldValue = req.body[field];
+//   if (fieldValue && typeof fieldValue !== "boolean") {
+//     return generateErrorData(field, `${fieldName} must be a boolean`);
+//   }
+//   return null;
+// };
+// const valObjectIdArray = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const ids = req.body[field];
+//   if (ids && !Array.isArray(ids)) {
+//     return generateErrorData(field, `${fieldName} must be an array`);
+//   }
+//   if (ids) {
+//     const invalidIds = ids.filter((id: any) => !mongoose.Types.ObjectId.isValid(id));
+//     if (invalidIds.length !== 0) {
+//       return generateErrorData(field, `${fieldName} is not a valid ObjectId Array`);
+//     }
+//   }
+//   return null;
+// };
 
-export const validatorHelperForRequestBodyOrParams = (schema: any): ValidatorFn => {
-  return (data: any, fieldName: string, params?: any): IErrorData[] => {
-    const errors: IErrorData[] = [];
-    const schemaKeys = Object.keys(schema);
+// const valUrlArray = (req: Request, field: string, fieldName: string): ValReturn => {
+//   const urls = req.body[field];
+//   if (urls && !Array.isArray(urls)) {
+//     return generateErrorData(field, `${fieldName} must be an array`);
+//   }
+//   if (urls) {
+//     const invalidIds = urls.filter((url: any) => !validator.isURL(url));
+//     if (invalidIds.length !== 0) {
+//       return generateErrorData(field, `${fieldName} must be a valid URL array`);
+//     }
+//   }
+//   return null;
+// };
 
-    addErrors(errors, hasExtraKeys(data, schema, fieldName));
+// const valLengthInRange = (req: Request, field: string, fieldName: string, min: number, max: number): ValReturn => {
+//   const fieldValue = req.body[field];
+//   if (typeof fieldValue === "string" && !validator.isLength(fieldValue, { min, max })) {
+//     return generateErrorData(field, `${fieldName} must be between ${min} and ${max} characters`);
+//   }
+//   return null;
+// };
 
-    schemaKeys.forEach((key: string) => {
-      const fieldValidators = schema[key];
-      const fieldNestName = `${fieldName}.${key}`;
-      const field = fieldValidators.isParams ? params : data;
-      const fieldValue = field[key];
-      if (fieldValidators.isRequired) {
-        addErrors(errors, checkRequiredFieldForObjects(field, fieldNestName, key));
-        addErrors(errors, checkEmptyForNonObjects(fieldValue, fieldNestName));
-      }
-      if (!Object.prototype.hasOwnProperty.call(field, key) || !checkFieldNotExist(field)) {
-        fieldValidators.validators.forEach((validatorFn: ValidatorFn) => {
-          addErrors(errors, validatorFn(fieldValue, fieldNestName));
-        });
-      }
-    });
+// const valMaxLength = (req: Request, field: string, fieldName: string, max: number): ValReturn => {
+//   const fieldValue = req.body[field];
+//   if (typeof fieldValue === "string" && !validator.isLength(fieldValue, { max })) {
+//     return generateErrorData(field, `${fieldName} must be no more than ${max} characters`);
+//   }
+//   return null;
+// };
 
-    return errors;
-  };
-};
+// const valEnum = (req: Request, field: string, fieldName: string, enumArray: string[]): ValReturn => {
+//   const fieldValue = req.body[field];
+//   const enumValues = enumArray.join(", ");
+//   if (fieldValue && !validator.isIn(fieldValue, enumArray)) {
+//     return generateErrorData(field, `${fieldName} must be one of the following: ${enumValues}`);
+//   }
+//   return null;
+// };
 
-export const valObject = (rules: any): ValidatorFn => {
-  return (data: any, fieldName: string): IErrorData[] => {
-    if (typeof data !== "object" || Array.isArray(data)) {
-      return [generateErrorData(fieldName, "must be an object")];
-    }
-    return validatorHelperForRequestBodyOrParams(rules)(data, `${fieldName}`);
-  };
-};
+// const getValidators = (req: Request, field: string, fieldName: string, rules: ValRule[]): ValReturn[] => {
+//   return rules.map((rule) => {
+//     switch (rule.type) {
+//       case "paramExist":
+//         return valParamExist(req, field, fieldName);
+//       case "fieldExist":
+//         return valFieldExist(req, field, fieldName);
+//       case "paramId":
+//         return valObjectIdParam(req, field, fieldName);
+//       case "objectId":
+//         return valObjectIdField(req, field, fieldName);
+//       case "date":
+//         return valDate(req, field, fieldName);
+//       case "url":
+//         return valUrl(req, field, fieldName);
+//       case "string":
+//         return valString(req, field, fieldName);
+//       case "array":
+//         return valArray(req, field, fieldName);
+//       case "boolean":
+//         return valboolean(req, field, fieldName);
+//       case "objectIdArray":
+//         return valObjectIdArray(req, field, fieldName);
+//       case "urlArray":
+//         return valUrlArray(req, field, fieldName);
+//       case "lengthRange":
+//         if (rule.min !== undefined && rule.max !== undefined) {
+//           return valLengthInRange(req, field, fieldName, rule.min, rule.max);
+//         }
+//         throw new Error(`Validate ${field} ${rule.type} : min and max must be defined`);
+//       case "maxLength":
+//         if (rule.max !== undefined) {
+//           return valMaxLength(req, field, fieldName, rule.max);
+//         }
+//         throw new Error(`Validate ${field} ${rule.type} : min and max must be defined`);
+//       case "enum":
+//         if (rule.enumArray !== undefined) {
+//           return valEnum(req, field, fieldName, rule.enumArray);
+//         }
+//         throw new Error(`Validate ${field} ${rule.type} : enumArray must be defined`);
 
-export const valArrayAndItemOrProp = (rules: ValidatorFn[] | ValidatorSchema): ValidatorFn => {
-  return (data: any, fieldName: string): IErrorData[] => {
-    const errors: IErrorData[] = [];
-    if (data !== undefined && data !== null && !Array.isArray(data)) {
-      return [generateErrorData(fieldName, "must be an array")];
-    }
-    if (Array.isArray(rules)) {
-      data.forEach((item: any) => {
-        rules.forEach((validatorFn: ValidatorFn, index: number) => {
-          addErrors(
-            errors,
-            validatorFn(item, `${fieldName}[${index}]`).map((e: IErrorData) => {
-              return { field: e.field, error: `${e.error} array` };
-            }),
-          );
-        });
-      });
-    } else {
-      const validatorFn = valObject(rules);
-      data.forEach((item: any, index: number) => {
-        addErrors(errors, validatorFn(item, `${fieldName}[${index}]`));
-      });
-    }
-    return errors;
-  };
-};
+//       default:
+//         throw new Error(`Validate ${field} ${rule.type} : type is not defined`);
+//     }
+//   });
+// };
 
-export const valString: ValidatorFn = (data, fieldName) => {
-  if (data === "" || typeof data === "string") {
-    return [];
-  }
-  return [generateErrorData(fieldName, "must be a string")];
-};
+// export const validateFields = (req: Request, valFields: ValField[]): ValReturn[] => {
+//   return valFields.reduce<ValReturn[]>((acc, valField) => {
+//     return acc.concat(getValidators(req, valField.field, valField.fieldName, valField.rules));
+//   }, []);
+// };
 
-export const valNumber: ValidatorFn = (data: any, fieldName: string) => {
-  if (typeof data === "number" && !Number.isNaN(Number(data))) {
-    return [];
-  }
-  return [generateErrorData(fieldName, "must be a valid Number")];
-};
+// export const aggregateErrors = (validationResults: ValReturn[]): ValReturn => {
+//   const validErrors = validationResults.filter((item): item is ValErrorData => item !== null);
+//   if (validErrors.length === 0) {
+//     console.log("validSuccess");
+//     return null;
+//   }
+//   const fields = new Set(validErrors.map((error) => error.field));
+//   const uniqueFields = Array.from(fields).join(" ");
+//   const errorMessages = validErrors.reduce((acc, validationResult) => `${acc} ${validationResult.error}\n`, "");
+//   return {
+//     field: uniqueFields,
+//     error: errorMessages,
+//   };
+// };
 
-export const valBoolean: ValidatorFn = (data: any, fieldName: string) => {
-  if (typeof data === "boolean") {
-    return [];
-  }
-  return [generateErrorData(fieldName, "must be a valid Boolean")];
-};
-
-export const valObjectId: ValidatorFn = (data: any, fieldName: string) => {
-  if (mongoose.Types.ObjectId.isValid(data)) {
-    return [];
-  }
-  return [generateErrorData(fieldName, "must be a valid ObjectId")];
-};
-
-export const valDate: ValidatorFn = (data: any, fieldName: string) => {
-  if (!Number.isNaN(Date.parse(data))) {
-    return [];
-  }
-  return [generateErrorData(fieldName, "must be a valid Date")];
-};
-
-export const valEmail: ValidatorFn = (data: any, fieldName: string) => {
-  if (validator.isEmail(data)) {
-    return [];
-  }
-  return [generateErrorData(fieldName, "must be a valid Email")];
-};
-
-export const valUrl: ValidatorFn = (data: any, fieldName: string) => {
-  if (validator.isURL(data)) {
-    return [];
-  }
-  return [generateErrorData(fieldName, "must be a valid Url")];
-};
-
-export const valColor: ValidatorFn = (data: any, fieldName: string) => {
-  if (validator.isHexColor(data)) {
-    return [];
-  }
-  return [generateErrorData(fieldName, "must be a valid Color")];
-};
-
-export const valLengthInRange = (min: number, max: number): ValidatorFn => {
-  return (data: any, fieldName: string) => {
-    if (typeof data === "string" || validator.isLength(data, { min, max })) {
-      return [];
-    }
-    return [generateErrorData(fieldName, `must be between ${min} and ${max} characters`)];
-  };
-};
-
-export const valMaxLength = (max: number): ValidatorFn => {
-  return (data: any, fieldName: string) => {
-    if (typeof data === "string" || validator.isLength(data, { max })) {
-      return [];
-    }
-    return [generateErrorData(fieldName, `must be less than ${max} characters`)];
-  };
-};
-
-export const valEnum = (enumArray: any): ValidatorFn => {
-  return (data: any, fieldName: string) => {
-    if (validator.isIn(data, enumArray)) {
-      return [];
-    }
-    return [generateErrorData(fieldName, `must be one of ${enumArray}.join(", ")`)];
-  };
-};
-export interface ValidatorSchema {
-  [key: string]: {
-    validators: ValidatorFn[];
-    isParams?: boolean;
-    isRequired?: boolean;
-  };
-}
-
-const card = {
-  name: "123123",
-  tags: [{ name: "", color: "blue" }, { name: {}, color: "red" }, { name: "cancel" }, []],
-  other: {
-    description: "this is a description",
-    likes: [123],
-  },
-  add: "123",
-};
-
-const rules = {
-  name: {
-    isRequired: true, // name 是必填欄位
-    validators: [valString],
-  },
-  tags: {
-    validators: [
-      valArrayAndItemOrProp({
-        name: {
-          validators: [valString],
-          isRequired: true,
-        },
-        color: {
-          validators: [valString],
-          isRequired: true,
-        },
-      }),
-    ],
-  },
-  other: {
-    isRequired: true,
-    validators: [
-      valObject({
-        description: {
-          validators: [valString],
-        },
-        likes: {
-          validators: [valArrayAndItemOrProp([valString])],
-          isRequired: true,
-        },
-      }),
-    ],
-  },
-};
-
-console.log(validatorHelperForRequestBodyOrParams(rules)(card, "Card" as any));
+// export const validateFieldsAndGetErrorData = (req: Request, valFields: ValField[]): ValReturn => {
+//   const validationResults = validateFields(req, valFields);
+//   return aggregateErrors(validationResults);
+// };

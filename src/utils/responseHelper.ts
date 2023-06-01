@@ -1,6 +1,6 @@
 import { Response } from "express";
 
-import { ApiResults, ApiStatus, CustomError, IDataType, StatusCode, ValErrorData } from "@/types";
+import { ApiResults, ApiStatus, CustomError, IDataType, IErrorData, StatusCode } from "@/types";
 
 import responsePattern from "./responsePattern";
 
@@ -14,6 +14,6 @@ export const sendErrorResponse = (err: CustomError, res: Response) => {
   res.status(err.statusCode).json(responsePattern(err.status, err.message, err.data));
 };
 
-export const generateErrorData = (field: string, error: string): ValErrorData => {
+export const generateErrorData = (field: string, error: string): IErrorData => {
   return { field, error };
 };

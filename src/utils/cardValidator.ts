@@ -1,125 +1,218 @@
-import { ValField, ValidationFn } from "@/types";
+import { ValidationForRequest, ValidatorSchema } from "@/types";
 
-import { validateFieldsAndGetErrorData } from "./validationHelper";
+import validationHelper from "./validationHelper";
 
-const createCard: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    {
-      field: "name",
-      fieldName: "Card Name",
-      rules: [{ type: "fieldExist" }, { type: "lengthRange", min: 1, max: 50 }],
+const {
+  validateFieldsAndGetErrorData,
+  valArrayAndItemOrProp,
+  valString,
+  valBoolean,
+  valObjectId,
+  valDate,
+  valUrl,
+  valLengthInRange,
+  valMaxLength,
+  valEnum,
+} = validationHelper;
+
+const createCard: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    name: {
+      validators: [valLengthInRange(1, 50)],
+      isRequired: true,
     },
-    { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
-    { field: "listId", fieldName: "List Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
-};
-
-const getCardById: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "id", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
-};
-
-const updateCard: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "id", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "name", fieldName: "Card Name", rules: [{ type: "string" }, { type: "lengthRange", min: 1, max: 50 }] },
-    { field: "description", fieldName: "Description", rules: [{ type: "string" }, { type: "maxLength", max: 500 }] },
-    { field: "reporter", fieldName: "Reporter", rules: [{ type: "objectId" }] },
-    { field: "assignee", fieldName: "Assignee", rules: [{ type: "objectIdArray" }] },
-    { field: "targetStartDate", fieldName: "Target start date", rules: [{ type: "date" }] },
-    { field: "targetEndDate", fieldName: "Target end date", rules: [{ type: "date" }] },
-    { field: "actualStartDate", fieldName: "Actual start date", rules: [{ type: "date" }] },
-    { field: "actualEndDate", fieldName: "Actual end date", rules: [{ type: "date" }] },
-    { field: "priority", fieldName: "Priority", rules: [{ type: "enum", enumArray: ["Low", "Medium", "High"] }] },
-    {
-      field: "status",
-      fieldName: "Status",
-      rules: [{ type: "enum", enumArray: ["Pending", "In Progress", "Done"] }],
+    kanbanId: {
+      validators: [valObjectId],
+      isRequired: true,
     },
-    { field: "tag", fieldName: "Tag", rules: [{ type: "objectIdArray" }] },
-    { field: "webLink", fieldName: "Web link", rules: [{ type: "array" }] },
-  ];
-
-  return validateFieldsAndGetErrorData(req, valFields);
+    listId: {
+      validators: [valObjectId],
+      isRequired: true,
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Card", req.body);
 };
 
-const archiveCard: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "id", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }, { type: "objectId" }] },
-    { field: "isArchived", fieldName: "Is Archived", rules: [{ type: "fieldExist" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
+const getCardById: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    id: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Card", req.body, req.params);
+};
+const updateCard: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    id: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    name: {
+      validators: [valString, valLengthInRange(1, 50)],
+    },
+    description: {
+      validators: [valString, valMaxLength(500)],
+    },
+    reporter: {
+      validators: [valObjectId],
+    },
+    assignee: {
+      validators: [valArrayAndItemOrProp([valObjectId])],
+    },
+    targetStartDate: {
+      validators: [valDate],
+    },
+    targetEndDate: {
+      validators: [valDate],
+    },
+    actualStartDate: {
+      validators: [valDate],
+    },
+    actualEndDate: {
+      validators: [valDate],
+    },
+    priority: {
+      validators: [valEnum(["Low", "Medium", "High"])],
+    },
+    status: {
+      validators: [valEnum(["Pending", "In Progress", "Done"])],
+    },
+    tag: {
+      validators: [valArrayAndItemOrProp([valObjectId])],
+    },
+    webLink: {
+      validators: [
+        valArrayAndItemOrProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true } }),
+      ],
+    },
+    isArchived: {
+      validators: [valBoolean],
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Card", req.body, req.params);
 };
 
-const addAttachment: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
-};
-const deleteAttachment: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    {
-      field: "attachmentId",
-      fieldName: "Attachment Id",
-      rules: [{ type: "paramExist" }, { type: "paramId" }],
+const archiveCard: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    id: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
     },
-    { field: "delete", fieldName: "Delete attachment", rules: [{ type: "fieldExist" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
-};
-const addComment: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    {
-      field: "currentComment",
-      fieldName: "Comment",
-      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 500 }],
+    isArchived: {
+      validators: [valBoolean],
+      isRequired: true,
     },
-    { field: "userId", fieldName: "User Id", rules: [{ type: "fieldExist" }, { type: "objectId" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
+  };
+  return validateFieldsAndGetErrorData(schema, "Card", req.body, req.params);
 };
-const updateComment: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "commentId", fieldName: "Comment Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    {
-      field: "currentComment",
-      fieldName: "Comment",
-      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 500 }],
+
+const addAttachment: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    cardId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
     },
-    {
-      field: "previousComment",
-      fieldName: "Previous Comment",
-      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 500 }],
-    },
-    {
-      field: "previousCommentTime",
-      fieldName: "Previous Comment Time",
-      rules: [{ type: "fieldExist" }, { type: "date" }],
-    },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
+  };
+  return validateFieldsAndGetErrorData(schema, "Attachment", req.body, req.params);
 };
-const archiveComment: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "commentId", fieldName: "Comment Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "isArchived", fieldName: "Is Archived", rules: [{ type: "fieldExist" }, { type: "boolean" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
+const deleteAttachment: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    cardId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    attachmentId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Attachment", req.body, req.params);
 };
-const getCommentHistory: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "cardId", fieldName: "Card Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "commentId", fieldName: "Comment Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
+const addComment: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    cardId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    currentComment: {
+      validators: [valString, valLengthInRange(1, 500)],
+      isRequired: true,
+    },
+    userId: {
+      validators: [valObjectId],
+      isRequired: true,
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Comment", req.body, req.params);
+};
+const updateComment: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    cardId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    commentId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    currentComment: {
+      validators: [valString, valLengthInRange(1, 500)],
+      isRequired: true,
+    },
+    previousComment: {
+      validators: [valString, valLengthInRange(1, 500)],
+      isRequired: true,
+    },
+    previousCommentTime: {
+      validators: [valDate],
+      isRequired: true,
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Comment", req.body, req.params);
+};
+const archiveComment: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    cardId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    commentId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    isArchived: {
+      validators: [valBoolean],
+      isRequired: true,
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Comment", req.body, req.params);
+};
+const getCommentHistory: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    cardId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    commentId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Comment", req.body, req.params);
 };
 
 export default {
