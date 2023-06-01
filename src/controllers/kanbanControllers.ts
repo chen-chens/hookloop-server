@@ -74,7 +74,7 @@ export default {
         error: "Kanban's key is required.",
       });
     } else {
-      const kanban = await mongoDbHandler.getDb(
+      let kanban = await mongoDbHandler.getDb(
         null,
         next,
         "Kanban",
@@ -83,9 +83,10 @@ export default {
         { _id: 0 },
         {
           path: "listOrder",
+          match: { isArchived: false },
           populate: {
             path: "cardOrder",
-            model: "Card",
+            match: { isArchived: false },
           },
         },
       );
@@ -95,6 +96,63 @@ export default {
           error: "kanban not found or archived.",
         });
       } else {
+        const reqQuery = req.query;
+
+        // 有過濾條件才進行卡片篩選
+        if (
+          Object.keys(reqQuery).indexOf("matchType") > -1 ||
+          Object.keys(reqQuery).indexOf("reporter") > -1 ||
+          Object.keys(reqQuery).indexOf("assignee") > -1 ||
+          Object.keys(reqQuery).indexOf("priority") > -1 ||
+          Object.keys(reqQuery).indexOf("status") > -1 ||
+          Object.keys(reqQuery).indexOf("tag") > -1
+        ) {
+          // eslint-disable-next-line no-underscore-dangle
+          kanban = kanban._doc;
+          let { listOrder } = kanban;
+          const { matchType, reporter, assignee, priority, status, tag } = reqQuery;
+          const assignees = assignee ? (assignee as string).split(",") : [];
+          const tags = tag ? (tag as string).split(",") : [];
+
+          // 完全符合
+          if (matchType === "fully") {
+            listOrder = listOrder.map((list: any) => ({
+              // eslint-disable-next-line no-underscore-dangle
+              ...list._doc,
+              cardOrder: list.cardOrder.filter((card: any) => {
+                return !(
+                  (reporter && card.reporter !== reporter) ||
+                  (assignees.length && !assignees.every((assi: any) => card.assignee.includes(assi))) ||
+                  (priority && card.priority !== priority) ||
+                  (status && card.status !== status) ||
+                  (tags.length && !tags.every((t: any) => card.tag.includes(t)))
+                );
+              }),
+            }));
+          }
+          // 部分符合
+          else {
+            listOrder = listOrder.map((list: any) => ({
+              // eslint-disable-next-line no-underscore-dangle
+              ...list._doc,
+              cardOrder: list.cardOrder.filter((card: any) => {
+                return (
+                  (reporter && card.reporter === reporter) ||
+                  (assignees.length && assignees.some((assi: any) => card.assignee.includes(assi))) ||
+                  (priority && card.priority === priority) ||
+                  (status && card.status === status) ||
+                  (tags.length && tags.some((t: any) => card.tag.includes(t)))
+                );
+              }),
+            }));
+          }
+
+          // 過濾已封存 & 卡片數為 0 的 list
+          listOrder = listOrder.filter((list: any) => !list.isArchived && !!list.cardOrder.length);
+
+          kanban.listOrder = listOrder;
+        }
+
         sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, kanban);
       }
     }
@@ -251,17 +309,17 @@ export default {
   },
   filterKanbanCards: async (req: Request, res: Response, next: NextFunction) => {
     const { kanbanId } = req.params;
-    const { searchType, reporter, assignee, priority, status, tag } = req.query;
+    const { matchType, reporter, assignee, priority, status, tag } = req.query;
 
     if (!kanbanId) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "kanbanId",
         error: "Kanban's kanbanId is required.",
       });
-    } else if (!searchType) {
+    } else if (!matchType) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-        field: "searchType",
-        error: "SearchType is required.",
+        field: "matchType",
+        error: "matchType is required.",
       });
     } else {
       let lists = await mongoDbHandler.getDb(
@@ -278,7 +336,7 @@ export default {
       const tags = tag ? (tag as string).split(",") : [];
 
       // 完全符合
-      if (searchType === "fully") {
+      if (matchType === "fully") {
         lists = lists.map((list: any) => ({
           // eslint-disable-next-line no-underscore-dangle
           ...list._doc,
