@@ -74,20 +74,13 @@ export default {
         error: "Kanban's key is required.",
       });
     } else {
-      let kanban = await mongoDbHandler.getDb(
-        null,
-        next,
-        "Kanban",
-        Kanban,
-        { key, isArchived: false },
-        { _id: 0 },
-        {
-          path: "listOrder",
-          populate: {
-            path: "cardOrder",
-          },
+      let kanban = await mongoDbHandler.getDb(null, next, "Kanban", Kanban, { key, isArchived: false }, null, {
+        path: "listOrder",
+        populate: {
+          path: "cardOrder",
+          populate: [{ path: "tag" }, { path: "assignee" }],
         },
-      );
+      });
       if (!kanban) {
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
           field: "kanban",
