@@ -83,10 +83,8 @@ export default {
         { _id: 0 },
         {
           path: "listOrder",
-          match: { isArchived: false },
           populate: {
             path: "cardOrder",
-            match: { isArchived: false },
           },
         },
       );
