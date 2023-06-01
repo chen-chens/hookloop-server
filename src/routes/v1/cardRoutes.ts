@@ -14,7 +14,7 @@ router.patch(
   validate(cardValidator.archiveCard, "DELETE"),
   asyncWrapper(cardControllers.archiveCard),
 );
-router.patch("/move", asyncWrapper(cardControllers.moveCard));
+router.patch("/:id/move", asyncWrapper(cardControllers.moveCard));
 
 router.post(
   "/:cardId/attachment",
