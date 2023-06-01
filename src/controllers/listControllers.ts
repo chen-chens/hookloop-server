@@ -108,7 +108,12 @@ export default {
         if (!kanbanUpdateResult || !kanbanUpdateResult.matchedCount) {
           forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
         } else {
-          const lists = await Kanban.findOne({ _id: kanbanId }).populate("listOrder").select("listOrder");
+          const lists = await Kanban.findOne({ _id: kanbanId }).populate({
+            path: "listOrder",
+            populate: {
+              path: "cardOrder",
+            },
+          });
           if (!lists) {
             forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
               error: `lists not found.`,
