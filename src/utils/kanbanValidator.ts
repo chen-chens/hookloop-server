@@ -1,54 +1,99 @@
-import { ValField, ValidationFn } from "@/types";
+import { ValidationForRequest, ValidatorSchema } from "@/types";
 
-import { validateFieldsAndGetErrorData } from "./validationHelper";
+import validationHelper from "./validationHelper";
 
-const getTags: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
-};
-
-const createTag: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "kanbanId", fieldName: "kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    {
-      field: "name",
-      fieldName: "Name",
-      rules: [{ type: "fieldExist" }, { type: "string" }, { type: "lengthRange", min: 1, max: 50 }],
+const { validateFieldsAndGetErrorData, valString, valBoolean, valObjectId, valLengthInRange } = validationHelper;
+const getTags: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    kanbanId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
     },
-    { field: "color", fieldName: "Color", rules: [{ type: "string" }] },
-    { field: "icon", fieldName: "Icon", rules: [{ type: "string" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
+  };
+  return validateFieldsAndGetErrorData(schema, "Tags", req.body, req.params);
 };
 
-const getTagById: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "tagId", fieldName: "Tag Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
+const createTag: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    kanbanId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    name: {
+      validators: [valString, valLengthInRange(1, 50)],
+      isRequired: true,
+    },
+    color: {
+      validators: [valString],
+    },
+    icon: {
+      validators: [valString],
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Tag", req.body, req.params);
 };
 
-const updateTagById: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "kanbanId", fieldName: "kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "tagId", fieldName: "Tag Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "name", fieldName: "Name", rules: [{ type: "string" }, { type: "lengthRange", min: 1, max: 50 }] },
-    { field: "color", fieldName: "Color", rules: [{ type: "string" }] },
-    { field: "icon", fieldName: "Icon", rules: [{ type: "string" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
+const getTagById: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    kanbanId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    tagId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Tag", req.body, req.params);
 };
 
-const archiveTag: ValidationFn = (req) => {
-  const valFields: ValField[] = [
-    { field: "kanbanId", fieldName: "Kanban Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "tagId", fieldName: "Tag Id", rules: [{ type: "paramExist" }, { type: "paramId" }] },
-    { field: "isArchived", fieldName: "Is Archived", rules: [{ type: "fieldExist" }, { type: "boolean" }] },
-  ];
-  return validateFieldsAndGetErrorData(req, valFields);
+const updateTagById: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    kanbanId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    tagId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    name: {
+      validators: [valString, valLengthInRange(1, 50)],
+    },
+    color: {
+      validators: [valString],
+    },
+    icon: {
+      validators: [valString],
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Tag", req.body, req.params);
+};
+
+const archiveTag: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    kanbanId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    tagId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    isArchived: {
+      validators: [valBoolean],
+      isRequired: true,
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Tag", req.body, req.params);
 };
 
 export default {

@@ -14,7 +14,8 @@ router.patch(
   validate(cardValidator.archiveCard, "DELETE"),
   asyncWrapper(cardControllers.archiveCard),
 );
-router.patch("/move", asyncWrapper(cardControllers.moveCard));
+router.patch("/:id/move", asyncWrapper(cardControllers.moveCard));
+
 router.post(
   "/:cardId/attachment",
   validate(cardValidator.addAttachment, "UPLOAD"),
@@ -27,6 +28,8 @@ router.delete(
   validate(cardValidator.deleteAttachment, "DELETE"),
   asyncWrapper(cardControllers.deleteAttachment),
 );
+
+router.get("/:cardId/comment", validate(cardValidator.getComments, "READ"), asyncWrapper(cardControllers.getComments));
 router.post("/:cardId/comment", validate(cardValidator.addComment, "CREATE"), asyncWrapper(cardControllers.addComment));
 router.patch(
   "/:cardId/comment/:commentId",
