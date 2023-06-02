@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
-import { Kanban, Tag } from "@/models";
+import { Kanban, List, Tag } from "@/models";
 import WorkspaceMember from "@/models/workspaceMemberModel";
 import Workspace from "@/models/workspaceModel";
 import { ApiResults, StatusCode } from "@/types";
@@ -16,10 +16,10 @@ export default {
         field: "key",
         error: "kanban's key is required.",
       });
-    } else if (key.indexOf(" ") > -1) {
+    } else if (!key.match(/^[0-9a-z-]+$/g)) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
         field: "key",
-        error: "space is not allowed in key.",
+        error: "Key value only allows lowercase English, numbers and `-` symbols.",
       });
     } else if (!name) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
@@ -32,9 +32,9 @@ export default {
         error: "workspaceId is required.",
       });
     } else {
-      const existId = await Kanban.findOne({ key });
+      const existKanban = await Kanban.findOne({ key });
 
-      if (existId) {
+      if (existKanban) {
         forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
           field: "key",
           error: "key already exists, unique requirement.",
@@ -74,7 +74,78 @@ export default {
         error: "Kanban's key is required.",
       });
     } else {
-      mongoDbHandler.getDb(res, next, "Kanban", Kanban, { key }, { _id: 0 });
+      let kanban = await mongoDbHandler.getDb(null, next, "Kanban", Kanban, { key, isArchived: false }, null, {
+        path: "listOrder",
+        populate: {
+          path: "cardOrder",
+          populate: [{ path: "tag" }, { path: "assignee" }],
+        },
+      });
+      if (!kanban) {
+        forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
+          field: "kanban",
+          error: "kanban not found or archived.",
+        });
+      } else {
+        const reqQuery = req.query;
+
+        // 有過濾條件才進行卡片篩選
+        if (
+          Object.keys(reqQuery).indexOf("matchType") > -1 ||
+          Object.keys(reqQuery).indexOf("reporter") > -1 ||
+          Object.keys(reqQuery).indexOf("assignee") > -1 ||
+          Object.keys(reqQuery).indexOf("priority") > -1 ||
+          Object.keys(reqQuery).indexOf("status") > -1 ||
+          Object.keys(reqQuery).indexOf("tag") > -1
+        ) {
+          // eslint-disable-next-line no-underscore-dangle
+          kanban = kanban._doc;
+          let { listOrder } = kanban;
+          const { matchType, reporter, assignee, priority, status, tag } = reqQuery;
+          const assignees = assignee ? (assignee as string).split(",") : [];
+          const tags = tag ? (tag as string).split(",") : [];
+
+          // 完全符合
+          if (matchType === "fully") {
+            listOrder = listOrder.map((list: any) => ({
+              // eslint-disable-next-line no-underscore-dangle
+              ...list._doc,
+              cardOrder: list.cardOrder.filter((card: any) => {
+                return !(
+                  (reporter && card.reporter !== reporter) ||
+                  (assignees.length && !assignees.every((assi: any) => card.assignee.includes(assi))) ||
+                  (priority && card.priority !== priority) ||
+                  (status && card.status !== status) ||
+                  (tags.length && !tags.every((t: any) => card.tag.includes(t)))
+                );
+              }),
+            }));
+          }
+          // 部分符合
+          else {
+            listOrder = listOrder.map((list: any) => ({
+              // eslint-disable-next-line no-underscore-dangle
+              ...list._doc,
+              cardOrder: list.cardOrder.filter((card: any) => {
+                return (
+                  (reporter && card.reporter === reporter) ||
+                  (assignees.length && assignees.some((assi: any) => card.assignee.includes(assi))) ||
+                  (priority && card.priority === priority) ||
+                  (status && card.status === status) ||
+                  (tags.length && tags.some((t: any) => card.tag.includes(t)))
+                );
+              }),
+            }));
+          }
+
+          // 過濾已封存 & 卡片數為 0 的 list
+          listOrder = listOrder.filter((list: any) => !list.isArchived && !!list.cardOrder.length);
+
+          kanban.listOrder = listOrder;
+        }
+
+        sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, kanban);
+      }
     }
   },
   modifyKanbanKey: async (req: Request, res: Response, next: NextFunction) => {
@@ -97,7 +168,7 @@ export default {
           error: `Kanban not found.`,
         });
       } else {
-        const target = await Kanban.findOne({ key: newKey }, { _id: 0 });
+        const target = await mongoDbHandler.getDb(null, next, "Kanban", Kanban, { key: newKey }, { _id: 0 });
         if (!target) {
           forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
         } else {
@@ -167,14 +238,14 @@ export default {
         error: `Kanban not found.`,
       });
     } else {
-      const worksoaceData = await WorkspaceMember.find({ workspaceId: kanbanData.workspaceId }).populate([
+      const workspaceData = await WorkspaceMember.find({ workspaceId: kanbanData.workspaceId }).populate([
         "workspace",
         "user",
       ]);
-      if (!worksoaceData) {
+      if (!workspaceData) {
         forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
       } else {
-        const membersData = worksoaceData.map((item) => ({
+        const membersData = workspaceData.map((item) => ({
           userId: item.userId,
           username: item.user?.username,
           role: item.role,
@@ -226,5 +297,75 @@ export default {
     }
     const allTags = await Tag.find({ kanbanId, isArchived: false });
     sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, allTags);
+  },
+  filterKanbanCards: async (req: Request, res: Response, next: NextFunction) => {
+    const { kanbanId } = req.params;
+    const { matchType, reporter, assignee, priority, status, tag } = req.query;
+
+    if (!kanbanId) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "kanbanId",
+        error: "Kanban's kanbanId is required.",
+      });
+    } else if (!matchType) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "matchType",
+        error: "matchType is required.",
+      });
+    } else {
+      let lists = await mongoDbHandler.getDb(
+        null,
+        next,
+        "List",
+        List,
+        { kanbanId, isArchived: false },
+        { _id: 0 },
+        "cardOrder",
+        true,
+      );
+      const assignees = assignee ? (assignee as string).split(",") : [];
+      const tags = tag ? (tag as string).split(",") : [];
+
+      // 完全符合
+      if (matchType === "fully") {
+        lists = lists.map((list: any) => ({
+          // eslint-disable-next-line no-underscore-dangle
+          ...list._doc,
+          cardOrder: list.cardOrder.filter((card: any) => {
+            return (
+              !card.isArchived &&
+              !(
+                (reporter && card.reporter !== reporter) ||
+                (assignees.length && !assignees.every((assi: any) => card.assignee.includes(assi))) ||
+                (priority && card.priority !== priority) ||
+                (status && card.status !== status) ||
+                (tags.length && !tags.every((t: any) => card.tag.includes(t)))
+              )
+            );
+          }),
+        }));
+      }
+      // 部分符合
+      else {
+        lists = lists.map((list: any) => ({
+          // eslint-disable-next-line no-underscore-dangle
+          ...list._doc,
+          cardOrder: list.cardOrder.filter((card: any) => {
+            return (
+              !card.isArchived &&
+              ((reporter && card.reporter === reporter) ||
+                (assignees.length && assignees.some((assi: any) => card.assignee.includes(assi))) ||
+                (priority && card.priority === priority) ||
+                (status && card.status === status) ||
+                (tags.length && tags.some((t: any) => card.tag.includes(t))))
+            );
+          }),
+        }));
+      }
+      // 過濾卡片數為 0 的 list
+      lists = lists.filter((list: any) => !!list.cardOrder.length);
+
+      sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, lists);
+    }
   },
 };

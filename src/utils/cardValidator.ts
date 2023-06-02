@@ -135,6 +135,17 @@ const deleteAttachment: ValidationForRequest = (req) => {
   };
   return validateFieldsAndGetErrorData(schema, "Attachment", req.body, req.params);
 };
+const getComments: ValidationForRequest = (req) => {
+  const schema: ValidatorSchema = {
+    cardId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+  };
+  return validateFieldsAndGetErrorData(schema, "Comment", req.body, req.params);
+};
+
 const addComment: ValidationForRequest = (req) => {
   const schema: ValidatorSchema = {
     cardId: {
@@ -222,6 +233,7 @@ export default {
   archiveCard,
   addAttachment,
   deleteAttachment,
+  getComments,
   addComment,
   updateComment,
   archiveComment,

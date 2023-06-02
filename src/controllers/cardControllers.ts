@@ -151,7 +151,21 @@ const moveCard = async (req: Request, res: Response, next: NextFunction) => {
         ) {
           forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
         } else {
-          sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE);
+          const populatedKanban = await List.findOne({ _id: newListId }).populate({
+            path: "kanbanId",
+            populate: {
+              path: "listOrder",
+              populate: {
+                path: "cardOrder",
+              },
+            },
+          });
+
+          if (!populatedKanban || !populatedKanban.kanbanId) {
+            forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+          } else {
+            sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, populatedKanban.kanbanId);
+          }
         }
       } catch (error) {
         console.log("MongoDb UPDATE List error: ", error);
@@ -206,6 +220,13 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
     {},
   );
 };
+
+const getComments = async (req: Request, res: Response, _: NextFunction) => {
+  const { cardId } = req.params;
+  const comments = await CardComment.find({ cardId }).sort("createdAt");
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, comments);
+};
+
 const addComment = async (req: Request, res: Response, _: NextFunction) => {
   const { cardId } = req.params;
   const { currentComment, userId } = req.body;
@@ -245,6 +266,7 @@ export default {
   moveCard,
   addAttachment,
   deleteAttachment,
+  getComments,
   addComment,
   updateComment,
   archiveComment,

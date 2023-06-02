@@ -12,14 +12,15 @@ async function getDb(
   query: any,
   projection: any = null,
   populate: any = null,
+  multiResult: boolean = false,
 ): Promise<any | void> {
   const target = await model
-    .findOne(query, projection)
+    .find(query, projection)
     .populate(populate)
     .catch((err: Error) => {
       console.log("MongoDb GET error: ", err);
     });
-  if (!target) {
+  if (res && !target.length) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
       error: `${modelName} not found.`,
     });
@@ -27,11 +28,14 @@ async function getDb(
   }
   if (res) {
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-      target,
+      target: target[0],
     });
     return null;
   }
-  return target;
+  if (multiResult) {
+    return target;
+  }
+  return target[0];
 }
 
 async function updateDb(
