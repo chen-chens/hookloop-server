@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { forwardCustomError } from "@/middlewares";
 import { Card, CardComment, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
-import { sendSuccessResponse } from "@/utils";
+import { sendSuccessResponse, websocket } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
@@ -14,18 +14,7 @@ const createCard = async (req: Request, res: Response, _: NextFunction) => {
     kanbanId,
   });
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newCard);
-  const wss = req.app.get("wss");
-  const { clients } = wss;
-  if (clients[kanbanId]) {
-    clients[kanbanId].forEach((client: any) => {
-      client.send(
-        JSON.stringify({
-          type: "createCard",
-          card: newCard,
-        }),
-      );
-    });
-  }
+  websocket.sendWebSocket(kanbanId, "createCard", newCard);
 };
 
 const getCardById = async (req: Request, res: Response, next: NextFunction) => {
