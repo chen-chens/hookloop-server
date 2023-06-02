@@ -18,9 +18,7 @@ app.use(cookieParser());
 
 app.use((req, res, next) => {
   console.log(`正在進行的請求類型（method）: ${req.method}`);
-
   console.log(`正在調用的 API: ${req.url}`);
-
   next();
 });
 app.use(router); // Set router
