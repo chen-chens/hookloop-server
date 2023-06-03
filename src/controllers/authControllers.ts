@@ -1,11 +1,12 @@
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
+import { google } from "googleapis";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 import validator from "validator";
 
 import dbOptions from "@/config/dbOptions";
-import mailTransporter from "@/config/mailTransporter";
 import { forwardCustomError } from "@/middlewares";
 import { User } from "@/models";
 import { ApiResults, IDecodedToken, MailOptions, StatusCode } from "@/types";
@@ -18,7 +19,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   const comparePasswordResult = await bcrypt.compare(password, targetUser?.password || "");
   if (!targetUser) {
     forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_LOG_IN, {
-      error: ApiResults.UNAUTHORIZED_IDENTITY,
+      error: "The User is not existing! Please Sign up first!",
     });
     return;
   }
@@ -66,10 +67,10 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
 
   // (1) 產生短期限 token，存到 DB 之後驗證用。
   // (2) 寄出通知信，包含一組由信箱、token 組成 url。
-  const tempToken = jwt.sign({ userId: targetUser.id }, process.env.JWT_SECRET_KEY!, { expiresIn: "10m" });
+  const tempToken = jwt.sign({ userId: targetUser.id, email }, process.env.JWT_SECRET_KEY!, { expiresIn: "10m" });
   const dbClearResetTokenTime = new Date(Date.now() + (10 * 60 + 30) * 1000); // token 設定 10分鐘過期，DB 自動在 10分鐘又30秒 移除 resetToken
   const url = process.env.NODE_ENV === "production" ? "https://hookloop-client.onrender.com" : "http://localhost:3000";
-  const resetPasswordUrl = `${url}/resetPassword/${tempToken}`;
+  const resetPasswordUrl = `${url}/resetPassword?resetToken=${tempToken}`;
 
   targetUser.resetToken = {
     token: tempToken,
@@ -77,35 +78,69 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
   };
   await targetUser.save();
 
-  // nodemailer
-  const mailConfig: MailOptions = {
-    from: process.env.SMTP_SEND_EMAIL!,
-    to: email,
-    subject: "HOOKLOOP Reset Password",
-    html: `
-      Hi ${targetUser.username}, 
-      <p>A request has been received to change the password for your HOOKLOOP account. Please reset your password in 10 minutes.</p>
-      <a href=${resetPasswordUrl} target="_blank">Reset Password</a>
+  const { OAuth2 } = google.auth;
+  const oauth2Client = new OAuth2(
+    process.env.GOOGLE_AUTH_CLIENT_ID,
+    process.env.GOOGLE_AUTH_CLIENT_SECRET,
+    "https://developers.google.com/oauthplayground", // YOUR_REDIRECT_URL
+  );
 
-      <footer>HOOKLOOP</footer>
-    `,
-  };
-
-  mailTransporter.sendMail(mailConfig, (err: Error | null, info: SMTPTransport.SentMessageInfo) => {
-    if (err) {
-      console.log(err);
-      return forwardCustomError(next, StatusCode.Service_Unavailable, ApiResults.FAIL_TO_SEND_EMAIL, {
-        field: "",
-        error: ApiResults.UNEXPECTED_ERROR,
-      });
-    }
-
-    console.log(info);
-    return sendSuccessResponse(res, ApiResults.SEND_RESET_PASSWORD_EMAIL, {
-      title: ApiResults.SEND_RESET_PASSWORD_EMAIL,
-      description: `An email has been sent to your email address: ${email}.`,
-    });
+  // To get access token by using credential oauth2Client
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GOOGLE_AUTH_REFRESH_TOKEN,
   });
+  // temperary token
+  oauth2Client
+    .getAccessToken()
+    .then((value) => {
+      if (value.token) {
+        // build nodemailer transport
+        const mailTransporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            type: "OAuth2",
+            user: process.env.GOOGLE_AUTH_EMAIL,
+            clientId: process.env.GOOGLE_AUTH_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_AUTH_CLIENT_SECRET,
+            refreshToken: process.env.GOOGLE_AUTH_REFRESH_TOKEN,
+            accessToken: value.token || "",
+          },
+        });
+
+        // nodemailer content
+        const mailConfig: MailOptions = {
+          from: `HOOKLOOP <${process.env.GOOGLE_AUTH_EMAIL!}>`,
+          to: email,
+          subject: "HOOKLOOP Reset Password",
+          html: `
+            Hi ${targetUser.username}, 
+            <p>A request has been received to change the password for your HOOKLOOP account. Please reset your password in 10 minutes.</p>
+            <a href=${resetPasswordUrl} target="_blank">Reset Password</a>
+
+            <footer><a href=${url} target="_blank">HOOKLOOP</a></footer>
+          `,
+        };
+
+        // send Email
+        mailTransporter.sendMail(mailConfig, (err: Error | null, info: SMTPTransport.SentMessageInfo) => {
+          if (err) {
+            console.log(err);
+            return forwardCustomError(next, StatusCode.Service_Unavailable, ApiResults.FAIL_TO_SEND_EMAIL, {
+              field: "",
+              error: ApiResults.UNEXPECTED_ERROR,
+            });
+          }
+
+          return sendSuccessResponse(res, ApiResults.SEND_RESET_PASSWORD_EMAIL, {
+            title: ApiResults.SEND_RESET_PASSWORD_EMAIL,
+            description: `An email has been sent to your email address: ${info.accepted[0]}.`,
+          });
+        });
+      }
+    })
+    .catch((reason: any) => {
+      console.log("🚀 ~ file: authControllers.ts:87 ~ .then ~ reason:", reason);
+    });
 };
 
 const verifyPassword = async (req: Request, res: Response, next: NextFunction) => {
@@ -119,7 +154,7 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
 
   const decode = await jwt.verify(resetPasswordToken, process.env.JWT_SECRET_KEY!);
   const { userId } = decode as IDecodedToken;
-  const targetUser = await User.findOne({ id: userId });
+  const targetUser = await User.findById(userId);
   if (!targetUser) {
     return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_SEND_EMAIL, {
       field: "",

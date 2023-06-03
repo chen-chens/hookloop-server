@@ -98,7 +98,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   const token = getJwtToken(newUser.id!);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
     token,
-    username: newUser.username,
+    user: newUser,
   });
 };
 
