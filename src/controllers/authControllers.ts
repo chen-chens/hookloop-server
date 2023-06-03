@@ -8,7 +8,7 @@ import validator from "validator";
 
 import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
-import { User } from "@/models";
+import { ResetPassword, User } from "@/models";
 import { ApiResults, IDecodedToken, MailOptions, StatusCode } from "@/types";
 import { getJwtToken, sendSuccessResponse, validatePassword } from "@/utils";
 
@@ -68,15 +68,15 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
   // (1) 產生短期限 token，存到 DB 之後驗證用。
   // (2) 寄出通知信，包含一組由信箱、token 組成 url。
   const tempToken = jwt.sign({ userId: targetUser.id, email }, process.env.JWT_SECRET_KEY!, { expiresIn: "10m" });
-  const dbClearResetTokenTime = new Date(Date.now() + (10 * 60 + 30) * 1000); // token 設定 10分鐘過期，DB 自動在 10分鐘又30秒 移除 resetToken
+  const dbClearResetTokenTime = new Date(Date.now() + 10 * 60 * 1000); // token 設定 10分鐘過期，DB 自動移除資料
   const url = process.env.NODE_ENV === "production" ? "https://hookloop-client.onrender.com" : "http://localhost:3000";
   const resetPasswordUrl = `${url}/resetPassword?resetToken=${tempToken}`;
 
-  targetUser.resetToken = {
-    token: tempToken,
+  await ResetPassword.create({
+    userId: targetUser.id,
+    tempToken,
     expiresAt: dbClearResetTokenTime,
-  };
-  await targetUser.save();
+  });
 
   const { OAuth2 } = google.auth;
   const oauth2Client = new OAuth2(
@@ -140,10 +140,11 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
     })
     .catch((reason: any) => {
       console.log("🚀 ~ file: authControllers.ts:87 ~ .then ~ reason:", reason);
+      return forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.FAIL_TO_SEND_EMAIL);
     });
 };
 
-const verifyPassword = async (req: Request, res: Response, next: NextFunction) => {
+const verifyResetPassword = async (req: Request, res: Response, next: NextFunction) => {
   const { newPassword, resetPasswordToken } = req.body;
   if (!validatePassword(newPassword || "")) {
     return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
@@ -154,15 +155,15 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
 
   const decode = await jwt.verify(resetPasswordToken, process.env.JWT_SECRET_KEY!);
   const { userId } = decode as IDecodedToken;
-  const targetUser = await User.findById(userId);
+  const targetUser = await ResetPassword.findOne({ userId });
   if (!targetUser) {
-    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_SEND_EMAIL, {
+    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
       field: "",
       error: "The member is not existing! ",
     });
   }
 
-  if (resetPasswordToken !== targetUser.resetToken?.token) {
+  if (resetPasswordToken !== targetUser.tempToken) {
     return forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_SEND_EMAIL, {
       field: "",
       error: "You don't have authorization to reset password! ",
@@ -221,7 +222,7 @@ const verifyUserToken = async (req: Request, res: Response, next: NextFunction) 
 export default {
   login,
   forgetPassword,
-  verifyPassword,
+  verifyResetPassword,
   verifyEmail,
   verifyUserToken,
 };
