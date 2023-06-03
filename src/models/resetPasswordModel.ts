@@ -10,6 +10,7 @@ const resetPasswordSchema = new Schema<IResetPasswordSchema>({
     type: String,
     ref: "User",
     required: true,
+    unique: true,
   },
   tempToken: {
     type: String,

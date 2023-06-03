@@ -7,7 +7,7 @@ enum ApiResults {
   SUCCESS_SEND_EMAIL = "The letter has been delivered！Please check your email!",
   FAIL_CREATE = "Failed to create！",
   FAIL_READ = "Failed to get information from DB",
-  FAIL_UPDATE = "Failed to upadte！",
+  FAIL_UPDATE = "Failed to update！",
   FAIL_DELETE = "Failed to delete !",
   FAIL_TO_GET_DATA = "Failed to Get Data!",
   FAIL_DOWNLOAD = "Failed to Download !",

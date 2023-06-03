@@ -71,7 +71,14 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
   const dbClearResetTokenTime = new Date(Date.now() + 10 * 60 * 1000); // token 設定 10分鐘過期，DB 自動移除資料
   const url = process.env.NODE_ENV === "production" ? "https://hookloop-client.onrender.com" : "http://localhost:3000";
   const resetPasswordUrl = `${url}/resetPassword?resetToken=${tempToken}`;
-
+  const hasExistingResetData = await ResetPassword.findOne({ userId: targetUser.id });
+  if (hasExistingResetData) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
+      field: "",
+      error: "The reset password Email has been sent! Please check out your email!",
+    });
+    return;
+  }
   await ResetPassword.create({
     userId: targetUser.id,
     tempToken,
@@ -164,7 +171,7 @@ const verifyResetPassword = async (req: Request, res: Response, next: NextFuncti
   }
 
   if (resetPasswordToken !== targetUser.tempToken) {
-    return forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_TO_SEND_EMAIL, {
+    return forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_UPDATE, {
       field: "",
       error: "You don't have authorization to reset password! ",
     });
