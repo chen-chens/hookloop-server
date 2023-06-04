@@ -13,6 +13,7 @@ router.patch("/:key/name", asyncWrapper(kanbanControllers.renameKanban));
 router.patch("/:key/key", asyncWrapper(kanbanControllers.modifyKanbanKey));
 router.patch("/:key/archive", asyncWrapper(kanbanControllers.archiveKanban));
 router.patch("/:key/pin", asyncWrapper(kanbanControllers.pinKanban));
+router.get("/:kanbanId/filter", asyncWrapper(kanbanControllers.filterKanbanCards));
 
 router.post(
   "/:kanbanId/tag",

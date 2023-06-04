@@ -53,7 +53,7 @@ const getKanbansByWorkspaceId = async (req: Request, res: Response, next: NextFu
   } else {
     const result = await mongoDbHandler.getDb(null, next, "Workspace", Workspace, { _id: id });
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-      kanbans: result.kanban,
+      kanbans: result?.kanbans ?? [],
     });
   }
 };

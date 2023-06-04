@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 
-import { ApiResults, StatusCode, ValidationFn } from "@/types";
+import { ApiResults, StatusCode, ValidationForRequest } from "@/types";
 
 import { forwardCustomError } from "./errorMiddleware";
 
-const validate = (validationFn: ValidationFn, apiMethod: string) => {
+const validate = (validationForRequest: ValidationForRequest, apiMethod: string) => {
   let apiResults: ApiResults;
   switch (apiMethod) {
     case "CREATE":
@@ -27,7 +27,7 @@ const validate = (validationFn: ValidationFn, apiMethod: string) => {
       break;
   }
   return (req: Request, res: Response, next: NextFunction) => {
-    const validationError = validationFn(req);
+    const validationError = validationForRequest(req);
     if (validationError) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, apiResults, validationError);
     } else {
