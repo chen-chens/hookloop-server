@@ -32,10 +32,15 @@ const getMember = async (req: Request, res: Response) => {
     email: { $regex: email, $options: "i" },
     // username 欄位存在才回傳
     username: { $ne: null },
-  }).select("email avatar username"); // 只回傳 {email, avatar, username} 給前端
+  }).select("email avatar username _id"); // 只回傳 {email, avatar, username} 給前端
+
+  const transformedMembers = members.map((member) => {
+    // eslint-disable-next-line no-underscore-dangle
+    return { ...member.toObject(), userId: member._id };
+  });
 
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
-    members,
+    members: transformedMembers,
   });
 };
 
@@ -159,6 +164,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 
 const updatePassword = async (req: Request, res: Response, next: NextFunction) => {
   const { newPassword, oldPassword } = req.body;
+  console.log("Update password start.");
 
   if (oldPassword) {
     const bearerToken = req.headers.authorization;
@@ -166,7 +172,7 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
 
     const { userId } = token as { userId: string };
 
-    const targetUser = await User.findById(userId).select("+password");
+    const targetUser = await User.findOne({ _id: userId }).select("+password");
     const isPasswordCorrect = await bcrypt.compare(oldPassword, targetUser?.password || "");
 
     if (!isPasswordCorrect) {
@@ -177,8 +183,14 @@ const updatePassword = async (req: Request, res: Response, next: NextFunction) =
     } else {
       const securedPassword = await bcrypt.hash(newPassword, 12);
       const newData = await User.findByIdAndUpdate(userId, { password: securedPassword }, dbOptions);
+      if (newData) {
+        const newToken = getJwtToken(newData.id);
 
-      sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, { userData: newData });
+        sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, {
+          token: newToken,
+          username: newData.username,
+        });
+      }
     }
   }
 };

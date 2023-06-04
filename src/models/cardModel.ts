@@ -59,7 +59,7 @@ const cardSchema = new Schema(
         {
           name: {
             type: String,
-            maxLength: 30,
+            maxLength: 50,
           },
           url: String,
         },

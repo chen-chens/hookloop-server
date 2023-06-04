@@ -9,5 +9,5 @@ export { default as IQueryUsersRequest } from "./queryUsersRequest";
 export { default as IRequestMembers } from "./requestMembers";
 export { default as RoleType } from "./roleType";
 export { default as StatusCode } from "./statusCode";
-export { ValErrorData, ValField, ValidationFn, ValReturn, ValRule, ValType } from "./validatorType";
+export { IErrorData, ValidationForRequest, ValidatorFn, ValidatorSchema } from "./validatorType";
 export { default as IWorkspaceRequest } from "./workspaceRequest";
