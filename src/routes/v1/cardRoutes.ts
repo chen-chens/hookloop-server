@@ -8,13 +8,13 @@ const router = Router();
 
 router.post("/", validate(cardValidator.createCard, "CREATE"), asyncWrapper(cardControllers.createCard));
 router.get("/:id", validate(cardValidator.getCardById, "READ"), asyncWrapper(cardControllers.getCardById));
-router.patch("/:id", validate(cardValidator.updateCard, "UPDATE"), asyncWrapper(cardControllers.updateCard));
+router.patch("/:id/update", validate(cardValidator.updateCard, "UPDATE"), asyncWrapper(cardControllers.updateCard));
 router.patch(
   "/:id/isArchived",
   validate(cardValidator.archiveCard, "DELETE"),
   asyncWrapper(cardControllers.archiveCard),
 );
-router.patch("/:id/move", asyncWrapper(cardControllers.moveCard));
+router.patch("/move", asyncWrapper(cardControllers.moveCard));
 
 router.post(
   "/:cardId/attachment",
