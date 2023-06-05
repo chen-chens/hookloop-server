@@ -4,6 +4,7 @@ export { default as CardHistory } from "./cardHistoryModel";
 export { default as Card } from "./cardModel";
 export { default as Kanban } from "./kanbanModel";
 export { default as List } from "./listModel";
+export { default as ResetPassword } from "./resetPasswordModel";
 export { default as Tag } from "./tagModel";
 export { default as User } from "./userModel";
 export { default as Workspace } from "./workspaceModel";
