@@ -6,6 +6,5 @@ export { default as kanbanValidators } from "./kanbanValidator";
 export { generateErrorData, sendErrorResponse, sendSuccessResponse } from "./responseHelper";
 export { default as responsePattern } from "./responsePattern";
 export { default as validatePassword } from "./validatePassword";
-export { default as websocket } from "./websocket";
 export { default as validationHelper } from "./validationHelper";
-
+export { default as websocketHelper } from "./websocketHelper";
