@@ -151,7 +151,21 @@ const moveCard = async (req: Request, res: Response, next: NextFunction) => {
         ) {
           forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
         } else {
-          sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE);
+          const populatedKanban = await List.findOne({ _id: newListId }).populate({
+            path: "kanbanId",
+            populate: {
+              path: "listOrder",
+              populate: {
+                path: "cardOrder",
+              },
+            },
+          });
+
+          if (!populatedKanban || !populatedKanban.kanbanId) {
+            forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+          } else {
+            sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, populatedKanban.kanbanId);
+          }
         }
       } catch (error) {
         console.log("MongoDb UPDATE List error: ", error);
