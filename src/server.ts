@@ -6,7 +6,8 @@ import app from "./app";
 
 // Connect mongoDB
 mongoose
-  .connect(process.env.MONGO_DB_URI!)
+  // .connect(process.env.MONGO_DB_URI!)
+  .connect(process.env.LOCAL_MONGO_DB_URI!)
   .then(() => {
     console.log("MongoDB is running!");
     const server = app.listen(process.env.PORT!, () => {
