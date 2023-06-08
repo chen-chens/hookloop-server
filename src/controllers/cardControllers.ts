@@ -22,25 +22,21 @@ const createCard = async (req: Request, res: Response, next: NextFunction) => {
     });
   }
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newCard);
-  websocketHelper.sendWebSocket(kanbanId, "createCard", newCard);
+  websocketHelper.sendWebSocket(req, kanbanId, "createCard", newCard);
 };
 
 const getCardById = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
-  const card = await Card.findOne({ _id: id, isArchived: false })
-    .populate("reporter", "id username avatar")
-    .populate("assignee", "id username avatar")
-    .populate("tag", "id name color icon")
-    .populate({
-      path: "cardComment",
-      select: "_id currentComment userId updatedAt",
-      match: { isArchived: false, isEdited: false },
-      options: { sort: { createdAt: -1 } },
-      populate: {
-        path: "userId",
-        select: "id username avatar",
-      },
-    });
+  const card = await Card.findOne({ _id: id, isArchived: false }).populate({
+    path: "cardComment",
+    select: "_id currentComment userId updatedAt",
+    match: { isArchived: false, isEdited: false },
+    options: { sort: { createdAt: -1 } },
+    populate: {
+      path: "userId",
+      select: "id username avatar",
+    },
+  });
   if (!card) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
       field: "card",
@@ -99,8 +95,22 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
 
 const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
-  const { isArchived } = req.body;
-  mongoDbHandler.updateDb(res, next, "Card", Card, { _id: id }, { isArchived });
+  const { isArchived, listId } = req.body;
+  const newCard = await Card.findOneAndUpdate({ _id: id }, { isArchived }, { new: true });
+  if (newCard) {
+    const newList = await List.findOneAndUpdate({ _id: listId }, { $pull: { cardOrder: id } }, { new: true });
+    if (!newList) {
+      forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+        field: "listId",
+        error: "List not found",
+      });
+    }
+    sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, newCard);
+  }
+  forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+    field: "card",
+    error: "Card not found",
+  });
 };
 
 const moveCard = async (req: Request, res: Response, next: NextFunction) => {

@@ -1,3 +1,7 @@
+import { Request } from "express";
+
+import { IUser } from "@/models/userModel";
+
 let clientsWSGroup: any = {};
 function setGlobalClientsWSGroup(newClientsWSGroup: any) {
   clientsWSGroup = newClientsWSGroup;
@@ -24,13 +28,18 @@ const removeClientWSFromGroup = (type: string, id: string, ws: any) => {
   }
 };
 
-const sendWebSocket = (id: string, type: string, data: any) => {
+const sendWebSocket = (req: Request, groupId: string, type: string, dbData: any) => {
   const group = getGlobalClientsWSGroup();
-  if (group[id])
-    group[id].forEach((clientWS: any) => {
+  const { id } = req.user as IUser;
+  const data = {
+    updateUserId: id,
+    type,
+    ...dbData,
+  };
+  if (group[groupId])
+    group[groupId].forEach((clientWS: any) => {
       clientWS.send(
         JSON.stringify({
-          type,
           data,
         }),
       );
