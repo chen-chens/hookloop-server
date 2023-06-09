@@ -19,7 +19,7 @@ router.get(
   asyncWrapper(cardControllers.getCardById),
 );
 router.patch(
-  "/:id/update",
+  "/:kanbanId/:id/update",
   verifyTokenMiddleware,
   validate(cardValidator.updateCard, "UPDATE"),
   asyncWrapper(cardControllers.updateCard),
