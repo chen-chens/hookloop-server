@@ -32,11 +32,7 @@ const getCardById = async (req: Request, res: Response, next: NextFunction) => {
     path: "cardComment",
     select: "_id currentComment userId updatedAt",
     match: { isArchived: false, isEdited: false },
-    options: { sort: { createdAt: 1 } },
-    // populate: {
-    //   path: "userId",
-    //   select: "id username avatar",
-    // },
+    options: { sort: { createdAt: -1 } },
   });
   if (!card) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
@@ -104,10 +100,6 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
     select: "_id currentComment userId updatedAt",
     match: { isArchived: false, isEdited: false },
     options: { sort: { createdAt: -1 } },
-    populate: {
-      path: "userId",
-      select: "id username avatar",
-    },
   });
 
   // 發送給 kanban
@@ -277,7 +269,7 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
 
 const getComments = async (req: Request, res: Response, _: NextFunction) => {
   const { cardId } = req.params;
-  const comments = await CardComment.find({ cardId }).sort("createdAt");
+  const comments = await CardComment.find({ cardId }).sort({ createdAt: -1 });
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, comments);
 };
 
@@ -286,7 +278,7 @@ const addComment = async (req: Request, res: Response, _: NextFunction) => {
   const { currentComment, userId } = req.body;
   const updatedFields = { currentComment, userId, cardId };
   const newComment = await CardComment.create(updatedFields);
-  const newComments = await CardComment.find({ cardId }).sort("createdAt");
+  const newComments = await CardComment.find({ cardId }).sort({ createdAt: -1 });
   // 發送給 card
   websocketHelper.sendWebSocket(req, cardId, "comments", newComments);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newComment);

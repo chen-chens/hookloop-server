@@ -1,9 +1,6 @@
 import { Request } from "express";
-import jwt from "jsonwebtoken";
 
-import { IDecodedToken } from "@/types";
-
-// import { IUser } from "@/models/userModel";
+import { IUser } from "@/models/userModel";
 
 let clientsWSGroup: any = {};
 function setGlobalClientsWSGroup(newClientsWSGroup: any) {
@@ -32,29 +29,23 @@ const removeClientWSFromGroup = (type: string, id: string, ws: any) => {
 };
 
 const sendWebSocket = async (req: Request, groupId: string, type: string, dbData: any) => {
-  const group = getGlobalClientsWSGroup();
-  const bearerToken = req.headers.authorization;
+  try {
+    const group = getGlobalClientsWSGroup();
 
-  // Ariean Jian
-  let id = "";
-  const token = bearerToken?.split(" ")[1];
-  if (token) {
-    const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
-    const { userId } = decode as IDecodedToken;
-    id = userId;
+    const { id } = req.user as IUser;
+    const data = {
+      updateUserId: id,
+      type,
+      result: dbData,
+    };
+
+    if (group[groupId])
+      group[groupId].forEach((clientWS: any) => {
+        clientWS.send(JSON.stringify(data));
+      });
+  } catch (error) {
+    console.log(error);
   }
-
-  // const { id } = req.user as IUser;
-  const data = {
-    updateUserId: id,
-    type,
-    result: dbData,
-  };
-
-  if (group[groupId])
-    group[groupId].forEach((clientWS: any) => {
-      clientWS.send(JSON.stringify(data));
-    });
 };
 
 export default {
