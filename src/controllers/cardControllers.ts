@@ -6,6 +6,7 @@ import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse, websocketHelper } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
 import mongoDbHandler from "@/utils/mongoDbHandler";
+import notificationHelper from "@/utils/notificationHelper";
 
 const createCard = async (req: Request, res: Response, next: NextFunction) => {
   const { name, kanbanId, listId } = req.body;
@@ -113,6 +114,11 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
   websocketHelper.sendWebSocket(req, kanbanId, "updateCard", lists);
   // 發送給 card
   websocketHelper.sendWebSocket(req, id, "updateCard", newCard);
+  // notification
+  notificationHelper.create(req, "card", {
+    id,
+    ...updatedFields,
+  });
 };
 
 const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
@@ -127,6 +133,11 @@ const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
         error: "List not found",
       });
     }
+    // notification
+    notificationHelper.create(req, "card", {
+      id,
+      isArchived: true,
+    });
     sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, newCard);
   }
   forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
@@ -232,6 +243,11 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
       };
       // 提醒前端使用 fileId
       mongoDbHandler.updateDb(res, next, "Card", Card, { _id: cardId }, { $push: { attachment: updatedFields } }, {});
+      // notification
+      notificationHelper.create(req, "card", {
+        id: cardId,
+        attachment: true,
+      });
     }
   }
 };
@@ -252,6 +268,11 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
     { $pull: { attachment: { fileId: attachmentId } } },
     {},
   );
+  // notification
+  notificationHelper.create(req, "card", {
+    id: cardId,
+    attachment: attachmentId,
+  });
 };
 
 const getComments = async (req: Request, res: Response, _: NextFunction) => {
@@ -269,6 +290,12 @@ const addComment = async (req: Request, res: Response, _: NextFunction) => {
   // 發送給 card
   websocketHelper.sendWebSocket(req, cardId, "comments", newComments);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newComment);
+  // notification
+  notificationHelper.create(req, "card", {
+    id: cardId,
+    // eslint-disable-next-line no-underscore-dangle
+    comment: newComment._id,
+  });
 };
 
 const updateComment = async (req: Request, res: Response, next: NextFunction) => {
@@ -285,6 +312,11 @@ const updateComment = async (req: Request, res: Response, next: NextFunction) =>
     { $set: replaceData, $push: pushData },
     {},
   );
+  // notification
+  notificationHelper.create(req, "card", {
+    id: cardId,
+    comment: commentId,
+  });
 };
 const archiveComment = async (req: Request, res: Response, next: NextFunction) => {
   const { cardId, commentId } = req.params;
