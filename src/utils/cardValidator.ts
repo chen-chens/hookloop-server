@@ -50,6 +50,11 @@ const updateCard: ValidationForRequest = (req) => {
       isRequired: true,
       isParams: true,
     },
+    kanbanId: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
     name: {
       validators: [valString, valLengthInRange(1, 50)],
     },
