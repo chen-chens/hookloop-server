@@ -100,6 +100,12 @@ cardSchema.virtual("cardComment", {
   localField: "_id",
   foreignField: "cardId",
 });
+cardSchema.virtual("cardCommentCount", {
+  ref: "CardComment",
+  localField: "_id",
+  foreignField: "cardId",
+  count: true,
+});
 cardSchema.virtual("cardHistory", {
   ref: "CardHistory",
   localField: "_id",

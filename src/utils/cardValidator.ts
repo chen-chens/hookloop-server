@@ -106,6 +106,10 @@ const archiveCard: ValidationForRequest = (req) => {
       validators: [valBoolean],
       isRequired: true,
     },
+    listId: {
+      validators: [valObjectId],
+      isRequired: true,
+    },
   };
   return validateFieldsAndGetErrorData(schema, "Card", req.body, req.params);
 };

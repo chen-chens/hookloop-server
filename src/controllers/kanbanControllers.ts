@@ -78,7 +78,23 @@ export default {
         path: "listOrder",
         populate: {
           path: "cardOrder",
-          populate: [{ path: "tag" }, { path: "assignee" }],
+          select: [
+            "_id",
+            "name",
+            "reporter",
+            "assignee",
+            "targetStartDate",
+            "targetEndDate",
+            "actualStartDate",
+            "actualEndDate",
+            "priority",
+            "status",
+            "tag",
+            "isArchived",
+          ],
+          populate: {
+            path: "cardCommentCount",
+          },
         },
       });
       if (!kanban) {
