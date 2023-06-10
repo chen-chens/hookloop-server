@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
-import { Card, CardComment, List } from "@/models";
+import { Card, CardComment, Kanban, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse, websocketHelper } from "@/utils";
 import fileHandler from "@/utils/fileHandler";
@@ -31,11 +31,11 @@ const getCardById = async (req: Request, res: Response, next: NextFunction) => {
     path: "cardComment",
     select: "_id currentComment userId updatedAt",
     match: { isArchived: false, isEdited: false },
-    options: { sort: { createdAt: -1 } },
-    populate: {
-      path: "userId",
-      select: "id username avatar",
-    },
+    options: { sort: { createdAt: 1 } },
+    // populate: {
+    //   path: "userId",
+    //   select: "id username avatar",
+    // },
   });
   if (!card) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
@@ -48,7 +48,7 @@ const getCardById = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const updateCard = async (req: Request, res: Response, next: NextFunction) => {
-  const { id } = req.params;
+  const { id, kanbanId } = req.params;
   const {
     name,
     description,
@@ -90,7 +90,29 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
     tag,
     webLink: updatedWebLink,
   };
+
   mongoDbHandler.updateDb(res, next, "Card", Card, { _id: id }, updatedFields, {});
+  const lists = await Kanban.findOne({ _id: kanbanId }).populate({
+    path: "listOrder",
+    populate: {
+      path: "cardOrder",
+    },
+  });
+  const newCard = await Card.findOne({ _id: id, isArchived: false }).populate({
+    path: "cardComment",
+    select: "_id currentComment userId updatedAt",
+    match: { isArchived: false, isEdited: false },
+    options: { sort: { createdAt: -1 } },
+    populate: {
+      path: "userId",
+      select: "id username avatar",
+    },
+  });
+
+  // 發送給 kanban
+  websocketHelper.sendWebSocket(req, kanbanId, "updateCard", lists);
+  // 發送給 card
+  websocketHelper.sendWebSocket(req, id, "updateCard", newCard);
 };
 
 const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
@@ -243,6 +265,9 @@ const addComment = async (req: Request, res: Response, _: NextFunction) => {
   const { currentComment, userId } = req.body;
   const updatedFields = { currentComment, userId, cardId };
   const newComment = await CardComment.create(updatedFields);
+  const newComments = await CardComment.find({ cardId }).sort("createdAt");
+  // 發送給 card
+  websocketHelper.sendWebSocket(req, cardId, "comments", newComments);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newComment);
 };
 

@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { forwardCustomError } from "@/middlewares";
 import { Kanban, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
-import { sendSuccessResponse } from "@/utils";
+import { sendSuccessResponse, websocketHelper } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
 export default {
@@ -119,6 +119,7 @@ export default {
               error: `lists not found.`,
             });
           } else {
+            websocketHelper.sendWebSocket(req, kanbanId, "moveList", lists);
             sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, lists);
           }
         }
