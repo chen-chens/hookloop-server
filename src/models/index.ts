@@ -1,4 +1,5 @@
 // eslint-disable-next-line import/prefer-default-export
+export { default as AdminUser } from "./adminUserModel";
 export { default as CardComment } from "./cardCommentModel";
 export { default as CardHistory } from "./cardHistoryModel";
 export { default as Card } from "./cardModel";

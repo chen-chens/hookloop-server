@@ -1,4 +1,5 @@
 // export index for controllers
+export { default as adminControllers } from "./adminControllers";
 export { default as authControllers } from "./authControllers";
 export { default as cardControllers } from "./cardControllers";
 export { default as kanbanControllers } from "./kanbanControllers";
