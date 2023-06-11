@@ -5,7 +5,7 @@ import { asyncWrapper, validate, verifyTokenMiddleware, verifyUploadMiddleware }
 import { cardValidator } from "@/utils";
 
 const router = Router();
-router.use(verifyTokenMiddleware);
+router.use("/",verifyTokenMiddleware);
 
 router.post("/", validate(cardValidator.createCard, "CREATE"), asyncWrapper(cardControllers.createCard));
 
