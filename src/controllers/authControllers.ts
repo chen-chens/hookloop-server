@@ -121,6 +121,9 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
   };
 
   // send Email
+  const sendResult = await mailTransporter.sendMail(mailConfig);
+  console.log("🚀 ~ file: authControllers.ts:125 ~ forgetPassword ~ sendResult:", sendResult);
+
   mailTransporter.sendMail(mailConfig, (err: Error | null, info: SMTPTransport.SentMessageInfo) => {
     if (err) {
       console.log(err);
@@ -141,72 +144,22 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
     tempToken,
     expiresAt: dbClearResetTokenTime,
   });
-
-  // oauth2Client
-  //   .getAccessToken()
-  //   .then((value) => {
-  //     if (value.token) {
-  //       // build nodemailer transport
-  //       const mailTransporter = nodemailer.createTransport({
-  //         service: "gmail",
-  //         auth: {
-  //           type: "OAuth2",
-  //           user: process.env.GOOGLE_AUTH_EMAIL,
-  //           clientId: process.env.GOOGLE_AUTH_CLIENT_ID,
-  //           clientSecret: process.env.GOOGLE_AUTH_CLIENT_SECRET,
-  //           refreshToken: process.env.GOOGLE_AUTH_REFRESH_TOKEN,
-  //           accessToken: value.token || "",
-  //         },
-  //       });
-
-  //       // nodemailer content
-  //       const mailConfig: MailOptions = {
-  //         from: `HOOKLOOP <${process.env.GOOGLE_AUTH_EMAIL!}>`,
-  //         to: email,
-  //         subject: "HOOKLOOP Reset Password",
-  //         html: generateResetPasswordEmail(targetUser.username, resetPasswordUrl),
-  //       };
-
-  //       // send Email
-  //       mailTransporter.sendMail(mailConfig, (err: Error | null, info: SMTPTransport.SentMessageInfo) => {
-  //         if (err) {
-  //           console.log(err);
-  //           return forwardCustomError(next, StatusCode.Service_Unavailable, ApiResults.FAIL_TO_SEND_EMAIL, {
-  //             field: "",
-  //             error: ApiResults.UNEXPECTED_ERROR,
-  //           });
-  //         }
-
-  //         ResetPassword.create({
-  //           userId: targetUser.id,
-  //           tempToken,
-  //           expiresAt: dbClearResetTokenTime,
-  //         });
-
-  //         return sendSuccessResponse(res, ApiResults.SEND_RESET_PASSWORD_EMAIL, {
-  //           title: ApiResults.SEND_RESET_PASSWORD_EMAIL,
-  //           description: `An email has been sent to your email address: ${info.accepted[0]}.`,
-  //         });
-  //       });
-  //     }
-  //   })
-  //   .catch((reason: any) => {
-  //     console.log("🚀 ~ file: authControllers.ts:87 ~ .then ~ reason:", reason);
-  //     ResetPassword.findByIdAndDelete({ userId: targetUser.id });
-  //     return forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
-  //   });
 };
 
 const verifyResetPassword = async (req: Request, res: Response, next: NextFunction) => {
   const { newPassword, resetPasswordToken } = req.body;
   if (!validatePassword(newPassword || "")) {
-    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
-      field: "password",
-      error: "Invalid Password! Password must be 8-20 characters and contain only letters and numbers.",
-    });
+    return forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.TOKEN_IS_EXPIRED, {});
   }
 
   const decode = await jwt.verify(resetPasswordToken, process.env.JWT_SECRET_KEY!);
+  if (!decode) {
+    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
+      field: "",
+      error: "The member is not existing! ",
+    });
+  }
+  console.log("🚀 ~ file: authControllers.ts:159 ~ verifyResetPassword ~ decode:", decode);
   const { userId } = decode as IDecodedToken;
   const targetUser = await ResetPassword.findOne({ userId });
   if (!targetUser) {
@@ -219,7 +172,7 @@ const verifyResetPassword = async (req: Request, res: Response, next: NextFuncti
   if (resetPasswordToken !== targetUser.tempToken) {
     return forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_UPDATE, {
       field: "",
-      error: "You don't have authorization to reset password! ",
+      error: "Your authorization is expired! ",
     });
   }
 
