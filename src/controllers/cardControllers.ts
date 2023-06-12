@@ -139,7 +139,7 @@ const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const moveCard = async (req: Request, res: Response, next: NextFunction) => {
-  const { oldListId, newListId, oldCardOrder, newCardOrder } = req.body;
+  const { kanbanId, oldListId, newListId, oldCardOrder, newCardOrder } = req.body;
   if (!oldListId) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
       field: "oldListId",
@@ -200,6 +200,7 @@ const moveCard = async (req: Request, res: Response, next: NextFunction) => {
           if (!populatedKanban || !populatedKanban.kanbanId) {
             forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
           } else {
+            websocketHelper.sendWebSocket(req, kanbanId, "moveCard", "Success");
             sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, populatedKanban.kanbanId);
           }
         }
