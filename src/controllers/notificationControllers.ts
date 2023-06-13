@@ -10,13 +10,17 @@ export default {
     const { userId } = req.params;
     const notifications = await Notification.find({
       toUserId: userId,
-    }).populate([
-      { path: "fromUserId", select: ["username", "avatar"] },
-      { path: "toUserId", select: "username" },
-      { path: "workspaceId", select: "name" },
-      { path: "kanbanId", select: ["name", "key"] },
-      { path: "cardId", select: "name" },
-    ]);
+    })
+      .populate([
+        { path: "fromUserId", select: ["username", "avatar"] },
+        { path: "toUserId", select: "username" },
+        { path: "workspaceId", select: "name" },
+        { path: "kanbanId", select: ["name", "key"] },
+        { path: "cardId", select: "name" },
+      ])
+      .sort({
+        createdAt: -1,
+      });
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, notifications);
   },
   isReadNotification: async (req: Request, res: Response, next: NextFunction) => {
