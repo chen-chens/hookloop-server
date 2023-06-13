@@ -3,5 +3,6 @@ export { default as authControllers } from "./authControllers";
 export { default as cardControllers } from "./cardControllers";
 export { default as kanbanControllers } from "./kanbanControllers";
 export { default as listControllers } from "./listControllers";
+export { default as planControllers } from "./planControllers";
 export { default as userControllers } from "./userControllers";
 export { default as workspaceControllers } from "./workspaceControllers";

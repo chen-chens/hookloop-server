@@ -1,5 +1,13 @@
 import mongoose, { Schema } from "mongoose";
 
+export interface IPlan {
+  name: "Free" | "Standard" | "Premium";
+  price: number;
+  endAt: Date;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 const planSchema = new Schema(
   {
     name: {
@@ -21,11 +29,12 @@ const planSchema = new Schema(
       ref: "User",
       required: true,
     },
-    items: [
-      {
-        name: String,
-      },
-    ],
+    // items: [
+    //   // 用途？
+    //   {
+    //     name: String,
+    //   },
+    // ],
   },
   {
     timestamps: true, // generate : createdAt, updatedAt

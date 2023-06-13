@@ -4,6 +4,7 @@ import authRoutes from "./authRoutes";
 import cardRoutes from "./cardRoutes";
 import kanbanRoutes from "./kanbanRoutes";
 import listRoutes from "./listRoutes";
+import plansRoutes from "./plansRoutes";
 import userRoutes from "./userRoutes";
 import workspacesRoutes from "./workspacesRoutes";
 
@@ -15,5 +16,6 @@ router.use("/cards", cardRoutes);
 router.use("/kanbans", kanbanRoutes);
 router.use("/lists", listRoutes);
 router.use("/workspaces", workspacesRoutes);
+router.use("/plan", plansRoutes);
 
 export default router;
