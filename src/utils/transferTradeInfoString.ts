@@ -19,10 +19,12 @@ const transferTradeInfoString = (tradeInfo: IPaymentTradeInfoType): string => {
     WEBATM=${tradeInfo.WEBATM}
   `;
 
-  return dataString
-    .split("\n")
-    .map((item) => item.trim())
-    .join("");
+  return encodeURIComponent(
+    dataString
+      .split("\n")
+      .map((item) => item.trim())
+      .join(""),
+  );
 };
 
 export default transferTradeInfoString;

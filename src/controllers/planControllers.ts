@@ -1,14 +1,14 @@
+import CryptoJS from "crypto-js";
 import { NextFunction, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
-import Plan from "@/models/planModel";
 import { IUser } from "@/models/userModel";
 import { ApiResults, IPaymentTradeInfoType, IPlanOrderRequest, StatusCode } from "@/types";
 import { getPriceByPlan, sendSuccessResponse, transferTradeInfoString } from "@/utils";
 
 const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunction) => {
   const { PAY_MERCHANT_ID, PAY_VERSION, PAY_RETURN_URL, PAY_NOTIFY_URL, PAY_HASH_IV, PAY_HASH_KEY } = process.env;
-  const { email, isArchived, id } = req.user as IUser;
+  const { email, isArchived } = req.user as IUser;
   const { targetPlan } = req.body;
   if (isArchived) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.USER_IS_ARCHIVED);
@@ -41,20 +41,38 @@ const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunc
   };
 
   // DB 建立一筆訂單
-  const oneMonth = 60 * 24 * 60 * 60 * 1000;
-  await Plan.create({
-    name: targetPlan,
-    price: getPriceByPlan(targetPlan),
-    endAt: Date.now() + oneMonth, // 1 month
-    userId: id,
-  });
+  // const oneMonth = 60 * 24 * 60 * 60 * 1000;
+  // await Plan.create({
+  //   name: targetPlan,
+  //   price: getPriceByPlan(targetPlan),
+  //   endAt: Date.now() + oneMonth, // 1 month
+  //   userId: id,
+  // });
 
   // 回傳加密後訂單資訊給前端
   // Step1: 生成請求字串
-  const orderString = transferTradeInfoString(tradeInfo);
-  // Step2: 將請求字串加密
+  const tradeString = transferTradeInfoString(tradeInfo);
 
-  sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, { orderString });
+  // Step2: 將請求字串加密
+  const key = CryptoJS.enc.Utf8.parse(PAY_HASH_KEY); // 先轉成 CryptoJS 可接受加密格式：WordArray
+  const iv = CryptoJS.enc.Utf8.parse(PAY_HASH_IV);
+  const aesEncrypted = CryptoJS.AES.encrypt(tradeString, key, {
+    iv,
+    mode: CryptoJS.mode.CBC, // AES-256-CBC: AES加密-密鑰長度(PAY_HASH_KEY)256-CBC模式
+    padding: CryptoJS.pad.Pkcs7, // PKCS7 填充
+  }).toString();
+
+  // Step3: 將 AES加密字串產生檢查碼
+  const hashString = `HashKey=${PAY_HASH_KEY}&${aesEncrypted}&HashIV=${PAY_HASH_IV}`;
+  const sha256Hash = CryptoJS.SHA256(hashString);
+  const shaHex = sha256Hash.toString(CryptoJS.enc.Hex);
+  const shaEncrypted = shaHex.toUpperCase();
+
+  sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
+    tradeInfo,
+    aesEncrypted,
+    shaEncrypted,
+  });
   res.json(tradeInfo);
 };
 
