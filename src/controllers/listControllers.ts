@@ -5,6 +5,7 @@ import { Kanban, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
 import { sendSuccessResponse, websocketHelper } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
+import notificationHelper from "@/utils/notificationHelper";
 
 export default {
   createList: async (req: Request, res: Response, next: NextFunction) => {
@@ -68,6 +69,8 @@ export default {
     } else {
       mongoDbHandler.updateDb(res, next, "List", List, { _id: id }, { name: list.name });
       websocketHelper.sendWebSocket(req, kanbanId, "renameList", socketData);
+      // notification
+      notificationHelper.create(req, id, "List", [`Name is updated to "${list.name}".`]);
     }
   },
   archiveList: async (req: Request, res: Response, next: NextFunction) => {
@@ -80,7 +83,9 @@ export default {
       });
     } else {
       mongoDbHandler.updateDb(res, next, "List", List, { _id: id }, { isArchived });
-      websocketHelper.sendWebSocket(req, kanbanId, "createList", socketData);
+      websocketHelper.sendWebSocket(req, kanbanId, "archiveList", socketData);
+      // notification
+      notificationHelper.create(req, id, "List", [isArchived ? "List is archived." : "List is unarchived."]);
     }
   },
   moveList: async (req: Request, res: Response, next: NextFunction) => {
