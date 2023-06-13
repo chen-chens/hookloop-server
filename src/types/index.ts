@@ -4,6 +4,7 @@ export { default as CustomError } from "./customError";
 export { ICustomError, IDataType } from "./customErrorInterface";
 export { IDecodedToken } from "./decodedToken";
 export { default as IDeleteUserFromWorkspaceRequest } from "./deleteUserFromWorkspaceRequest";
+export { default as MailOptions } from "./mailOptions";
 export { default as IPaymentTradeInfoType } from "./paymentTradeInfoType";
 export { default as PlanOptions } from "./planOptions";
 export { default as IPlanOrderRequest } from "./planOrderRequest";
