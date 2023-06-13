@@ -5,5 +5,6 @@ export { default as getPriceByPlan } from "./getPriceByPlan";
 export { default as kanbanValidators } from "./kanbanValidator";
 export { generateErrorData, sendErrorResponse, sendSuccessResponse } from "./responseHelper";
 export { default as responsePattern } from "./responsePattern";
+export { default as transferTradeInfoString } from "./transferTradeInfoString";
 export { default as validatePassword } from "./validatePassword";
 export { default as validationHelper } from "./validationHelper";

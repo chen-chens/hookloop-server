@@ -32,7 +32,7 @@ enum ApiResults {
   EMAIL_NOT_BEEN_USED = "This email has not been used yet.",
   VALIDATOR_TYPE_ERROR = "Validation fail!",
   USER_IS_ARCHIVED = "The account is suspended!",
-  PLAN_FOR_PAYMENT_IS_REQUIRED = "The Plan is required! ",
+  PLAN_FOR_PAYMENT_IS_REQUIRED = "The Plan is required!",
 }
 
 export default ApiResults;
