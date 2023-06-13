@@ -1,5 +1,14 @@
 import mongoose, { Schema } from "mongoose";
 
+export interface IPlan {
+  name: "Free" | "Standard" | "Premium";
+  price: number;
+  endAt: Date;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  merchantOrderNo: string;
+}
 const planSchema = new Schema(
   {
     name: {
@@ -21,11 +30,35 @@ const planSchema = new Schema(
       ref: "User",
       required: true,
     },
-    items: [
-      {
-        name: String,
+    merchantOrderNo: {
+      // 用來與藍新金流核對
+      type: String,
+      required: true,
+    },
+    tradeResults: {
+      // 藍新金流交易後回傳狀態
+      status: {
+        type: String,
       },
-    ],
+      message: {
+        // 藍新金流交易後回傳訊息
+        type: String,
+      },
+      payBankCode: {
+        // 付款人金融機構代碼
+        type: String,
+      },
+      payerAccount5Code: {
+        // 付款人金融機構帳號末五碼
+        type: String,
+      },
+    },
+    // items: [
+    //   // 用途？
+    //   {
+    //     name: String,
+    //   },
+    // ],
   },
   {
     timestamps: true, // generate : createdAt, updatedAt

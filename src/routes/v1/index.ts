@@ -6,6 +6,7 @@ import cardRoutes from "./cardRoutes";
 import kanbanRoutes from "./kanbanRoutes";
 import listRoutes from "./listRoutes";
 import notificationRoutes from "./notificationRoutes";
+import plansRoutes from "./plansRoutes";
 import userRoutes from "./userRoutes";
 import workspacesRoutes from "./workspacesRoutes";
 
@@ -18,6 +19,7 @@ router.use("/kanbans", kanbanRoutes);
 router.use("/lists", listRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/workspaces", workspacesRoutes);
+router.use("/plan", plansRoutes);
 router.use("/admin", adminRoutes);
 
 export default router;
