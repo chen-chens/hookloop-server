@@ -8,7 +8,7 @@ import mongoDbHandler from "@/utils/mongoDbHandler";
 
 export default {
   createList: async (req: Request, res: Response, next: NextFunction) => {
-    const { name, kanbanId } = req.body;
+    const { name, kanbanId, socketData } = req.body;
     if (!name) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
         field: "name",
@@ -40,6 +40,7 @@ export default {
         });
       } else {
         sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, lists);
+        websocketHelper.sendWebSocket(req, kanbanId, "createList", socketData);
       }
 
       // sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newList);
@@ -70,7 +71,7 @@ export default {
     }
   },
   archiveList: async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
+    const { id, kanbanId, socketData } = req.params;
     const { isArchived } = req.body;
     if (Object.keys(req.body).indexOf("isArchived") < 0) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
@@ -79,6 +80,7 @@ export default {
       });
     } else {
       mongoDbHandler.updateDb(res, next, "List", List, { _id: id }, { isArchived });
+      websocketHelper.sendWebSocket(req, kanbanId, "createList", socketData);
     }
   },
   moveList: async (req: Request, res: Response, next: NextFunction) => {
@@ -120,8 +122,8 @@ export default {
               error: `lists not found.`,
             });
           } else {
-            websocketHelper.sendWebSocket(req, kanbanId, "moveList", lists);
             sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, lists);
+            websocketHelper.sendWebSocket(req, kanbanId, "moveList", lists);
           }
         }
       }
