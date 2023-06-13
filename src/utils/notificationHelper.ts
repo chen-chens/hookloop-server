@@ -49,10 +49,7 @@ export default {
               if (!newNotification) {
                 console.log("Create notification failed!");
               } else {
-                websocketHelper.sendWebSocket(req, receiverId, "notification", {
-                  fromUserId: userId,
-                  toUserId: receiverId,
-                });
+                websocketHelper.sendWebSocket(req, receiverId, "notification", newNotification);
               }
             })();
           }
