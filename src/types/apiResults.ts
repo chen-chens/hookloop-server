@@ -30,7 +30,9 @@ enum ApiResults {
   TOKEN_IS_EXPIRED = "Token is expired! ",
   EMAIL_BEEN_USED = "The email is already existing!",
   EMAIL_NOT_BEEN_USED = "This email has not been used yet.",
-  VALIDATOR_TYPE_ERROR = " Validation fail!",
+  VALIDATOR_TYPE_ERROR = "Validation fail!",
+  USER_IS_ARCHIVED = "The account is suspended!",
+  PLAN_FOR_PAYMENT_IS_REQUIRED = "The Plan is required! ",
 }
 
 export default ApiResults;
