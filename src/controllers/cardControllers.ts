@@ -120,7 +120,7 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
       }
     }
   }
-  notificationHelper.create(req, id, "card", contentTypes);
+  notificationHelper.create(req, id, "Card", contentTypes);
 };
 
 const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
@@ -137,7 +137,7 @@ const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
     }
     sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, newCard);
     // notification
-    notificationHelper.create(req, id, "card", [isArchived ? "Card is archived." : "Card is unarchived"]);
+    notificationHelper.create(req, id, "Card", [isArchived ? "Card is archived." : "Card is unarchived."]);
   }
   forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
     field: "card",
@@ -216,7 +216,7 @@ const moveCard = async (req: Request, res: Response, next: NextFunction) => {
               .filter((el: any) => !after.includes(el))
               .concat(after.filter((el: any) => !before.includes(el)))[0];
             if (movedCardId) {
-              notificationHelper.create(req, movedCardId, "card", [`Card is moved to "${newListData.name}" list.`]);
+              notificationHelper.create(req, movedCardId, "Card", [`Card is moved to "${newListData.name}" list.`]);
             }
           }
         }
@@ -253,7 +253,7 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
       // 提醒前端使用 fileId
       mongoDbHandler.updateDb(res, next, "Card", Card, { _id: cardId }, { $push: { attachment: updatedFields } }, {});
       // notification
-      notificationHelper.create(req, cardId, "card", ["Attachment is added."]);
+      notificationHelper.create(req, cardId, "Card", ["Attachment is added."]);
     }
   }
 };
@@ -275,7 +275,7 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
     {},
   );
   // notification
-  notificationHelper.create(req, cardId, "card", ["Attachment is deleted."]);
+  notificationHelper.create(req, cardId, "Card", ["Attachment is deleted."]);
 };
 
 const getComments = async (req: Request, res: Response, _: NextFunction) => {
@@ -294,7 +294,7 @@ const addComment = async (req: Request, res: Response, _: NextFunction) => {
   websocketHelper.sendWebSocket(req, cardId, "comments", newComments);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newComment);
   // notification
-  notificationHelper.create(req, cardId, "card", ["Comment is added."]);
+  notificationHelper.create(req, cardId, "Card", ["Comment is added."]);
 };
 
 const updateComment = async (req: Request, res: Response, next: NextFunction) => {
@@ -312,7 +312,7 @@ const updateComment = async (req: Request, res: Response, next: NextFunction) =>
     {},
   );
   // notification
-  notificationHelper.create(req, cardId, "card", ["comment"]);
+  notificationHelper.create(req, cardId, "Card", ["comment"]);
 };
 const archiveComment = async (req: Request, res: Response, next: NextFunction) => {
   const { cardId, commentId } = req.params;
