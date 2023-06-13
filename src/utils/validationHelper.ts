@@ -1,14 +1,10 @@
 import mongoose from "mongoose";
 import validator from "validator";
 
-import { IErrorData, ValidatorFn } from "../types";
+import { IErrorData, ValidatorFn, ValidatorSchema } from "../types";
 
 function generateErrorData(field: string, error: string): IErrorData {
   return { field, error: `${field} ${error}` };
-}
-
-function addErrors(errors: IErrorData[], newErrors: IErrorData[]) {
-  errors.push(...newErrors);
 }
 
 function hasExtraKeys(data: any, schema: any, fieldName: string): IErrorData[] {
@@ -46,13 +42,14 @@ function checkOptionsFieldExist(data: any, key: string) {
   }
   return false;
 }
-function valParamExist(params: any, fieldName: string): IErrorData[] {
+function valParamExist(params: any, fieldName: string, key: string): IErrorData[] {
   if (!params) {
-    // console.log(params, fieldName);
-    return [generateErrorData(`${fieldName}.params`, "is required")];
+    return [generateErrorData(`${fieldName}.params.${key}`, "is required")];
   }
   return [];
 }
+
+// 將錯誤訊息陣列轉換成 IErrorData 物件
 function parseToIErrorDataType(validationResults: IErrorData[]): IErrorData | null {
   if (validationResults.length === 0) {
     console.log("validSuccess");
@@ -66,35 +63,45 @@ function parseToIErrorDataType(validationResults: IErrorData[]): IErrorData | nu
     error: errorMessages,
   };
 }
-function validatorHelperForRequestBodyOrParams(schema: ValidatorSchema): ValidatorFn {
+
+// 進行 api 請求時，檢查 req.body 及 req.params 是否符合 schema 規範
+function validateRequestBodyAndParams(schema: ValidatorSchema): ValidatorFn {
   return (fieldName: string, data: any, params?: any): IErrorData[] => {
     const errors: IErrorData[] = [];
     const schemaKeys = Object.keys(schema);
     if (!data) {
       return [generateErrorData(fieldName, "is required")];
     }
-    addErrors(errors, hasExtraKeys(data, schema, fieldName));
-    // console.log(`schemaKeys=====${schemaKeys}`);
+    // 檢查是否有多餘的req.body欄位
+    errors.push(...hasExtraKeys(data, schema, fieldName));
+
     schemaKeys.forEach((key: string) => {
       const fieldValidators = schema[key];
-      if (fieldValidators.isParams && valParamExist(params, fieldName).length > 0) {
-        addErrors(errors, valParamExist(params, fieldName));
-        // console.log("errors=====", errors);
-      } else {
-        const fieldNestName = fieldValidators.isParams ? `${fieldName}.${key}.params` : `${fieldName}.${key}`;
-        const field = fieldValidators.isParams ? params : data;
-        const fieldValue = fieldValidators.isParams ? params[key] : data[key];
-        if (fieldValidators.isRequired) {
-          addErrors(errors, checkRequiredFieldExist(field, fieldNestName, key));
-          addErrors(errors, checkRequiredFieldNotEmpty(fieldValue, fieldNestName));
-        }
-        if (checkOptionsFieldExist(field, key)) {
-          // console.log(`key=====${key}`);
-          // console.log(`fieldValue=====${fieldValue}`);
-          // console.log(`fieldValidators.validators=====${fieldValidators.validators}`);
-          fieldValidators.validators.forEach((validatorFn: ValidatorFn) => {
-            addErrors(errors, validatorFn(fieldValue, fieldNestName));
-          });
+      if (!fieldValidators.isSocketData) {
+        // 若為socketData，則不進行檢查
+        if (fieldValidators.isParams && valParamExist(params, fieldName, key).length > 0) {
+          // fieldValidators.isParams == true， 表示 schema 設定該屬性 (key) 是 req.params，所以進行 valParamExist
+          // 檢查若沒有該屬性(length > 0)，新增錯誤訊息並不進行後續檢查
+          errors.push(...valParamExist(params, fieldName, key));
+        } else {
+          // 判斷是對 req.body 還是 req.params 進行檢查
+          const fieldNestName = fieldValidators.isParams ? `${fieldName}.${key}.params` : `${fieldName}.${key}`;
+          const field = fieldValidators.isParams ? params : data;
+          const fieldValue = fieldValidators.isParams ? params[key] : data[key];
+
+          // 當 schema 設定該屬性 (key) 為必填，進行檢查屬性需存在且不為空
+          if (fieldValidators.isRequired) {
+            errors.push(...checkRequiredFieldExist(field, fieldNestName, key));
+            errors.push(...checkRequiredFieldNotEmpty(fieldValue, fieldNestName));
+          }
+
+          // 判端有該屬性時才對 value 進行檢查，讓非必填屬性不存在時不會報錯
+          if (checkOptionsFieldExist(field, key) && fieldValidators.validators) {
+            // 用 schema.key.validators 陣列中的函式對 value 進行檢查
+            fieldValidators.validators.forEach((validatorFn: ValidatorFn) => {
+              errors.push(...validatorFn(fieldValue, fieldNestName));
+            });
+          }
         }
       }
     });
@@ -103,48 +110,57 @@ function validatorHelperForRequestBodyOrParams(schema: ValidatorSchema): Validat
   };
 }
 
+// 進行 api 請求時，用 validatorHelperForRequestBodyAndParams 檢查 req.body 及 req.params 是否符合 schema 規範，並將錯誤訊息陣列轉換成 IErrorData 物件以回傳給前端
 const validateFieldsAndGetErrorData = (
   schema: ValidatorSchema,
   fieldName: string,
   data: any,
   params?: any,
 ): IErrorData | null => {
-  return parseToIErrorDataType(validatorHelperForRequestBodyOrParams(schema)(fieldName, data, params));
+  return parseToIErrorDataType(validateRequestBodyAndParams(schema)(fieldName, data, params));
 };
 
-const valObject = (rules: any): ValidatorFn => {
+// 物件型別的檢查，當該屬性為物件時，會再次呼叫 validatorHelperForRequestBodyAndParams 進行下一層物件屬性的檢查，rules 在建立 schema 時傳入
+const valObjectAndProp = (rules: any): ValidatorFn => {
   return (data: any, fieldName: string): IErrorData[] => {
     if (typeof data !== "object" || Array.isArray(data)) {
       return [generateErrorData(fieldName, "must be an object")];
     }
-    return validatorHelperForRequestBodyOrParams(rules)(`${fieldName}`, data);
+    return validateRequestBodyAndParams(rules)(`${fieldName}`, data);
   };
 };
 
+/**
+  陣列型別的檢查，當該屬性為陣列時，會依據傳入的 rules 判斷要進行一般陣列檢查或是物件陣列檢查
+ 一般陣列檢查，rules 需傳入 ValidatorFn 陣列，再用 ValidatorFn 對陣列中的每個元素進行檢查
+ 物件陣列檢查，rules 需傳入 ValidatorSchema 物件，再呼叫 valObjectAndProp 對陣列中的每個元素進行物件型別、物件屬性的檢查
+ valArrayAndItemOrProp rules 在建立 schema 時傳入，再傳給 valObjectAndProp 或 valArrayAndItem 進行檢查
+ */
 const valArrayAndItemOrProp = (rules: ValidatorFn[] | ValidatorSchema): ValidatorFn => {
   return (data: any, fieldName: string): IErrorData[] => {
     const errors: IErrorData[] = [];
+    // 檢查 data 是否為陣列
     if (!Array.isArray(data)) {
       return [generateErrorData(fieldName, "must be an array")];
     }
+
+    // 用 rules 型別判斷 data 須為一般陣列檢查還是物件陣列檢查
     if (Array.isArray(rules)) {
-      // console.log(`data=====${data}`);
+      // 一般陣列檢查
       data.forEach((item: any) => {
-        // console.log(`rules=====${rules}`);
         rules.forEach((validatorFn: ValidatorFn, index: number) => {
-          addErrors(
-            errors,
-            validatorFn(item, `${fieldName}[${index}]`).map((e: IErrorData) => {
+          errors.push(
+            ...validatorFn(item, `${fieldName}[${index}]`).map((e: IErrorData) => {
               return { field: e.field, error: `${e.error} array` };
             }),
           );
         });
       });
     } else {
-      const validatorFn = valObject(rules);
-      // console.log(`data2=====${data}`);
+      // 物件陣列檢查
+      const validatorFn = valObjectAndProp(rules);
       data.forEach((item: any, index: number) => {
-        addErrors(errors, validatorFn(item, `${fieldName}[${index}]`));
+        errors.push(...validatorFn(item, `${fieldName}[${index}]`));
       });
     }
     return errors;
@@ -180,15 +196,9 @@ const valObjectId: ValidatorFn = (data: any, fieldName: string) => {
 };
 
 const valDate: ValidatorFn = (data: any, fieldName: string) => {
-  console.log("data=====1", data);
-  console.log("data=====1", fieldName);
   if (data === "" || !Number.isNaN(Date.parse(data))) {
-    console.log("data=====2", Date.parse(data));
-    console.log("data=====2", Number.isNaN(Date.parse(data)));
     return [];
   }
-  console.log("data=====?", Date.parse(data));
-  console.log("data=====?", Number.isNaN(Date.parse(data)));
   return [generateErrorData(fieldName, "must be a valid Date")];
 };
 
@@ -239,17 +249,10 @@ const valEnum = (enumArray: any): ValidatorFn => {
     return [generateErrorData(fieldName, `must be one of ${enumArray}`)];
   };
 };
-interface ValidatorSchema {
-  [key: string]: {
-    validators: ValidatorFn[];
-    isParams?: boolean;
-    isRequired?: boolean;
-  };
-}
 
 export default {
   validateFieldsAndGetErrorData,
-  valObject,
+  valObjectAndProp,
   valArrayAndItemOrProp,
   valString,
   valNumber,
@@ -263,48 +266,3 @@ export default {
   valMaxLength,
   valEnum,
 };
-
-// const card = {
-//   name: "123123",
-//   // tags: [{ gender: "male" }],
-//   other: {
-//     description: 123,
-//     likes: [123],
-//   },
-//   add: "123",
-// };
-
-// const rules = {
-//   name: {
-//     isRequired: true, // name 是必填欄位
-//     validators: [valString],
-//   },
-//   tags: {
-//     validators: [
-//       valArrayAndItemOrProp({
-//         name: {
-//           validators: [valString],
-//           isRequired: true,
-//         },
-//         color: {
-//           validators: [valString],
-//         },
-//       }),
-//     ],
-//   },
-//   other: {
-//     isRequired: true,
-//     validators: [
-//       valObject({
-//         description: {
-//           validators: [valString],
-//         },
-//         likes: {
-//           validators: [valArrayAndItemOrProp([valString])],
-//           isRequired: true,
-//         },
-//       }),
-//     ],
-//   },
-// };
-// console.log(validateFieldsAndGetErrorData(rules, card, "card"));
