@@ -319,6 +319,7 @@ const getWorkspacesByUserId = async (req: Request, res: Response, next: NextFunc
               username: memberData?.username,
               isArchived: memberData?.isArchived,
               // role: item.role,
+              avatar: memberData?.avatar,
               role: roleData[0]?.role || "",
             };
           }),

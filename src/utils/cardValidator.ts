@@ -29,6 +29,9 @@ const createCard: ValidationForRequest = (req) => {
       validators: [valObjectId],
       isRequired: true,
     },
+    socketData: {
+      isSocketData: true,
+    },
   };
   return validateFieldsAndGetErrorData(schema, "Card", req.body);
 };
@@ -46,6 +49,11 @@ const getCardById: ValidationForRequest = (req) => {
 const updateCard: ValidationForRequest = (req) => {
   const schema: ValidatorSchema = {
     id: {
+      validators: [valObjectId],
+      isRequired: true,
+      isParams: true,
+    },
+    kanbanId: {
       validators: [valObjectId],
       isRequired: true,
       isParams: true,
@@ -91,6 +99,9 @@ const updateCard: ValidationForRequest = (req) => {
     isArchived: {
       validators: [valBoolean],
     },
+    socketData: {
+      isSocketData: true,
+    },
   };
   return validateFieldsAndGetErrorData(schema, "Card", req.body, req.params);
 };
@@ -105,6 +116,17 @@ const archiveCard: ValidationForRequest = (req) => {
     isArchived: {
       validators: [valBoolean],
       isRequired: true,
+    },
+    listId: {
+      validators: [valObjectId],
+      isRequired: true,
+    },
+    kanbanId: {
+      validators: [valObjectId],
+      isRequired: true,
+    },
+    socketData: {
+      isSocketData: true,
     },
   };
   return validateFieldsAndGetErrorData(schema, "Card", req.body, req.params);
