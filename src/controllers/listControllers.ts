@@ -58,14 +58,15 @@ export default {
   },
   renameList: async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const { name } = req.body;
-    if (!name) {
+    const { kanbanId, list, socketData } = req.body;
+    if (!list.name) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "name",
         error: "List's name is required.",
       });
     } else {
-      mongoDbHandler.updateDb(res, next, "List", List, { _id: id }, { name });
+      mongoDbHandler.updateDb(res, next, "List", List, { _id: id }, { name: list.name });
+      websocketHelper.sendWebSocket(req, kanbanId, "renameList", socketData);
     }
   },
   archiveList: async (req: Request, res: Response, next: NextFunction) => {
