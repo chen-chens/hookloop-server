@@ -106,6 +106,15 @@ cardSchema.virtual("cardCommentCount", {
   foreignField: "cardId",
   count: true,
 });
+cardSchema.virtual("notificationCommentCount", {
+  ref: "Notification",
+  localField: "_id",
+  foreignField: "cardId",
+  options: {
+    match: { isRead: false },
+  },
+  count: true,
+});
 cardSchema.virtual("cardHistory", {
   ref: "CardHistory",
   localField: "_id",

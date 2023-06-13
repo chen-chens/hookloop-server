@@ -92,9 +92,7 @@ export default {
             "tag",
             "isArchived",
           ],
-          populate: {
-            path: "cardCommentCount",
-          },
+          populate: ["cardCommentCount", "notificationCommentCount"],
         },
       });
       if (!kanban) {

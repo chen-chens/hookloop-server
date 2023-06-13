@@ -88,6 +88,8 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
     webLink: updatedWebLink,
   };
 
+  const oldCard = (await Card.findOne({ _id: id, isArchived: false })) as any;
+
   mongoDbHandler.updateDb(res, next, "Card", Card, { _id: id }, updatedFields, {});
   const lists = await Kanban.findOne({ _id: kanbanId }).populate({
     path: "listOrder",
@@ -95,22 +97,30 @@ const updateCard = async (req: Request, res: Response, next: NextFunction) => {
       path: "cardOrder",
     },
   });
-  const newCard = await Card.findOne({ _id: id, isArchived: false }).populate({
+  const newCard = (await Card.findOne({ _id: id, isArchived: false }).populate({
     path: "cardComment",
     select: "_id currentComment userId updatedAt",
     match: { isArchived: false, isEdited: false },
     options: { sort: { createdAt: -1 } },
-  });
+  })) as any;
 
   // 發送給 kanban
   websocketHelper.sendWebSocket(req, kanbanId, "updateCard", lists);
   // 發送給 card
   websocketHelper.sendWebSocket(req, id, "updateCard", newCard);
   // notification
-  notificationHelper.create(req, "card", {
-    id,
-    ...updatedFields,
-  });
+  const contentTypes = [];
+  if (oldCard && newCard) {
+    // eslint-disable-next-line no-underscore-dangle
+    for (const key of Object.keys(oldCard._doc)) {
+      // 新舊 card 不同的欄位發通知
+      // eslint-disable-next-line no-underscore-dangle
+      if (oldCard._doc[key].toString() !== newCard._doc[key].toString()) {
+        contentTypes.push(key);
+      }
+    }
+  }
+  notificationHelper.create(req, id, "card", contentTypes);
 };
 
 const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
@@ -125,12 +135,9 @@ const archiveCard = async (req: Request, res: Response, next: NextFunction) => {
         error: "List not found",
       });
     }
-    // notification
-    notificationHelper.create(req, "card", {
-      id,
-      isArchived: true,
-    });
     sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, newCard);
+    // notification
+    notificationHelper.create(req, id, "card", [isArchived ? "Card is archived." : "Card is unarchived"]);
   }
   forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
     field: "card",
@@ -202,6 +209,15 @@ const moveCard = async (req: Request, res: Response, next: NextFunction) => {
           } else {
             websocketHelper.sendWebSocket(req, kanbanId, "moveCard", socketData);
             sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, populatedKanban.kanbanId);
+            // notification
+            const before = oldListData.cardOrder.map((el: any) => el.toString());
+            const after = oldCardOrder;
+            const movedCardId = before
+              .filter((el: any) => !after.includes(el))
+              .concat(after.filter((el: any) => !before.includes(el)))[0];
+            if (movedCardId) {
+              notificationHelper.create(req, movedCardId, "card", [`Card is moved to "${newListData.name}" list.`]);
+            }
           }
         }
       } catch (error) {
@@ -237,10 +253,7 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
       // 提醒前端使用 fileId
       mongoDbHandler.updateDb(res, next, "Card", Card, { _id: cardId }, { $push: { attachment: updatedFields } }, {});
       // notification
-      notificationHelper.create(req, "card", {
-        id: cardId,
-        attachment: true,
-      });
+      notificationHelper.create(req, cardId, "card", ["Attachment is added."]);
     }
   }
 };
@@ -262,10 +275,7 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
     {},
   );
   // notification
-  notificationHelper.create(req, "card", {
-    id: cardId,
-    attachment: attachmentId,
-  });
+  notificationHelper.create(req, cardId, "card", ["Attachment is deleted."]);
 };
 
 const getComments = async (req: Request, res: Response, _: NextFunction) => {
@@ -284,11 +294,7 @@ const addComment = async (req: Request, res: Response, _: NextFunction) => {
   websocketHelper.sendWebSocket(req, cardId, "comments", newComments);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newComment);
   // notification
-  notificationHelper.create(req, "card", {
-    id: cardId,
-    // eslint-disable-next-line no-underscore-dangle
-    comment: newComment._id,
-  });
+  notificationHelper.create(req, cardId, "card", ["Comment is added."]);
 };
 
 const updateComment = async (req: Request, res: Response, next: NextFunction) => {
@@ -306,10 +312,7 @@ const updateComment = async (req: Request, res: Response, next: NextFunction) =>
     {},
   );
   // notification
-  notificationHelper.create(req, "card", {
-    id: cardId,
-    comment: commentId,
-  });
+  notificationHelper.create(req, cardId, "card", ["comment"]);
 };
 const archiveComment = async (req: Request, res: Response, next: NextFunction) => {
   const { cardId, commentId } = req.params;
