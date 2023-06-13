@@ -1,7 +1,7 @@
 import { Request } from "express";
 
 import { Card, Notification } from "@/models";
-import { getUserIdByToken } from "@/utils";
+import { getUserIdByToken, websocketHelper } from "@/utils";
 
 export default {
   create: async (req: Request, id: string, type: string, contentMsgs: string[]) => {
@@ -29,15 +29,16 @@ export default {
         }
 
         // 取得所有接收者
-        const receivers = [card.reporter, ...card.assignee];
+        const receivers = [card.reporter, ...card.assignee].map((receiver) => receiver?.toString());
 
         // 創建 Notification
         for (const receiverId of receivers) {
-          if (receiverId && receiverId.toString() !== userId) {
+          // receiver 不含動作執行者本人
+          if (receiverId && receiverId !== userId) {
             (async function () {
               const newNotification = await Notification.create({
                 fromUserId: userId,
-                toUserId: receiverId.toString(),
+                toUserId: receiverId,
                 subject: card.name,
                 cardId: id,
                 // eslint-disable-next-line no-underscore-dangle
@@ -47,6 +48,11 @@ export default {
               });
               if (!newNotification) {
                 console.log("Create notification failed!");
+              } else {
+                websocketHelper.sendWebSocket(req, receiverId, "notification", {
+                  fromUserId: userId,
+                  toUserId: receiverId,
+                });
               }
             })();
           }

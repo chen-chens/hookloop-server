@@ -34,6 +34,12 @@ export default function runWebSocket(server: any) {
           case "leaveCard":
             websocketHelper.removeClientWSFromGroup(type, id, ws);
             break;
+          case "enterNotification":
+            websocketHelper.setClientWSToGroup(type, id, ws);
+            break;
+          case "leaveNotification":
+            websocketHelper.removeClientWSFromGroup(type, id, ws);
+            break;
           default:
             ws.send(
               JSON.stringify({
