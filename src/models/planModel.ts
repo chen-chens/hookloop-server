@@ -5,6 +5,7 @@ export interface IPlan {
   price: number;
   endAt: Date;
   userId: string;
+  status: "PAID" | "UN-PAID";
   createdAt: Date;
   updatedAt: Date;
   merchantOrderNo: string;
@@ -30,6 +31,11 @@ const planSchema = new Schema(
       ref: "User",
       required: true,
     },
+    status: {
+      type: String,
+      require: true,
+      enum: ["PAID", "UN-PAID"],
+    },
     merchantOrderNo: {
       // 用來與藍新金流核對
       type: String,
@@ -53,12 +59,6 @@ const planSchema = new Schema(
         type: String,
       },
     },
-    // items: [
-    //   // 用途？
-    //   {
-    //     name: String,
-    //   },
-    // ],
   },
   {
     timestamps: true, // generate : createdAt, updatedAt
