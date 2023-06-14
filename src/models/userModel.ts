@@ -8,6 +8,7 @@ export interface IUser extends Document {
   password: string;
   avatar: string;
   isArchived: boolean;
+  plan: any;
   lastActiveTime: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -40,6 +41,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       trim: true,
       default: "",
+    },
+    plan: {
+      type: Schema.Types.ObjectId,
+      ref: "Plan",
     },
     isArchived: {
       type: Boolean,
