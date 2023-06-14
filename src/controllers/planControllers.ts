@@ -1,5 +1,5 @@
 import CryptoJS from "crypto-js";
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
 import { IUser } from "@/models/userModel";
@@ -75,6 +75,26 @@ const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunc
   });
 };
 
+const paymentNotify = async (req: Request, res: Response, next: NextFunction) => {
+  const receivePaymentData = req.body;
+  console.log("🚀 ~ file: planControllers.ts:80 ~ paymentNotify :", receivePaymentData);
+
+  // 解密資料，核對 產品編號是否一致
+  // 如果資料一致，就可以更新到 DB
+  console.log("🚀 ~ file: planControllers.ts:87 ~ paymentReturn ~ res:", res, next);
+};
+
+const paymentReturn = async (req: Request, res: Response, next: NextFunction) => {
+  const receivePaymentData = req.body;
+  console.log("🚀 ~ file: planControllers.ts:80 ~ paymentReturn:", receivePaymentData);
+
+  // 解密資料，核對 產品編號是否一致
+  // 如果資料一致，就可以更新到 DB
+  console.log("🚀 ~ file: planControllers.ts:87 ~ paymentReturn ~ res:", res, next);
+};
+
 export default {
   createOrder,
+  paymentNotify,
+  paymentReturn,
 };

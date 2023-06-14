@@ -23,6 +23,12 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     });
     return;
   }
+  if (targetUser.isArchived) {
+    forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_LOG_IN, {
+      error: ApiResults.USER_IS_ARCHIVED,
+    });
+    return;
+  }
   if (!comparePasswordResult) {
     forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_LOG_IN, {
       field: "password",
@@ -159,7 +165,6 @@ const verifyResetPassword = async (req: Request, res: Response, next: NextFuncti
       error: "The member is not existing! ",
     });
   }
-  console.log("🚀 ~ file: authControllers.ts:159 ~ verifyResetPassword ~ decode:", decode);
   const { userId } = decode as IDecodedToken;
   const targetUser = await ResetPassword.findOne({ userId });
   if (!targetUser) {
