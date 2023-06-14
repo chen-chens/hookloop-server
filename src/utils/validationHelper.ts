@@ -78,9 +78,9 @@ function validateRequestBodyAndParams(schema: ValidatorSchema): ValidatorFn {
     schemaKeys.forEach((key: string) => {
       const fieldValidators = schema[key];
       if (!fieldValidators.isSocketData) {
-        // 若為socketData，則不進行檢查
+        // schema 中該屬性 (key) 若為socketData，則不進行檢查
         if (fieldValidators.isParams && valParamExist(params, fieldName, key).length > 0) {
-          // fieldValidators.isParams == true， 表示 schema 設定該屬性 (key) 是 req.params，所以進行 valParamExist
+          // schema 中該屬性 (key) 若是 req.params(isParams)，進行 valParamExist
           // 檢查若沒有該屬性(length > 0)，新增錯誤訊息並不進行後續檢查
           errors.push(...valParamExist(params, fieldName, key));
         } else {
@@ -89,7 +89,7 @@ function validateRequestBodyAndParams(schema: ValidatorSchema): ValidatorFn {
           const field = fieldValidators.isParams ? params : data;
           const fieldValue = fieldValidators.isParams ? params[key] : data[key];
 
-          // 當 schema 設定該屬性 (key) 為必填，進行檢查屬性需存在且不為空
+          // schema 中該屬性 (key) 若為必填(isRequired)，進行檢查屬性需存在且不為空
           if (fieldValidators.isRequired) {
             errors.push(...checkRequiredFieldExist(field, fieldNestName, key));
             errors.push(...checkRequiredFieldNotEmpty(fieldValue, fieldNestName));
@@ -110,7 +110,7 @@ function validateRequestBodyAndParams(schema: ValidatorSchema): ValidatorFn {
   };
 }
 
-// 進行 api 請求時，用 validatorHelperForRequestBodyAndParams 檢查 req.body 及 req.params 是否符合 schema 規範，並將錯誤訊息陣列轉換成 IErrorData 物件以回傳給前端
+// 進行 api 請求時，用 validateRequestBodyAndParams 檢查 req.body 及 req.params 是否符合 schema 規範，並將錯誤訊息陣列轉換成 IErrorData 物件以回傳給前端
 const validateFieldsAndGetErrorData = (
   schema: ValidatorSchema,
   fieldName: string,
@@ -120,7 +120,7 @@ const validateFieldsAndGetErrorData = (
   return parseToIErrorDataType(validateRequestBodyAndParams(schema)(fieldName, data, params));
 };
 
-// 物件型別的檢查，當該屬性為物件時，會再次呼叫 validatorHelperForRequestBodyAndParams 進行下一層物件屬性的檢查，rules 在建立 schema 時傳入
+// 物件型別的檢查，當該屬性為物件時，會再次呼叫 validateRequestBodyAndParams 進行下一層物件屬性的檢查，rules 在建立 schema 時傳入
 const valObjectAndProp = (rules: any): ValidatorFn => {
   return (data: any, fieldName: string): IErrorData[] => {
     if (typeof data !== "object" || Array.isArray(data)) {
@@ -130,41 +130,47 @@ const valObjectAndProp = (rules: any): ValidatorFn => {
   };
 };
 
-/**
-  陣列型別的檢查，當該屬性為陣列時，會依據傳入的 rules 判斷要進行一般陣列檢查或是物件陣列檢查
- 一般陣列檢查，rules 需傳入 ValidatorFn 陣列，再用 ValidatorFn 對陣列中的每個元素進行檢查
- 物件陣列檢查，rules 需傳入 ValidatorSchema 物件，再呼叫 valObjectAndProp 對陣列中的每個元素進行物件型別、物件屬性的檢查
- valArrayAndItemOrProp rules 在建立 schema 時傳入，再傳給 valObjectAndProp 或 valArrayAndItem 進行檢查
- */
-const valArrayAndItemOrProp = (rules: ValidatorFn[] | ValidatorSchema): ValidatorFn => {
+// 一般陣列檢查，rules 在建立 schema 時傳入
+const valArrayAndItem = (rules: ValidatorFn[]): ValidatorFn => {
   return (data: any, fieldName: string): IErrorData[] => {
     const errors: IErrorData[] = [];
-    // 檢查 data 是否為陣列
+    if (!Array.isArray(data)) {
+      return [generateErrorData(fieldName, "must be an array")];
+    }
+    data.forEach((item: any, index: number) => {
+      rules.forEach((validatorFn: ValidatorFn) => {
+        errors.push(
+          ...validatorFn(item, `${fieldName}[${index}]`).map((e: IErrorData) => {
+            return { field: e.field, error: `${e.error} array` };
+          }),
+        );
+      });
+    });
+    return errors;
+  };
+};
+
+// 物件陣列檢查，rules 為物件，用 valObjectAndProp 進行檢查
+const valObjectArrayAndProp = (rules: ValidatorSchema): ValidatorFn => {
+  return (data: any, fieldName: string): IErrorData[] => {
+    const errors: IErrorData[] = [];
     if (!Array.isArray(data)) {
       return [generateErrorData(fieldName, "must be an array")];
     }
 
-    // 用 rules 型別判斷 data 須為一般陣列檢查還是物件陣列檢查
-    if (Array.isArray(rules)) {
-      // 一般陣列檢查
-      data.forEach((item: any) => {
-        rules.forEach((validatorFn: ValidatorFn, index: number) => {
-          errors.push(
-            ...validatorFn(item, `${fieldName}[${index}]`).map((e: IErrorData) => {
-              return { field: e.field, error: `${e.error} array` };
-            }),
-          );
-        });
-      });
-    } else {
-      // 物件陣列檢查
-      const validatorFn = valObjectAndProp(rules);
-      data.forEach((item: any, index: number) => {
-        errors.push(...validatorFn(item, `${fieldName}[${index}]`));
-      });
-    }
+    const validatorFn = valObjectAndProp(rules);
+    data.forEach((item: any, index: number) => {
+      errors.push(...validatorFn(item, `${fieldName}[${index}]`));
+    });
     return errors;
   };
+};
+
+const valArray = (data: any, fieldName: string): IErrorData[] => {
+  if (Array.isArray(data)) {
+    return [];
+  }
+  return [generateErrorData(fieldName, "must be an array")];
 };
 
 const valString: ValidatorFn = (data, fieldName) => {
@@ -253,7 +259,9 @@ const valEnum = (enumArray: any): ValidatorFn => {
 export default {
   validateFieldsAndGetErrorData,
   valObjectAndProp,
-  valArrayAndItemOrProp,
+  valArrayAndItem,
+  valObjectArrayAndProp,
+  valArray,
   valString,
   valNumber,
   valBoolean,
@@ -266,3 +274,35 @@ export default {
   valMaxLength,
   valEnum,
 };
+
+// 改為使用 valObjectAndProp、valArrayAndItem 進行檢查
+// const valArrayAndItemOrProp = (rules: ValidatorFn[] | ValidatorSchema): ValidatorFn => {
+//   return (data: any, fieldName: string): IErrorData[] => {
+//     const errors: IErrorData[] = [];
+//     // 檢查 data 是否為陣列
+//     if (!Array.isArray(data)) {
+//       return [generateErrorData(fieldName, "must be an array")];
+//     }
+
+//     // 用 rules 型別判斷 data 須為一般陣列檢查還是物件陣列檢查
+//     if (Array.isArray(rules)) {
+//       // 一般陣列檢查
+//       data.forEach((item: any) => {
+//         rules.forEach((validatorFn: ValidatorFn, index: number) => {
+//           errors.push(
+//             ...validatorFn(item, `${fieldName}[${index}]`).map((e: IErrorData) => {
+//               return { field: e.field, error: `${e.error} array` };
+//             }),
+//           );
+//         });
+//       });
+//     } else {
+//       // 物件陣列檢查
+//       const validatorFn = valObjectAndProp(rules);
+//       data.forEach((item: any, index: number) => {
+//         errors.push(...validatorFn(item, `${fieldName}[${index}]`));
+//       });
+//     }
+//     return errors;
+//   };
+// };

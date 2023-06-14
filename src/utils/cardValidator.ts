@@ -4,7 +4,8 @@ import validationHelper from "./validationHelper";
 
 const {
   validateFieldsAndGetErrorData,
-  valArrayAndItemOrProp,
+  valArrayAndItem,
+  valObjectArrayAndProp,
   valString,
   valBoolean,
   valObjectId,
@@ -68,7 +69,7 @@ const updateCard: ValidationForRequest = (req) => {
       validators: [valObjectId],
     },
     assignee: {
-      validators: [valArrayAndItemOrProp([valObjectId])],
+      validators: [valArrayAndItem([valObjectId])],
     },
     targetStartDate: {
       validators: [valDate],
@@ -89,11 +90,11 @@ const updateCard: ValidationForRequest = (req) => {
       validators: [valEnum(["Pending", "In Progress", "Done"])],
     },
     tag: {
-      validators: [valArrayAndItemOrProp([valObjectId])],
+      validators: [valArrayAndItem([valObjectId])],
     },
     webLink: {
       validators: [
-        valArrayAndItemOrProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true } }),
+        valObjectArrayAndProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true } }),
       ],
     },
     isArchived: {

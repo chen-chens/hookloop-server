@@ -237,7 +237,7 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
     });
   } else {
     const uploadedFileMeta = await fileHandler.filePost(file, next);
-    console.log("uploadedFileMeta: ", uploadedFileMeta);
+
     if (!uploadedFileMeta) {
       forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
     } else {
@@ -251,7 +251,7 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
         size,
         mimetype,
       };
-      // 提醒前端使用 fileId
+
       mongoDbHandler.updateDb(res, next, "Card", Card, { _id: cardId }, { $push: { attachment: updatedFields } }, {});
       // notification
       notificationHelper.create(req, cardId, "Card", ["Attachment is added."]);
@@ -260,7 +260,6 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
 };
 const deleteAttachment = async (req: Request, res: Response, next: NextFunction) => {
   // 提醒前端提供 fileId
-  console.log("req.params: ", req.params);
   const { cardId, attachmentId } = req.params;
   const successfullyDeleted = fileHandler.fileDelete(attachmentId, next);
   if (!successfullyDeleted) {
