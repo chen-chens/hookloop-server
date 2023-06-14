@@ -1,5 +1,5 @@
 import CryptoJS from "crypto-js";
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
 import { IUser } from "@/models/userModel";
@@ -26,7 +26,7 @@ const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunc
   const tradeInfo: IPaymentTradeInfoType = {
     MerchantID: PAY_MERCHANT_ID,
     RespondType: "JSON",
-    TimeStamp: Date.now().toString(),
+    TimeStamp: `${Math.floor(Date.now() / 1000)}`,
     Version: PAY_VERSION,
     LoginType: "en",
     MerchantOrderNo: `${targetPlan.charAt(0)}${Date.now()}`, // 商品編號，先用時間戳使用。
@@ -60,7 +60,7 @@ const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunc
     iv,
     mode: CryptoJS.mode.CBC, // AES-256-CBC: AES加密-密鑰長度(PAY_HASH_KEY)256-CBC模式
     padding: CryptoJS.pad.Pkcs7, // PKCS7 填充
-  }).toString();
+  }).ciphertext.toString(CryptoJS.enc.Hex); // 轉成 十六進位制
 
   // Step3: 將 AES加密字串產生檢查碼
   const hashString = `HashKey=${PAY_HASH_KEY}&${aesEncrypted}&HashIV=${PAY_HASH_IV}`;
@@ -73,9 +73,28 @@ const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunc
     aesEncrypted,
     shaEncrypted,
   });
-  res.json(tradeInfo);
+};
+
+const paymentNotify = async (req: Request, res: Response, next: NextFunction) => {
+  const receivePaymentData = req.body;
+  console.log("🚀 ~ file: planControllers.ts:80 ~ paymentNotify :", receivePaymentData);
+
+  // 解密資料，核對 產品編號是否一致
+  // 如果資料一致，就可以更新到 DB
+  console.log("🚀 ~ file: planControllers.ts:87 ~ paymentReturn ~ res:", res, next);
+};
+
+const paymentReturn = async (req: Request, res: Response, next: NextFunction) => {
+  const receivePaymentData = req.body;
+  console.log("🚀 ~ file: planControllers.ts:80 ~ paymentReturn:", receivePaymentData);
+
+  // 解密資料，核對 產品編號是否一致
+  // 如果資料一致，就可以更新到 DB
+  console.log("🚀 ~ file: planControllers.ts:87 ~ paymentReturn ~ res:", res, next);
 };
 
 export default {
   createOrder,
+  paymentNotify,
+  paymentReturn,
 };
