@@ -4,7 +4,8 @@ import validationHelper from "./validationHelper";
 
 const {
   validateFieldsAndGetErrorData,
-  valArrayAndItemOrProp,
+  valArrayAndItem,
+  valObjectArrayAndProp,
   valString,
   valBoolean,
   valObjectId,
@@ -28,6 +29,9 @@ const createCard: ValidationForRequest = (req) => {
     listId: {
       validators: [valObjectId],
       isRequired: true,
+    },
+    socketData: {
+      isSocketData: true,
     },
   };
   return validateFieldsAndGetErrorData(schema, "Card", req.body);
@@ -65,7 +69,7 @@ const updateCard: ValidationForRequest = (req) => {
       validators: [valObjectId],
     },
     assignee: {
-      validators: [valArrayAndItemOrProp([valObjectId])],
+      validators: [valArrayAndItem([valObjectId])],
     },
     targetStartDate: {
       validators: [valDate],
@@ -86,15 +90,18 @@ const updateCard: ValidationForRequest = (req) => {
       validators: [valEnum(["Pending", "In Progress", "Done"])],
     },
     tag: {
-      validators: [valArrayAndItemOrProp([valObjectId])],
+      validators: [valArrayAndItem([valObjectId])],
     },
     webLink: {
       validators: [
-        valArrayAndItemOrProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true } }),
+        valObjectArrayAndProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true } }),
       ],
     },
     isArchived: {
       validators: [valBoolean],
+    },
+    socketData: {
+      isSocketData: true,
     },
   };
   return validateFieldsAndGetErrorData(schema, "Card", req.body, req.params);
@@ -114,6 +121,13 @@ const archiveCard: ValidationForRequest = (req) => {
     listId: {
       validators: [valObjectId],
       isRequired: true,
+    },
+    kanbanId: {
+      validators: [valObjectId],
+      isRequired: true,
+    },
+    socketData: {
+      isSocketData: true,
     },
   };
   return validateFieldsAndGetErrorData(schema, "Card", req.body, req.params);
