@@ -18,9 +18,7 @@ import { sendErrorResponse } from "@/utils";
 //   [key: string]: any;
 // }
 export const asyncWrapper = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {
-  console.log("asyncWrapper");
   return (req: Request, res: Response, next: NextFunction) => {
-    console.log("fn");
     fn(req, res, next).catch((err: Error) => next(err));
   };
 };
