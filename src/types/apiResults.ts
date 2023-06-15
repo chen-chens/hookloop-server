@@ -36,6 +36,8 @@ enum ApiResults {
   SEND_RESET_PASSWORD_EMAIL = "Password Reset Email Sent!",
   USER_IS_ARCHIVED = "The account is suspended!",
   PLAN_FOR_PAYMENT_IS_REQUIRED = "The Plan is required!",
+  FAIL_TO_PAY = "Pay Result: Fail! ",
+  SUCCESS_TO_PAY = "Pay Result: Success! ",
 }
 
 export default ApiResults;

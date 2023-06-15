@@ -105,6 +105,27 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
   });
   const decryptedWithoutPadding = CryptoJS.enc.Utf8.stringify(decrypted).replace(/\0+$/, "");
   console.log("🚀 ~ file: planControllers.ts:95 ~ paymentNotify ~ decryptedWithoutPadding:", decryptedWithoutPadding);
+  const [returnInfo] = decryptedWithoutPadding.split("&").map((item) => {
+    const [prop, value] = item.split("=");
+    return { [prop]: value };
+  });
+  if (returnInfo.status !== "SUCCESS") {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_PAY);
+    return;
+  }
+
+  const updateDbTradeRecord = Plan.findOneAndUpdate(
+    { merchantOrderNo: returnInfo.merchantOrderNo },
+    {
+      status: returnInfo.status === "SUCCESS" ? "PAID" : "UN-PAID",
+      payMethod: "WEBATM",
+    },
+  );
+  if (!updateDbTradeRecord) {
+    forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.FAIL_UPDATE);
+    return;
+  }
+  sendSuccessResponse(res, ApiResults.SUCCESS_TO_PAY);
   // 如果資料一致，就可以更新到 DB
   console.log("🚀 ~ file: planControllers.ts:87 ~ paymentReturn ~ res:", res, next);
 };

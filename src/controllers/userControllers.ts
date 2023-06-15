@@ -115,6 +115,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
     price: getPriceByPlan(PlanOptions.PREMIUM),
     endAt: Date.now() + oneMonth, // 1 month
     userId: newUser.id,
+    status: "UN-PAID",
   });
   const token = getJwtToken(newUser.id!);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
