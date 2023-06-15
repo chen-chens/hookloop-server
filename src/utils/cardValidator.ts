@@ -96,7 +96,7 @@ const updateCard: ValidationForRequest = (req) => {
       validators: [
         valObjectArrayAndProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true }, _id: { validators: [valObjectId] }}),
       ],
-    }
+    },
     isArchived: {
       validators: [valBoolean],
     },
