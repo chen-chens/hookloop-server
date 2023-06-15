@@ -63,9 +63,11 @@ userSchema.virtual("currentPlan", {
   localField: "_id",
   foreignField: "userId",
   justOne: true,
-  options: { select: "name endAt status" },
-  sort: { endAt: -1 },
-  limit: 1,
+  options: {
+    select: "name endAt status",
+    sort: { endAt: -1 },
+    limit: 1,
+  },
 });
 
 const User = mongoose.model<IUser>("User", userSchema);

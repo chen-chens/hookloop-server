@@ -7,13 +7,6 @@ import { IUser } from "@/models/userModel";
 import { ApiResults, IPaymentTradeInfoType, IPlanOrderRequest, StatusCode } from "@/types";
 import { getPriceByPlan, sendSuccessResponse, transferTradeInfoString } from "@/utils";
 
-const getPlansByUserId = async (req: IPlanOrderRequest, res: Response) => {
-  const { id } = req.user as IUser;
-  const tradeRecords = await Plan.find({ userId: id });
-
-  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { plans: tradeRecords });
-};
-
 const createOrderForPayment = async (req: IPlanOrderRequest, res: Response, next: NextFunction) => {
   /* -- FREE Plan 會在前端處理掉，這裡針對要付費的 Standard/Premium -- */
   const { PAY_MERCHANT_ID, PAY_VERSION, PAY_RETURN_URL, PAY_NOTIFY_URL, PAY_HASH_IV, PAY_HASH_KEY } = process.env;
@@ -105,6 +98,27 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
   });
   const decryptedWithoutPadding = CryptoJS.enc.Utf8.stringify(decrypted).replace(/\0+$/, "");
   console.log("🚀 ~ file: planControllers.ts:95 ~ paymentNotify ~ decryptedWithoutPadding:", decryptedWithoutPadding);
+  const [returnInfo] = decryptedWithoutPadding.split("&").map((item) => {
+    const [prop, value] = item.split("=");
+    return { [prop]: value };
+  });
+  if (returnInfo.status !== "SUCCESS") {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_PAY);
+    return;
+  }
+
+  const updateDbTradeRecord = Plan.findOneAndUpdate(
+    { merchantOrderNo: returnInfo.merchantOrderNo },
+    {
+      status: returnInfo.status === "SUCCESS" ? "PAID" : "UN-PAID",
+      payMethod: "WEBATM",
+    },
+  );
+  if (!updateDbTradeRecord) {
+    forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.FAIL_UPDATE);
+    return;
+  }
+  sendSuccessResponse(res, ApiResults.SUCCESS_TO_PAY);
   // 如果資料一致，就可以更新到 DB
   console.log("🚀 ~ file: planControllers.ts:87 ~ paymentReturn ~ res:", res, next);
 };
@@ -119,7 +133,6 @@ const paymentReturn = async (req: Request, res: Response, next: NextFunction) =>
 };
 
 export default {
-  getPlansByUserId,
   createOrderForPayment,
   paymentNotify,
   paymentReturn,
