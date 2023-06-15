@@ -19,7 +19,7 @@ router.use("/kanbans", kanbanRoutes);
 router.use("/lists", listRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/workspaces", workspacesRoutes);
-router.use("/plan", plansRoutes);
+router.use("/plans", plansRoutes);
 router.use("/admin", adminRoutes);
 
 export default router;

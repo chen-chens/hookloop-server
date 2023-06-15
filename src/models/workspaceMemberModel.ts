@@ -52,13 +52,6 @@ workspaceMemberSchema.virtual("user", {
   justOne: true,
   options: { select: "username isArchived" },
 });
-// workspaceMemberSchema.virtual("WorkspaceMemberWithPlan", {
-//   ref: "Plan",
-//   localField: "userId",
-//   foreignField: "userId",
-//   justOne: true,
-//   options: { select: "userId name endAt" },
-// });
 
 const WorkspaceMember = mongoose.model<IWorkspaceMember>("WorkspaceMember", workspaceMemberSchema);
 
