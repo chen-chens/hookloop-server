@@ -94,9 +94,9 @@ const updateCard: ValidationForRequest = (req) => {
     },
     webLink: {
       validators: [
-        valObjectArrayAndProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true }, id: { validators: [valObjectId] }}),
+        valObjectArrayAndProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true }, _id: { validators: [valObjectId] }}),
       ],
-    },
+    }
     isArchived: {
       validators: [valBoolean],
     },
