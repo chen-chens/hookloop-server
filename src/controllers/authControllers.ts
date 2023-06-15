@@ -15,7 +15,7 @@ import { generateResetPasswordEmail, getJwtToken, sendSuccessResponse, validateP
 const login = async (req: Request, res: Response, next: NextFunction) => {
   // (1) 找到 目標 email，然後比對 password 是否正確
   const { email, password } = req.body;
-  const targetUser = await User.findOne({ email }).select("+password");
+  const targetUser = await User.findOne({ email }).select("+password").populate({ path: "currentPlan" }).exec();
   const comparePasswordResult = await bcrypt.compare(password, targetUser?.password || "");
   if (!targetUser) {
     forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_LOG_IN, {
@@ -39,16 +39,23 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   const token = getJwtToken(targetUser.id);
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
     token,
-    user: {
-      id: targetUser.id,
-      email: targetUser.email,
-      username: targetUser.username,
-      avatar: targetUser.avatar,
-      isArchived: targetUser.isArchived,
-      lastActiveTime: targetUser.lastActiveTime,
-      createdAt: targetUser.createdAt,
-      updatedAt: targetUser.updatedAt,
-    },
+    user: targetUser,
+    currentPlan: targetUser.currentPlan,
+    // user: {
+    //   id: targetUser.id,
+    //   email: targetUser.email,
+    //   username: targetUser.username,
+    //   avatar: targetUser.avatar,
+    //   isArchived: targetUser.isArchived,
+    //   lastActiveTime: targetUser.lastActiveTime,
+    //   createdAt: targetUser.createdAt,
+    //   updatedAt: targetUser.updatedAt,
+    //   currentPlan: {
+    //     name: targetUser?.currentPlan?.name || null,
+    //     endAt: targetUser?.currentPlan?.endAt || null,
+    //     status: targetUser?.currentPlan?.status || null,
+    //   },
+    // },
   });
 };
 
