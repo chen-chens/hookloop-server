@@ -63,7 +63,7 @@ const updateCard: ValidationForRequest = (req) => {
       validators: [valString, valLengthInRange(1, 50)],
     },
     description: {
-      validators: [valString, valMaxLength(500)],
+      validators: [valString],
     },
     reporter: {
       validators: [valObjectId],
