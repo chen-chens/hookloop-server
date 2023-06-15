@@ -2,13 +2,21 @@ import CryptoJS from "crypto-js";
 import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
+import Plan from "@/models/planModel";
 import { IUser } from "@/models/userModel";
 import { ApiResults, IPaymentTradeInfoType, IPlanOrderRequest, StatusCode } from "@/types";
 import { getPriceByPlan, sendSuccessResponse, transferTradeInfoString } from "@/utils";
 
+const getPlanByUserId = async (req: IPlanOrderRequest, res: Response) => {
+  const { id } = req.user as IUser;
+  const tradeRecords = await Plan.find({ userId: id });
+
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { tradeRecords });
+};
+
 const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunction) => {
   const { PAY_MERCHANT_ID, PAY_VERSION, PAY_RETURN_URL, PAY_NOTIFY_URL, PAY_HASH_IV, PAY_HASH_KEY } = process.env;
-  const { email, isArchived } = req.user as IUser;
+  const { email, isArchived, id } = req.user as IUser;
   const { targetPlan } = req.body;
   if (isArchived) {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.USER_IS_ARCHIVED);
@@ -40,15 +48,6 @@ const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunc
     WEBATM: 1,
   };
 
-  // DB 建立一筆訂單
-  // const oneMonth = 60 * 24 * 60 * 60 * 1000;
-  // await Plan.create({
-  //   name: targetPlan,
-  //   price: getPriceByPlan(targetPlan),
-  //   endAt: Date.now() + oneMonth, // 1 month
-  //   userId: id,
-  // });
-
   // 回傳加密後訂單資訊給前端
   // Step1: 生成請求字串
   const tradeString = transferTradeInfoString(tradeInfo);
@@ -68,6 +67,17 @@ const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunc
   const shaHex = sha256Hash.toString(CryptoJS.enc.Hex);
   const shaEncrypted = shaHex.toUpperCase();
 
+  // DB 建立一筆訂單
+  const oneMonth = 60 * 24 * 60 * 60 * 1000;
+  await Plan.create({
+    name: targetPlan,
+    price: getPriceByPlan(targetPlan),
+    endAt: Date.now() + oneMonth, // 1 month
+    userId: id,
+    status: "UN-PAID",
+    merchantOrderNo: tradeInfo.MerchantOrderNo,
+  });
+
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
     tradeInfo,
     aesEncrypted,
@@ -76,10 +86,24 @@ const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunc
 };
 
 const paymentNotify = async (req: Request, res: Response, next: NextFunction) => {
+  const { PAY_MERCHANT_ID, PAY_VERSION, PAY_RETURN_URL, PAY_NOTIFY_URL, PAY_HASH_IV, PAY_HASH_KEY } = process.env;
   const receivePaymentData = req.body;
   console.log("🚀 ~ file: planControllers.ts:80 ~ paymentNotify :", receivePaymentData);
 
+  if (!PAY_MERCHANT_ID || !PAY_VERSION || !PAY_RETURN_URL || !PAY_NOTIFY_URL || !PAY_HASH_IV || !PAY_HASH_KEY) {
+    forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+    return;
+  }
   // 解密資料，核對 產品編號是否一致
+  const key = CryptoJS.enc.Utf8.parse(PAY_HASH_KEY); // 先轉成 CryptoJS 可接受加密格式：WordArray
+  const iv = CryptoJS.enc.Utf8.parse(PAY_HASH_IV);
+  const ciphertext = CryptoJS.enc.Hex.parse(req.body.TradeInfo as string);
+  const decrypted = CryptoJS.AES.decrypt(ciphertext.toString(), key, {
+    iv,
+    padding: CryptoJS.pad.Pkcs7,
+  });
+  const decryptedWithoutPadding = CryptoJS.enc.Utf8.stringify(decrypted).replace(/\0+$/, "");
+  console.log("🚀 ~ file: planControllers.ts:95 ~ paymentNotify ~ decryptedWithoutPadding:", decryptedWithoutPadding);
   // 如果資料一致，就可以更新到 DB
   console.log("🚀 ~ file: planControllers.ts:87 ~ paymentReturn ~ res:", res, next);
 };
@@ -94,6 +118,7 @@ const paymentReturn = async (req: Request, res: Response, next: NextFunction) =>
 };
 
 export default {
+  getPlanByUserId,
   createOrder,
   paymentNotify,
   paymentReturn,

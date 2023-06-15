@@ -8,7 +8,6 @@ export interface IUser extends Document {
   password: string;
   avatar: string;
   isArchived: boolean;
-  plan: any;
   lastActiveTime: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -42,10 +41,6 @@ const userSchema = new Schema<IUser>(
       trim: true,
       default: "",
     },
-    plan: {
-      type: Schema.Types.ObjectId,
-      ref: "Plan",
-    },
     isArchived: {
       type: Boolean,
       default: false,
@@ -60,6 +55,16 @@ const userSchema = new Schema<IUser>(
     versionKey: false,
   },
 );
+userSchema.virtual("currentPlan", {
+  ref: "Plan",
+  localField: "id",
+  foreignField: "userId",
+  options: {
+    select: "name endAt status",
+    sort: { endAt: -1 },
+    limit: 1,
+  },
+});
 
 const User = mongoose.model<IUser>("User", userSchema);
 
