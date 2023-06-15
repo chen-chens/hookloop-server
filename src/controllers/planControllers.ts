@@ -14,7 +14,8 @@ const getPlansByUserId = async (req: IPlanOrderRequest, res: Response) => {
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { plans: tradeRecords });
 };
 
-const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunction) => {
+const createOrderForPayment = async (req: IPlanOrderRequest, res: Response, next: NextFunction) => {
+  /* -- FREE Plan 會在前端處理掉，這裡針對要付費的 Standard/Premium -- */
   const { PAY_MERCHANT_ID, PAY_VERSION, PAY_RETURN_URL, PAY_NOTIFY_URL, PAY_HASH_IV, PAY_HASH_KEY } = process.env;
   const { email, isArchived, id } = req.user as IUser;
   const { targetPlan } = req.body;
@@ -67,7 +68,7 @@ const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunc
   const shaHex = sha256Hash.toString(CryptoJS.enc.Hex);
   const shaEncrypted = shaHex.toUpperCase();
 
-  // DB 建立一筆訂單
+  // DB 建立一筆訂單:
   const oneMonth = 30 * 24 * 60 * 60 * 1000;
   await Plan.create({
     name: targetPlan,
@@ -119,7 +120,7 @@ const paymentReturn = async (req: Request, res: Response, next: NextFunction) =>
 
 export default {
   getPlansByUserId,
-  createOrder,
+  createOrderForPayment,
   paymentNotify,
   paymentReturn,
 };
