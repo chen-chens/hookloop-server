@@ -7,11 +7,11 @@ import { IUser } from "@/models/userModel";
 import { ApiResults, IPaymentTradeInfoType, IPlanOrderRequest, StatusCode } from "@/types";
 import { getPriceByPlan, sendSuccessResponse, transferTradeInfoString } from "@/utils";
 
-const getPlanByUserId = async (req: IPlanOrderRequest, res: Response) => {
+const getPlansByUserId = async (req: IPlanOrderRequest, res: Response) => {
   const { id } = req.user as IUser;
   const tradeRecords = await Plan.find({ userId: id });
 
-  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { tradeRecords });
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { plans: tradeRecords });
 };
 
 const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunction) => {
@@ -68,7 +68,7 @@ const createOrder = async (req: IPlanOrderRequest, res: Response, next: NextFunc
   const shaEncrypted = shaHex.toUpperCase();
 
   // DB 建立一筆訂單
-  const oneMonth = 60 * 24 * 60 * 60 * 1000;
+  const oneMonth = 30 * 24 * 60 * 60 * 1000;
   await Plan.create({
     name: targetPlan,
     price: getPriceByPlan(targetPlan),
@@ -118,7 +118,7 @@ const paymentReturn = async (req: Request, res: Response, next: NextFunction) =>
 };
 
 export default {
-  getPlanByUserId,
+  getPlansByUserId,
   createOrder,
   paymentNotify,
   paymentReturn,

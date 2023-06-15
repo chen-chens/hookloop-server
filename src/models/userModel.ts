@@ -1,5 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
+import { IPlan } from "./planModel";
+
 // 定義 User 模型的介面
 export interface IUser extends Document {
   id: string;
@@ -11,6 +13,7 @@ export interface IUser extends Document {
   lastActiveTime: Date;
   createdAt: Date;
   updatedAt: Date;
+  currentPlan?: IPlan;
 }
 const userSchema = new Schema<IUser>(
   {
@@ -57,13 +60,12 @@ const userSchema = new Schema<IUser>(
 );
 userSchema.virtual("currentPlan", {
   ref: "Plan",
-  localField: "id",
+  localField: "_id",
   foreignField: "userId",
-  options: {
-    select: "name endAt status",
-    sort: { endAt: -1 },
-    limit: 1,
-  },
+  justOne: true,
+  options: { select: "name endAt status" },
+  sort: { endAt: -1 },
+  limit: 1,
 });
 
 const User = mongoose.model<IUser>("User", userSchema);

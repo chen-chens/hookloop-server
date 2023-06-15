@@ -40,7 +40,6 @@ const planSchema = new Schema(
     merchantOrderNo: {
       // 用來與藍新金流核對
       type: String,
-      required: true,
     },
     payMethod: {
       // 付款人交易方式
