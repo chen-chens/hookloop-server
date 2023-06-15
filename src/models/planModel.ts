@@ -1,18 +1,19 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
 export interface IPlan {
   name: "Free" | "Standard" | "Premium";
   price: number;
   endAt: Date;
-  userId: string;
+  userId: Types.ObjectId;
   status?: "PAID" | "UN-PAID";
   createdAt: Date;
   updatedAt: Date;
   merchantOrderNo: string;
+  payMethod: string;
   payBankCode?: string;
   payerAccount5Code?: string;
 }
-const planSchema = new Schema(
+const planSchema = new Schema<IPlan>(
   {
     name: {
       type: String,
@@ -34,8 +35,10 @@ const planSchema = new Schema(
       required: true,
     },
     status: {
+      // 付費狀態
       type: String,
-      enum: ["PAID", "UN-PAID"],
+      enum: ["PAID", "UN-PAID", "NONE"], // NONE 代表 FREE 方案，沒有付費狀態
+      required: true,
     },
     merchantOrderNo: {
       // 用來與藍新金流核對
