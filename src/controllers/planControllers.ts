@@ -81,8 +81,8 @@ const createOrderForPayment = async (req: IPlanOrderRequest, res: Response, next
 
 const paymentNotify = async (req: Request, res: Response, next: NextFunction) => {
   const { PAY_MERCHANT_ID, PAY_VERSION, PAY_RETURN_URL, PAY_NOTIFY_URL, PAY_HASH_IV, PAY_HASH_KEY } = process.env;
-  const receivePaymentData = req.body;
-  console.log("🚀 ~ file: planControllers.ts:80 ~ paymentNotify :", receivePaymentData);
+  // const receivePaymentData = req.body;
+  console.log("🚀 ~ file: planControllers ~ paymentNotify req :", req);
 
   if (!PAY_MERCHANT_ID || !PAY_VERSION || !PAY_RETURN_URL || !PAY_NOTIFY_URL || !PAY_HASH_IV || !PAY_HASH_KEY) {
     forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
