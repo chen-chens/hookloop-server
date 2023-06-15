@@ -5,7 +5,7 @@ import { asyncWrapper, verifyTokenMiddleware as verifyToken } from "@/middleware
 
 const router = Router();
 router.post("/createOrder", verifyToken, asyncWrapper(planControllers.createOrderForPayment));
-router.post("/paymentNotify", asyncWrapper(planControllers.paymentNotify));
+router.post("/paymentNotify", planControllers.paymentNotify);
 router.post("/paymentReturn", asyncWrapper(planControllers.paymentReturn));
 
 export default router;
