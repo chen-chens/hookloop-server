@@ -64,19 +64,14 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
 
   const targetUser = await User.findOne({ email });
   if (!targetUser) {
-    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_SEND_EMAIL, {
-      field: "",
-      error: "The member is not existing! ",
-    });
+    /* ----------- 回傳中性(混淆)內容，避免被駭客重複發信確認。（實際上 DB 是找不到該會員） ----------- */
+    sendSuccessResponse(res, ApiResults.EMAIL_BEEN_SENT_ALREADY);
     return;
   }
 
   const hasExistingResetData = await ResetPassword.findOne({ userId: targetUser.id });
   if (hasExistingResetData) {
-    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.EMAIL_BEEN_SENT_ALREADY, {
-      field: "",
-      error: "The reset password Email has been sent! Please check out your email!",
-    });
+    sendSuccessResponse(res, ApiResults.EMAIL_BEEN_SENT_ALREADY);
     return;
   }
 
@@ -128,7 +123,7 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
 
   // send Email
   const sendResult = await mailTransporter.sendMail(mailConfig);
-  console.log("🚀 ~ file: authControllers.ts:125 ~ forgetPassword ~ sendResult:", sendResult);
+  console.log("🚀 ~ ------ forgetPassword ~ sendResult:", sendResult);
 
   mailTransporter.sendMail(mailConfig, (err: Error | null, info: SMTPTransport.SentMessageInfo) => {
     if (err) {
