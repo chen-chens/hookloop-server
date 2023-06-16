@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 
-import corsOptions from "./config/corsOptions";
+// import corsOptions from "./config/corsOptions";
 import { errorHandler } from "./middlewares";
 import router from "./routes";
 import { ApiResults, ApiStatus, StatusCode } from "./types";
@@ -12,7 +12,8 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors(corsOptions)); // Set CORS with default options
+// app.use(cors(corsOptions)); // Set CORS with default options
+app.use(cors()); // test for paymant
 app.use(express.json());
 app.use(cookieParser());
 
