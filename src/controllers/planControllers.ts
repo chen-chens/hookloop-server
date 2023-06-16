@@ -85,6 +85,7 @@ const paymentNotify = async (req: Request) => {
     console.log("🚀 ======================= 進入藍新回傳 Notify =====================");
     console.log("🚀 ~ =======================  paymentNotify req.body :", req.body);
 
+    console.log(" *************** pay2go_return : ", req.body.JSONData);
     // if (!PAY_MERCHANT_ID || !PAY_VERSION || !PAY_RETURN_URL || !PAY_NOTIFY_URL || !PAY_HASH_IV || !PAY_HASH_KEY) {
     //   forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
     //   return;
