@@ -3,12 +3,13 @@ import { NextFunction, Request, Response } from "express";
 import { forwardCustomError } from "@/middlewares";
 import { Kanban, List } from "@/models";
 import { ApiResults, StatusCode } from "@/types";
-import { sendSuccessResponse } from "@/utils";
+import { sendSuccessResponse, websocketHelper } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
+import notificationHelper from "@/utils/notificationHelper";
 
 export default {
   createList: async (req: Request, res: Response, next: NextFunction) => {
-    const { name, kanbanId } = req.body;
+    const { name, kanbanId, socketData } = req.body;
     if (!name) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_CREATE, {
         field: "name",
@@ -40,6 +41,7 @@ export default {
         });
       } else {
         sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, lists);
+        websocketHelper.sendWebSocket(req, kanbanId, "createList", socketData);
       }
 
       // sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, newList);
@@ -58,18 +60,21 @@ export default {
   },
   renameList: async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const { name } = req.body;
-    if (!name) {
+    const { kanbanId, list, socketData } = req.body;
+    if (!list.name) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "name",
         error: "List's name is required.",
       });
     } else {
-      mongoDbHandler.updateDb(res, next, "List", List, { _id: id }, { name });
+      mongoDbHandler.updateDb(res, next, "List", List, { _id: id }, { name: list.name });
+      websocketHelper.sendWebSocket(req, kanbanId, "renameList", socketData);
+      // notification
+      notificationHelper.create(req, id, "List", [`Name is updated to "${list.name}".`]);
     }
   },
   archiveList: async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
+    const { id, kanbanId, socketData } = req.params;
     const { isArchived } = req.body;
     if (Object.keys(req.body).indexOf("isArchived") < 0) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
@@ -78,6 +83,9 @@ export default {
       });
     } else {
       mongoDbHandler.updateDb(res, next, "List", List, { _id: id }, { isArchived });
+      websocketHelper.sendWebSocket(req, kanbanId, "archiveList", socketData);
+      // notification
+      notificationHelper.create(req, id, "List", [isArchived ? "List is archived." : "List is unarchived."]);
     }
   },
   moveList: async (req: Request, res: Response, next: NextFunction) => {
@@ -120,6 +128,7 @@ export default {
             });
           } else {
             sendSuccessResponse(res, ApiResults.SUCCESS_UPDATE, lists);
+            websocketHelper.sendWebSocket(req, kanbanId, "moveList", lists);
           }
         }
       }

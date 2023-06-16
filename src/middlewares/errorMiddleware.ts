@@ -18,9 +18,7 @@ import { sendErrorResponse } from "@/utils";
 //   [key: string]: any;
 // }
 export const asyncWrapper = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {
-  console.log("asyncWrapper");
   return (req: Request, res: Response, next: NextFunction) => {
-    console.log("fn");
     fn(req, res, next).catch((err: Error) => next(err));
   };
 };
@@ -40,6 +38,7 @@ export const forwardCustomError = (
 // INFO: Error handler middleware
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler = (err: CustomError | any, req: Request, res: Response, _: NextFunction) => {
+  console.log("🚀 ~ file: errorMiddleware.ts:43 ~ errorHandler ~ err:", err, !!(err instanceof jwt.TokenExpiredError));
   console.log("errorHandler");
   console.log("==============err=================\n", err, "\n==============end=================");
   if (err instanceof CustomError) {

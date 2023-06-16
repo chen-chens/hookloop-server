@@ -11,8 +11,9 @@ export type ValidatorFn = (data: any, fieldName: string, params?: any) => IError
 
 export interface ValidatorSchema {
   [key: string]: {
-    validators: ValidatorFn[];
+    validators?: ValidatorFn[];
     isParams?: boolean;
     isRequired?: boolean;
+    isSocketData?: boolean;
   };
 }

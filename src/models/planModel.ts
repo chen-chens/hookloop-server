@@ -1,6 +1,19 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
-const planSchema = new Schema(
+export interface IPlan {
+  name: "Free" | "Standard" | "Premium";
+  price: number;
+  endAt: Date;
+  userId: Types.ObjectId;
+  status?: "PAID" | "UN-PAID";
+  createdAt: Date;
+  updatedAt: Date;
+  merchantOrderNo: string;
+  payMethod: string;
+  payBankCode?: string;
+  payerAccount5Code?: string;
+}
+const planSchema = new Schema<IPlan>(
   {
     name: {
       type: String,
@@ -21,11 +34,29 @@ const planSchema = new Schema(
       ref: "User",
       required: true,
     },
-    items: [
-      {
-        name: String,
-      },
-    ],
+    status: {
+      // 付費狀態
+      type: String,
+      enum: ["PAID", "UN-PAID", "NONE"], // NONE 代表 FREE 方案，沒有付費狀態
+      required: true,
+    },
+    merchantOrderNo: {
+      // 用來與藍新金流核對
+      type: String,
+    },
+    payMethod: {
+      // 付款人交易方式
+      type: String,
+      enum: ["WEBATM", "CREDIT_CARD"],
+    },
+    payBankCode: {
+      // 付款人金融機構代碼
+      type: String,
+    },
+    payerAccount5Code: {
+      // 付款人金融機構帳號末五碼
+      type: String,
+    },
   },
   {
     timestamps: true, // generate : createdAt, updatedAt
@@ -33,6 +64,7 @@ const planSchema = new Schema(
   },
 );
 
+planSchema.index({ endAt: -1 }); // 在 endAt 上創建索引，方便 UserModel 指向最新方案資料。
 const Plan = mongoose.model("Plan", planSchema);
 
 export default Plan;

@@ -2,7 +2,6 @@ import axios from "axios";
 import { NextFunction } from "express";
 import * as fs from "fs";
 
-// import fileupload from "express-fileupload";
 import { forwardCustomError } from "@/middlewares";
 import { ApiResults, StatusCode } from "@/types";
 
@@ -57,33 +56,25 @@ const filePost = async (file: any, _: NextFunction) => {
 
   console.log("Upload Result:", response.statusText);
 
+  let fileData = null;
   if (response) {
     const { data } = response!;
-    const fileData = {
+    fileData = {
       fileId: data.url.replace("https://cdn.filestackcontent.com/", ""),
       url: data.url,
       size: data.size,
       type: data.mimetype,
     };
-    // 刪除暫存區檔案
-    fs.unlink(file.path, (err) => {
-      if (err) {
-        console.error(`Error: ${err}`);
-      } else {
-        console.log("File deleted successfully");
-      }
-    });
-    return fileData;
   }
   // 刪除暫存區檔案
   fs.unlink(file.path, (err) => {
     if (err) {
       console.error(`Error: ${err}`);
     } else {
-      console.log("File deleted successfully");
+      console.log("Temp file deleted successfully");
     }
   });
-  return false;
+  return fileData;
 };
 
 const filePatch = async (fileId: string, file: any, next: NextFunction) => {

@@ -4,6 +4,8 @@ const corsOptions: CorsOptions = {
   origin: [
     "http://localhost:3000",
     "https://hookloop-client.onrender.com",
+    "https://ccore.newebpay.com",
+
     // admin
     "http://localhost:5173",
     "https://hookloop-admin.onrender.com",

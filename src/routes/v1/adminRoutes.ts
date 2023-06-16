@@ -10,5 +10,6 @@ router.get("/users/:id", asyncWrapper(adminControllers.getUserById));
 router.patch("/users/:id", asyncWrapper(adminControllers.updateUserById));
 router.post("/users", asyncWrapper(adminControllers.register));
 router.post("/login", asyncWrapper(adminControllers.login));
+router.get("/plans/:userId", asyncWrapper(adminControllers.getPlansByUserId));
 
 export default router;
