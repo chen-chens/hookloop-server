@@ -147,6 +147,26 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
   });
 };
 
+const validateResetPasswordToken = async (req: Request, res: Response, next: NextFunction) => {
+  const { resetPasswordToken } = req.params;
+
+  const decode = await jwt.verify(resetPasswordToken, process.env.JWT_SECRET_KEY!);
+  if (!decode) {
+    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.CANT_RESET_PASSWORD);
+  }
+  const { userId } = decode as IDecodedToken;
+  const targetUser = await ResetPassword.findOne({ userId });
+  if (!targetUser) {
+    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.CANT_RESET_PASSWORD);
+  }
+
+  if (resetPasswordToken !== targetUser.tempToken) {
+    return forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.CANT_RESET_PASSWORD);
+  }
+
+  return sendSuccessResponse(res, ApiResults.VERIFIED_TOKEN);
+};
+
 const verifyResetPassword = async (req: Request, res: Response, next: NextFunction) => {
   const { newPassword, resetPasswordToken } = req.body;
   if (!validatePassword(newPassword || "")) {
@@ -155,25 +175,16 @@ const verifyResetPassword = async (req: Request, res: Response, next: NextFuncti
 
   const decode = await jwt.verify(resetPasswordToken, process.env.JWT_SECRET_KEY!);
   if (!decode) {
-    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-      field: "",
-      error: "The member is not existing! ",
-    });
+    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.CANT_RESET_PASSWORD);
   }
   const { userId } = decode as IDecodedToken;
   const targetUser = await ResetPassword.findOne({ userId });
   if (!targetUser) {
-    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
-      field: "",
-      error: "The member is not existing! ",
-    });
+    return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.CANT_RESET_PASSWORD);
   }
 
   if (resetPasswordToken !== targetUser.tempToken) {
-    return forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.FAIL_UPDATE, {
-      field: "",
-      error: "Your authorization is expired! ",
-    });
+    return forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.CANT_RESET_PASSWORD);
   }
 
   const securedPassword = await bcrypt.hash(newPassword, 12);
@@ -229,6 +240,7 @@ export default {
   login,
   forgetPassword,
   verifyResetPassword,
+  validateResetPasswordToken,
   verifyEmail,
   verifyUserToken,
 };

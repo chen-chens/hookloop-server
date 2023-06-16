@@ -30,6 +30,7 @@ enum ApiResults {
   TOKEN_IS_EXPIRED = "Token is expired! ",
   EMAIL_BEEN_USED = "The email is already existing!",
   EMAIL_BEEN_SENT_ALREADY = "The reset password email has been sent already!",
+  CANT_RESET_PASSWORD = "Validation expired! Can't Reset Password!",
   EMAIL_IS_REQUIRE = "The email is required!",
   EMAIL_NOT_BEEN_USED = "This email has not been used yet.",
   VALIDATOR_TYPE_ERROR = "Validation fail!",
