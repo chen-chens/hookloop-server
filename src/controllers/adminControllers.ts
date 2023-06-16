@@ -8,8 +8,8 @@ import { filteredUndefinedConditions, getJwtToken, sendSuccessResponse, timeHand
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
-  const { username, email, plan, startDate, endDate } = req.body;
-  const queryConditions = filteredUndefinedConditions({ username, email, plan });
+  const { username, email, plan, startDate, endDate, isArchived } = req.body;
+  const queryConditions = filteredUndefinedConditions({ username, email, plan, isArchived });
 
   // 如果沒有任何條件，就回傳空陣列
   if (Object.keys(req.body).length === 0) {
