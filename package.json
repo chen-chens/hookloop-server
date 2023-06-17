@@ -23,10 +23,9 @@
   "author": "Ariean, Emi, Joanna, Jason, Yuna, Yun",
   "license": "MIT",
   "dependencies": {
-    "@types/crypto-js": "^4.1.1",
-    "@types/ws": "^8.5.4",
     "axios": "^1.4.0",
     "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "crypto-js": "^4.1.1",
@@ -43,6 +42,9 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@types/ws": "^8.5.4",
+    "@types/body-parser": "^1.19.2",
+    "@types/crypto-js": "^4.1.1",
     "@commitlint/cli": "^17.6.1",
     "@commitlint/config-conventional": "^17.6.1",
     "@types/bcryptjs": "^2.4.2",
