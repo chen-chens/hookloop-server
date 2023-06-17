@@ -74,8 +74,8 @@ export default {
     }
   },
   archiveList: async (req: Request, res: Response, next: NextFunction) => {
-    const { id, kanbanId, socketData } = req.params;
-    const { isArchived } = req.body;
+    const { id } = req.params;
+    const { isArchived, kanbanId, socketData } = req.body;
     if (Object.keys(req.body).indexOf("isArchived") < 0) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_UPDATE, {
         field: "isArchived",
