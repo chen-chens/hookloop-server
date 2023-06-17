@@ -9,9 +9,10 @@ export interface IPlan {
   createdAt: Date;
   updatedAt: Date;
   merchantOrderNo: string;
-  payMethod: string;
+  paymentType: string;
   payBankCode?: string;
   payerAccount5Code?: string;
+  payTime: string;
 }
 const planSchema = new Schema<IPlan>(
   {
@@ -44,7 +45,7 @@ const planSchema = new Schema<IPlan>(
       // 用來與藍新金流核對
       type: String,
     },
-    payMethod: {
+    paymentType: {
       // 付款人交易方式
       type: String,
       enum: ["WEBATM", "CREDIT_CARD"],
@@ -55,6 +56,9 @@ const planSchema = new Schema<IPlan>(
     },
     payerAccount5Code: {
       // 付款人金融機構帳號末五碼
+      type: String,
+    },
+    payTime: {
       type: String,
     },
   },
