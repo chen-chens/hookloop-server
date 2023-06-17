@@ -1,3 +1,4 @@
+import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -13,6 +14,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors(corsOptions)); // Set CORS with default options
+app.use(bodyParser.urlencoded({ extended: true })); // 使用 bodyParser 中間件解析表單資料
 app.use(express.json());
 app.use(cookieParser());
 
