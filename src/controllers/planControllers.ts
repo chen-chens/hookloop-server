@@ -92,18 +92,21 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
   // 解密資料，核對 產品編號是否一致
   const key = CryptoJS.enc.Utf8.parse(PAY_HASH_KEY); // 先轉成 CryptoJS 可接受加密格式：WordArray
   const iv = CryptoJS.enc.Utf8.parse(PAY_HASH_IV);
-  const ciphertext = CryptoJS.enc.Hex.parse(req.body.TradeInfo as string);
-  const decrypted = CryptoJS.AES.decrypt(ciphertext.toString(), key, {
+  const ciphertext = CryptoJS.enc.Hex.parse(`${req.body.TradeInfo}`);
+
+  console.log("🚀 ~ ---------------- paymentNotify ~ ciphertext:", ciphertext);
+  const decrypted = CryptoJS.AES.decrypt({ ciphertext } as CryptoJS.lib.CipherParams, key, {
     iv,
     padding: CryptoJS.pad.Pkcs7,
   });
+  console.log("🚀 ~ ----------------  ~ decrypted:", decrypted);
   const decryptedWithoutPadding = CryptoJS.enc.Utf8.stringify(decrypted).replace(/\0+$/, "");
-  console.log("🚀 ~ file: planControllers.ts:95 ~ paymentNotify ~ decryptedWithoutPadding:", decryptedWithoutPadding);
+  console.log("🚀 ~  ----------------  ~ decryptedWithoutPadding:", decryptedWithoutPadding);
   const [returnInfo] = decryptedWithoutPadding.split("&").map((item) => {
     const [prop, value] = item.split("=");
     return { [prop]: value };
   });
-  console.log("🚀 ~ file: planControllers.ts:108 ~ paymentNotify ~ returnInfo:", returnInfo);
+  console.log("🚀 ~  ----------------  ~ paymentNotify ~ returnInfo:", returnInfo);
   if (returnInfo.status !== "SUCCESS") {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_PAY);
     return;
