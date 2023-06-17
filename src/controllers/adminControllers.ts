@@ -1,10 +1,11 @@
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
+import jwt from "jsonwebtoken";
 
 import { forwardCustomError } from "@/middlewares";
 import { AdminUser, User } from "@/models";
 import Plan from "@/models/planModel";
-import { ApiResults, IPlanOrderRequest, StatusCode } from "@/types";
+import { ApiResults, IDecodedToken, IPlanOrderRequest, StatusCode } from "@/types";
 import { filteredUndefinedConditions, getJwtToken, sendSuccessResponse, timeHandler } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
@@ -35,7 +36,19 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
     };
   }
 
-  const targetUsers = await User.find(queryConditions).select("_id username email isArchived createdAt");
+  // 模糊搜尋
+  const regexConditions: { [key: string]: any } = {};
+  if (username) {
+    regexConditions.username = { $regex: new RegExp(username, "i") };
+  }
+  if (email) {
+    regexConditions.email = { $regex: new RegExp(email, "i") };
+  }
+
+  const targetUsers = await User.find({
+    ...queryConditions,
+    ...regexConditions,
+  }).select("_id username email isArchived createdAt");
 
   if (!targetUsers || targetUsers.length === 0) {
     // 回傳空陣列，代表沒有符合此條件下的 user
@@ -179,6 +192,24 @@ const getPlansByUserId = async (req: IPlanOrderRequest, res: Response) => {
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { plans: tradeRecords });
 };
 
+const verifyUserToken = async (req: Request, res: Response, next: NextFunction) => {
+  // (1) 從 header 中拿 token
+  // (2) 驗證 token 有沒有過期
+  const bearerToken = req.headers.authorization;
+  const token = bearerToken?.split(" ")[1];
+  if (!token) {
+    forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.TOKEN_IS_NULL);
+    return;
+  }
+  const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
+  const { userId } = decode as IDecodedToken;
+  const targetUser = await AdminUser.findById(userId);
+  if (!targetUser) {
+    forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_READ);
+    return;
+  }
+  sendSuccessResponse(res, ApiResults.VERIFIED_TOKEN, targetUser);
+};
 export default {
   getUsers,
   getUserById,
@@ -186,4 +217,5 @@ export default {
   register,
   login,
   getPlansByUserId,
+  verifyUserToken,
 };
