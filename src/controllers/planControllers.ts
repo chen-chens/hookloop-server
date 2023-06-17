@@ -83,7 +83,7 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
   const { PAY_MERCHANT_ID, PAY_VERSION, PAY_RETURN_URL, PAY_NOTIFY_URL, PAY_HASH_IV, PAY_HASH_KEY } = process.env;
   console.log("🚀 ======================= 進入藍新回傳 Notify =====================");
   console.log("🚀 ~ =======================  paymentNotify req.body :", req.body);
-  console.log("🚀 ~ =======================  paymentNotify Source req.headers :", req.headers);
+  // console.log("🚀 ~ =======================  paymentNotify Source req.headers :", req.headers);
 
   if (!PAY_MERCHANT_ID || !PAY_VERSION || !PAY_RETURN_URL || !PAY_NOTIFY_URL || !PAY_HASH_IV || !PAY_HASH_KEY) {
     forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
@@ -93,20 +93,12 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
   const key = CryptoJS.enc.Utf8.parse(PAY_HASH_KEY); // 先轉成 CryptoJS 可接受加密格式：WordArray
   const iv = CryptoJS.enc.Utf8.parse(PAY_HASH_IV);
   const ciphertext = CryptoJS.enc.Hex.parse(`${req.body.TradeInfo}`);
-
-  console.log("🚀 ~ ---------------- paymentNotify ~ ciphertext:", ciphertext);
   const decrypted = CryptoJS.AES.decrypt({ ciphertext } as CryptoJS.lib.CipherParams, key, {
     iv,
     padding: CryptoJS.pad.Pkcs7,
   });
-  console.log("🚀 ~ ----------------  ~ decrypted:", decrypted);
   const decryptedWithoutPadding = CryptoJS.enc.Utf8.stringify(decrypted).replace(/\0+$/, "");
-  console.log("🚀 ~  ----------------  ~ decryptedWithoutPadding:", decryptedWithoutPadding);
-  const [returnInfo] = decryptedWithoutPadding.split("&").map((item) => {
-    const [prop, value] = item.split("=");
-    return { [prop]: value };
-  });
-  console.log("🚀 ~  ----------------  ~ paymentNotify ~ returnInfo:", returnInfo);
+  const returnInfo = JSON.parse(JSON.stringify(decryptedWithoutPadding));
   if (returnInfo.status !== "SUCCESS") {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_PAY);
     return;
@@ -117,7 +109,8 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
     { merchantOrderNo: returnInfo.merchantOrderNo },
     {
       status: returnInfo.status === "SUCCESS" ? "PAID" : "UN-PAID",
-      payMethod: "WEBATM",
+      paymentType: returnInfo.PaymentType,
+      payBankCode: returnInfo.PayBankCode,
     },
   );
   if (!updateDbTradeRecord) {
@@ -127,13 +120,12 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
   sendSuccessResponse(res, ApiResults.SUCCESS_TO_PAY);
 };
 
-const paymentReturn = async (req: Request, res: Response, next: NextFunction) => {
+const paymentReturn = async (req: Request) => {
   const receivePaymentData = req.body;
-  console.log("🚀 ~ file: planControllers.ts:80 ~ paymentReturn:", receivePaymentData);
+  console.log("🚀 ~ ################ ~ paymentReturn:", receivePaymentData);
 
   // 解密資料，核對 產品編號是否一致
   // 如果資料一致，就可以更新到 DB
-  console.log("🚀 ~ file: planControllers.ts:87 ~ paymentReturn ~ res:", res, next);
 };
 
 export default {
