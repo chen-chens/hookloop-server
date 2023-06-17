@@ -7,9 +7,9 @@ const router = Router();
 
 router.get("/verifyUserToken", asyncWrapper(authControllers.verifyUserToken));
 router.post("/login", verifyLogInInputMiddleware, asyncWrapper(authControllers.login));
-router.post("/forgetPassword", authControllers.forgetPassword);
-router.get("/:resetToken", authControllers.validateResetPasswordToken);
-router.post("/verifyPassword", authControllers.verifyResetPassword);
+router.post("/forgetPassword", asyncWrapper(authControllers.forgetPassword));
+router.get("/:resetToken", asyncWrapper(authControllers.validateResetPasswordToken));
+router.post("/verifyPassword", asyncWrapper(authControllers.verifyResetPassword));
 router.post("/verifyEmail", asyncWrapper(authControllers.verifyEmail));
 
 export default router;

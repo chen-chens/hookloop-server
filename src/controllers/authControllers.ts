@@ -156,6 +156,7 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
 
 const validateResetPasswordToken = async (req: Request, res: Response, next: NextFunction) => {
   const { resetPasswordToken } = req.params;
+  console.log("🚀 ~  validateResetPasswordToken ~ resetPasswordToken:", resetPasswordToken);
 
   const decode = await jwt.verify(resetPasswordToken, process.env.JWT_SECRET_KEY!);
   if (!decode) {
