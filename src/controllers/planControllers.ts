@@ -98,9 +98,11 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
     padding: CryptoJS.pad.Pkcs7,
   });
   const decryptedWithoutPadding = CryptoJS.enc.Utf8.stringify(decrypted).replace(/\0+$/, "");
-  console.log("🚀 ~ file: planControllers.ts:101 ~ paymentNotify ~ decryptedWithoutPadding:", decryptedWithoutPadding);
-  const returnInfo = JSON.parse(JSON.stringify(decryptedWithoutPadding));
-  console.log("🚀 ~ file: planControllers.ts:102 ~ paymentNotify ~ returnInfo:", returnInfo);
+  console.log("🚀 ~ ~ ~ ~ ~ ~ paymentNotify ~ decryptedWithoutPadding:", decryptedWithoutPadding);
+  const returnInfo = JSON.parse(decodeURIComponent(decryptedWithoutPadding));
+  console.log("🚀 ~ ~ ~ ~ ~ ~ ~  paymentNotify ~ returnInfo:", returnInfo);
+  console.log("🚀 ~ ~ ~ ~ ~ ~ ~  paymentNotify ~ returnInfo.Status:", returnInfo.Status);
+  console.log("🚀 ~ ~ ~ ~ ~ ~ ~  paymentNotify ~ returnInfo.Result:", returnInfo.Result);
   if (returnInfo.Status !== "SUCCESS") {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_PAY);
     return;
