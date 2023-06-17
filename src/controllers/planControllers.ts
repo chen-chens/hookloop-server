@@ -99,16 +99,16 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
   });
   const decryptedWithoutPadding = CryptoJS.enc.Utf8.stringify(decrypted).replace(/\0+$/, "");
   const returnInfo = JSON.parse(JSON.stringify(decryptedWithoutPadding));
-  if (returnInfo.status !== "SUCCESS") {
+  if (returnInfo.Status !== "SUCCESS") {
     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_PAY);
     return;
   }
 
   // 如果訂單編號一致，就可以更新到 DB
   const updateDbTradeRecord = Plan.findOneAndUpdate(
-    { merchantOrderNo: returnInfo.merchantOrderNo },
+    { merchantOrderNo: returnInfo.MerchantOrderNo },
     {
-      status: returnInfo.status === "SUCCESS" ? "PAID" : "UN-PAID",
+      status: returnInfo.Status === "SUCCESS" ? "PAID" : "UN-PAID",
       paymentType: returnInfo.PaymentType,
       payBankCode: returnInfo.PayBankCode,
     },
