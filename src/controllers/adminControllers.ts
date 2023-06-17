@@ -3,13 +3,14 @@ import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
 import { AdminUser, User } from "@/models";
-import { ApiResults, StatusCode } from "@/types";
+import Plan from "@/models/planModel";
+import { ApiResults, IPlanOrderRequest, StatusCode } from "@/types";
 import { filteredUndefinedConditions, getJwtToken, sendSuccessResponse, timeHandler } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
-  const { username, email, plan, startDate, endDate } = req.body;
-  const queryConditions = filteredUndefinedConditions({ username, email, plan });
+  const { username, email, plan, startDate, endDate, isArchived } = req.body;
+  const queryConditions = filteredUndefinedConditions({ username, email, plan, isArchived });
 
   // 如果沒有任何條件，就回傳空陣列
   if (Object.keys(req.body).length === 0) {
@@ -171,10 +172,18 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
+const getPlansByUserId = async (req: IPlanOrderRequest, res: Response) => {
+  const { userId } = req.params;
+  const tradeRecords = await Plan.find({ userId });
+
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { plans: tradeRecords });
+};
+
 export default {
   getUsers,
   getUserById,
   updateUserById,
   register,
   login,
+  getPlansByUserId,
 };

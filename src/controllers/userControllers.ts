@@ -4,9 +4,16 @@ import { NextFunction, Request, Response } from "express";
 import dbOptions from "@/config/dbOptions";
 import { forwardCustomError } from "@/middlewares";
 import { User, Workspace } from "@/models";
+import Plan from "@/models/planModel";
 import { IUser } from "@/models/userModel";
-import { ApiResults, IQueryUsersRequest, StatusCode } from "@/types";
-import { filteredUndefinedConditions, getJwtToken, getUserIdByToken, sendSuccessResponse } from "@/utils";
+import { ApiResults, IQueryUsersRequest, PlanOptions, StatusCode } from "@/types";
+import {
+  filteredUndefinedConditions,
+  getJwtToken,
+  getPriceByPlan,
+  getUserIdByToken,
+  sendSuccessResponse,
+} from "@/utils";
 import fileHandler from "@/utils/fileHandler";
 
 const getUsers = async (req: IQueryUsersRequest, res: Response, next: NextFunction) => {
@@ -93,6 +100,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   }
 
   const securedPassword = await bcrypt.hash(password, 12);
+  // 新建會員資料
   const newUser = await User.create({
     username,
     email,
@@ -100,10 +108,34 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
     avatar,
     lastActiveTime: Date.now(),
   });
+  // 新建方案資料
+  const oneMonth = 30 * 24 * 60 * 60 * 1000;
+  const newPlan = await Plan.create({
+    name: PlanOptions.PREMIUM,
+    price: getPriceByPlan(PlanOptions.PREMIUM),
+    endAt: Date.now() + oneMonth, // 1 month
+    userId: newUser.id,
+    status: "UN-PAID",
+  });
   const token = getJwtToken(newUser.id!);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
     token,
-    user: newUser,
+    user: {
+      id: newUser.id,
+      email: newUser.email,
+      username: newUser.username,
+      avatar: newUser.avatar,
+      isArchived: newUser.isArchived,
+      lastActiveTime: newUser.lastActiveTime,
+      createdAt: newUser.createdAt,
+      updatedAt: newUser.updatedAt,
+      currentPlan: {
+        userId: newPlan.userId,
+        name: newPlan.name,
+        endAt: newPlan.endAt,
+        status: newPlan.status,
+      },
+    },
   });
 };
 
