@@ -39,23 +39,21 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   const token = getJwtToken(targetUser.id);
   sendSuccessResponse(res, ApiResults.SUCCESS_LOG_IN, {
     token,
-    user: targetUser,
-    currentPlan: targetUser.currentPlan,
-    // user: {
-    //   id: targetUser.id,
-    //   email: targetUser.email,
-    //   username: targetUser.username,
-    //   avatar: targetUser.avatar,
-    //   isArchived: targetUser.isArchived,
-    //   lastActiveTime: targetUser.lastActiveTime,
-    //   createdAt: targetUser.createdAt,
-    //   updatedAt: targetUser.updatedAt,
-    //   currentPlan: {
-    //     name: targetUser?.currentPlan?.name || null,
-    //     endAt: targetUser?.currentPlan?.endAt || null,
-    //     status: targetUser?.currentPlan?.status || null,
-    //   },
-    // },
+    user: {
+      id: targetUser.id,
+      email: targetUser.email,
+      username: targetUser.username,
+      avatar: targetUser.avatar,
+      isArchived: targetUser.isArchived,
+      lastActiveTime: targetUser.lastActiveTime,
+      createdAt: targetUser.createdAt,
+      updatedAt: targetUser.updatedAt,
+      currentPlan: {
+        name: targetUser?.currentPlan?.name || null,
+        endAt: targetUser?.currentPlan?.endAt || null,
+        status: targetUser?.currentPlan?.status || null,
+      },
+    },
   });
 };
 
@@ -155,10 +153,10 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
 };
 
 const validateResetPasswordToken = async (req: Request, res: Response, next: NextFunction) => {
-  const { resetPasswordToken } = req.params;
-  console.log("🚀 ~  validateResetPasswordToken ~ resetPasswordToken:", resetPasswordToken);
+  const { resetToken } = req.params;
+  console.log("🚀 ~  validateResetPasswordToken ~ resetToken:", resetToken);
 
-  const decode = await jwt.verify(resetPasswordToken, process.env.JWT_SECRET_KEY!);
+  const decode = await jwt.verify(resetToken, process.env.JWT_SECRET_KEY!);
   if (!decode) {
     return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.CANT_RESET_PASSWORD);
   }
@@ -168,7 +166,7 @@ const validateResetPasswordToken = async (req: Request, res: Response, next: Nex
     return forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.CANT_RESET_PASSWORD);
   }
 
-  if (resetPasswordToken !== targetUser.tempToken) {
+  if (resetToken !== targetUser.tempToken) {
     return forwardCustomError(next, StatusCode.UNAUTHORIZED, ApiResults.CANT_RESET_PASSWORD);
   }
 
