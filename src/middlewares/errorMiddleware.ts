@@ -14,9 +14,7 @@ import { sendErrorResponse } from "@/utils";
 //     }
 //   };
 // };
-// export interface RequestWrapper extends Request {
-//   [key: string]: any;
-// }
+
 export const asyncWrapper = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {
   return (req: Request, res: Response, next: NextFunction) => {
     fn(req, res, next).catch((err: Error) => next(err));

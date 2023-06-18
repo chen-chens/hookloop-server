@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 
 import { forwardCustomError } from "@/middlewares";
 import { Kanban, List, Tag } from "@/models";
+import { IUser } from "@/models/userModel";
 import WorkspaceMember from "@/models/workspaceMemberModel";
 import Workspace from "@/models/workspaceModel";
 import { ApiResults, StatusCode } from "@/types";
@@ -68,6 +69,8 @@ export default {
   },
   getKanbanByKey: async (req: Request, res: Response, next: NextFunction) => {
     const { key } = req.params;
+    const { id } = req.user as IUser;
+
     if (!key) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
         field: "key",
@@ -92,7 +95,13 @@ export default {
             "tag",
             "isArchived",
           ],
-          populate: ["cardCommentCount", "notificationCommentCount"],
+          populate: [
+            "cardCommentCount",
+            {
+              path: "notificationCommentCount",
+              match: { toUserId: id, isRead: false },
+            },
+          ],
         },
       });
       if (!kanban) {
