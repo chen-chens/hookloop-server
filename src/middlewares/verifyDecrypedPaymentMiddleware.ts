@@ -1,3 +1,4 @@
+import CryptoJS from "crypto-js";
 import { NextFunction, Request, Response } from "express";
 
 import { ApiResults, StatusCode } from "@/types";
