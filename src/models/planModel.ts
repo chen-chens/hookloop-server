@@ -5,7 +5,7 @@ export interface IPlan {
   price: number;
   endAt: Date;
   userId: Types.ObjectId;
-  status?: "PAID" | "UN-PAID";
+  status?: "UN-PAID" | "NONE" | "PAY-SUCCESS" | "PAY-FAIL";
   createdAt: Date;
   updatedAt: Date;
   merchantOrderNo: string;
@@ -38,7 +38,7 @@ const planSchema = new Schema<IPlan>(
     status: {
       // 付費狀態
       type: String,
-      enum: ["PAID", "UN-PAID", "NONE"], // NONE 代表 FREE 方案，沒有付費狀態
+      enum: ["UN-PAID", "NONE", "PAY-SUCCESS", "PAY-FAIL"], // NONE 代表 FREE 方案，沒有付費狀態
       required: true,
     },
     merchantOrderNo: {
