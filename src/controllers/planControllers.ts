@@ -81,19 +81,19 @@ const createOrderForPayment = async (req: IPlanOrderRequest, res: Response, next
 };
 
 const paymentNotify = async (req: Request, res: Response, next: NextFunction) => {
-  const { returnInfo } = req.returnInfo;
-  // if (returnInfo.Status !== "SUCCESS") {
+  const { Status, Result } = req.returnInfo;
+  // if (Status !== "SUCCESS") {
   //   forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_PAY);
   //   return;
   // }
 
   // 如果訂單編號一致，就可以更新到 DB
   const updateDbTradeRecord = await Plan.findOneAndUpdate(
-    { merchantOrderNo: returnInfo.Result.MerchantOrderNo },
+    { merchantOrderNo: Result.MerchantOrderNo },
     {
-      status: returnInfo.Status === "SUCCESS" ? "PAY-SUCCESS" : "PAY-FAIL",
-      paymentType: returnInfo.Result.PaymentType,
-      payBankCode: returnInfo.Result.PayBankCode,
+      status: Status === "SUCCESS" ? "PAY-SUCCESS" : "PAY-FAIL",
+      paymentType: Result.PaymentType,
+      payBankCode: Result.PayBankCode,
     },
     dbOptions,
   );
@@ -105,11 +105,11 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
 };
 
 const paymentReturn = async (req: Request, res: Response) => {
-  const { returnInfo } = req.returnInfo;
+  const { Result } = req.returnInfo;
 
-  const targetTradeRecord = await Plan.findOne({ merchantOrderNo: returnInfo.Result.MerchantOrderNo });
+  const targetTradeRecord = await Plan.findOne({ merchantOrderNo: Result.MerchantOrderNo });
   if (targetTradeRecord) {
-    res.status(StatusCode.OK).json(returnInfo);
+    res.status(StatusCode.OK).json(Result);
     res.redirect(`/plan?targetPlan=${targetTradeRecord.name}`);
   }
 };
