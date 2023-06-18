@@ -14,7 +14,6 @@ const cardSchema = new Schema(
     },
     description: {
       type: String,
-      maxLength: 500,
     },
     reporter: {
       type: Schema.Types.ObjectId,

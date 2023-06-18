@@ -63,7 +63,7 @@ const updateCard: ValidationForRequest = (req) => {
       validators: [valString, valLengthInRange(1, 50)],
     },
     description: {
-      validators: [valString, valMaxLength(500)],
+      validators: [valString],
     },
     reporter: {
       validators: [valObjectId],
@@ -94,7 +94,7 @@ const updateCard: ValidationForRequest = (req) => {
     },
     webLink: {
       validators: [
-        valObjectArrayAndProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true } }),
+        valObjectArrayAndProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true }, _id: { validators: [valObjectId] }}),
       ],
     },
     isArchived: {
