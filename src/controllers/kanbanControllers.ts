@@ -70,6 +70,7 @@ export default {
   getKanbanByKey: async (req: Request, res: Response, next: NextFunction) => {
     const { key } = req.params;
     const { id } = req.user as IUser;
+
     if (!key) {
       forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_READ, {
         field: "key",
@@ -98,7 +99,7 @@ export default {
             "cardCommentCount",
             {
               path: "notificationCommentCount",
-              match: { toUserId: id },
+              match: { toUserId: id, isRead: false },
             },
           ],
         },
