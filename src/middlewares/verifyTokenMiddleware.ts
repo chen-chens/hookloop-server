@@ -11,6 +11,7 @@ declare module "express" {
   interface Request {
     user?: IUser;
     body: any;
+    [key: string]: any;
   }
 }
 const verifyTokenMiddleware = async (req: Request, _: Response, next: NextFunction) => {
