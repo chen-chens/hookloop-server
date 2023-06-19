@@ -5,7 +5,7 @@ export interface IPlan {
   price: number;
   endAt: Date;
   userId: Types.ObjectId;
-  status?: "UN-PAID" | "NONE" | "PAY-SUCCESS" | "PAY-FAIL";
+  status: "UN-PAID" | "NONE" | "PAY-SUCCESS" | "PAY-FAIL";
   createdAt: Date;
   updatedAt: Date;
   merchantOrderNo: string;
