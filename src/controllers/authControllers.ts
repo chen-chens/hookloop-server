@@ -49,6 +49,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       createdAt: targetUser.createdAt,
       updatedAt: targetUser.updatedAt,
       currentPlan: {
+        userId: targetUser?.currentPlan?.userId || null,
         name: targetUser?.currentPlan?.name || null,
         endAt: targetUser?.currentPlan?.endAt || null,
         status: targetUser?.currentPlan?.status || null,

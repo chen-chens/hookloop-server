@@ -12,7 +12,7 @@ const {
   valDate,
   valUrl,
   valLengthInRange,
-  valMaxLength,
+  // valMaxLength,
   valEnum,
 } = validationHelper;
 
@@ -94,7 +94,11 @@ const updateCard: ValidationForRequest = (req) => {
     },
     webLink: {
       validators: [
-        valObjectArrayAndProp({ name: { validators: [valString] }, url: { validators: [valUrl], isRequired: true }, _id: { validators: [valObjectId] }}),
+        valObjectArrayAndProp({
+          name: { validators: [valString] },
+          url: { validators: [valUrl], isRequired: true },
+          _id: { validators: [valObjectId] },
+        }),
       ],
     },
     isArchived: {

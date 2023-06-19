@@ -111,11 +111,11 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   // 新建方案資料
   const oneMonth = 30 * 24 * 60 * 60 * 1000;
   const newPlan = await Plan.create({
-    name: PlanOptions.PREMIUM,
-    price: getPriceByPlan(PlanOptions.PREMIUM),
+    name: PlanOptions.FREE,
+    price: getPriceByPlan(PlanOptions.FREE),
     endAt: Date.now() + oneMonth, // 1 month
     userId: newUser.id,
-    status: "UN-PAID",
+    status: "NONE",
   });
   const token = getJwtToken(newUser.id!);
   sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {

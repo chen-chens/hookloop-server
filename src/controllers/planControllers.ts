@@ -105,13 +105,10 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
 };
 
 const paymentReturn = async (req: Request, res: Response) => {
-  const { Result } = req.returnInfo;
-
-  const targetTradeRecord = await Plan.findOne({ merchantOrderNo: Result.MerchantOrderNo });
-  if (targetTradeRecord) {
-    res.status(StatusCode.OK).json(Result);
-    res.redirect(`/plan?targetPlan=${targetTradeRecord.name}`);
-  }
+  console.log("🚀 ", req, res);
+  //   const { Result } = req.returnInfo;
+  //   res.status(StatusCode.OK).json(Result);
+  //   res.redirect(`/plan?targetPlan=${targetTradeRecord.name}`);
 };
 
 export default {
