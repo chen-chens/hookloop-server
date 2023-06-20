@@ -46,18 +46,33 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   }
 
   const targetUsers = await User.find({
-    // ...queryConditions,
-    // ...regexConditions,
+    ...queryConditions,
+    ...regexConditions,
   })
     .populate({ path: "currentPlan" })
     .exec();
-  console.log("🚀 ~ file: adminControllers.ts:54 ~ getUsers ~ targetUsers:", targetUsers);
 
   if (!targetUsers) {
     // 回傳空陣列，代表沒有符合此條件下的 user
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { users: [] });
   } else {
-    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { users: targetUsers });
+    const data = targetUsers.map((targetUser) => ({
+      id: targetUser.id,
+      email: targetUser.email,
+      username: targetUser.username,
+      avatar: targetUser.avatar,
+      isArchived: targetUser.isArchived,
+      lastActiveTime: targetUser.lastActiveTime,
+      createdAt: targetUser.createdAt,
+      updatedAt: targetUser.updatedAt,
+      currentPlan: {
+        userId: targetUser?.currentPlan?.userId || null,
+        name: targetUser?.currentPlan?.name || null,
+        endAt: targetUser?.currentPlan?.endAt || null,
+        status: targetUser?.currentPlan?.status || null,
+      },
+    }));
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, data);
   }
 };
 
