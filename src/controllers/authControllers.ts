@@ -235,7 +235,7 @@ const verifyUserToken = async (req: Request, res: Response, next: NextFunction) 
   }
   const decode = await jwt.verify(token, process.env.JWT_SECRET_KEY!);
   const { userId } = decode as IDecodedToken;
-  const targetUser = await User.findById(userId);
+  const targetUser = await User.findById(userId).populate({ path: "currentPlan" }).exec();
   if (!targetUser) {
     forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_READ);
     return;
