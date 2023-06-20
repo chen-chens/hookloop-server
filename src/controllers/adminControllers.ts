@@ -10,8 +10,8 @@ import { filteredUndefinedConditions, getJwtToken, sendSuccessResponse, timeHand
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
-  const { username, email, plan, startDate, endDate, isArchived } = req.body;
-  const queryConditions = filteredUndefinedConditions({ username, email, plan, isArchived });
+  const { username, email, startDate, endDate, isArchived } = req.body;
+  const queryConditions = filteredUndefinedConditions({ username, email, isArchived });
 
   // 如果沒有任何條件，就回傳空陣列
   if (Object.keys(req.body).length === 0) {
@@ -46,11 +46,14 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   }
 
   const targetUsers = await User.find({
-    ...queryConditions,
-    ...regexConditions,
-  }).select("_id username email isArchived createdAt");
+    // ...queryConditions,
+    // ...regexConditions,
+  })
+    .populate({ path: "currentPlan" })
+    .exec();
+  console.log("🚀 ~ file: adminControllers.ts:54 ~ getUsers ~ targetUsers:", targetUsers);
 
-  if (!targetUsers || targetUsers.length === 0) {
+  if (!targetUsers) {
     // 回傳空陣列，代表沒有符合此條件下的 user
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { users: [] });
   } else {

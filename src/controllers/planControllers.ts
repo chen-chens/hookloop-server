@@ -1,4 +1,5 @@
 import CryptoJS from "crypto-js";
+import dayjs from "dayjs";
 import { NextFunction, Request, Response } from "express";
 
 import dbOptions from "@/config/dbOptions";
@@ -63,11 +64,12 @@ const createOrderForPayment = async (req: IPlanOrderRequest, res: Response, next
   const shaEncrypted = shaHex.toUpperCase();
 
   // DB 建立一筆訂單:
-  const oneMonth = 30 * 24 * 60 * 60 * 1000;
+  const startDate = dayjs();
+  const endDate = startDate.add(30, "day"); // 1 month
   await Plan.create({
     name: targetPlan,
     price: getPriceByPlan(targetPlan),
-    endAt: Date.now() + oneMonth, // 1 month
+    endAt: endDate.toISOString(),
     userId: id,
     status: "UN-PAID",
     merchantOrderNo: tradeInfo.MerchantOrderNo,
@@ -88,12 +90,16 @@ const paymentNotify = async (req: Request, res: Response, next: NextFunction) =>
   // }
 
   // 如果訂單編號一致，就可以更新到 DB
+  const startDate = dayjs(Result.PayTime);
+  const endDate = startDate.add(30, "day"); // 1 month
   const updateDbTradeRecord = await Plan.findOneAndUpdate(
     { merchantOrderNo: Result.MerchantOrderNo },
     {
       status: Status === "SUCCESS" ? "PAY-SUCCESS" : "PAY-FAIL",
       paymentType: Result.PaymentType,
       payBankCode: Result.PayBankCode,
+      payTime: Result.PayTime,
+      endAt: endDate.toISOString(), // 更新同付款時間後一個月
     },
     dbOptions,
   );
