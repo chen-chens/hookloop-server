@@ -10,7 +10,7 @@ import { filteredUndefinedConditions, getJwtToken, sendSuccessResponse, timeHand
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
-  const { username, email, startDate, endDate, isArchived } = req.body;
+  const { username, email, startDate, endDate, isArchived, planType } = req.body;
   const queryConditions = filteredUndefinedConditions({ username, email, isArchived });
 
   // 如果沒有任何條件，就回傳空陣列
@@ -56,7 +56,9 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
     // 回傳空陣列，代表沒有符合此條件下的 user
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { users: [] });
   } else {
-    const data = targetUsers.map((targetUser) => ({
+    // 過濾符合條件的使用者
+    const usersWithTargetPlan = targetUsers.filter((user) => user.currentPlan?.name === planType);
+    const data = usersWithTargetPlan.map((targetUser) => ({
       id: targetUser.id,
       email: targetUser.email,
       username: targetUser.username,
