@@ -155,7 +155,6 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
 
 const validateResetPasswordToken = async (req: Request, res: Response, next: NextFunction) => {
   const { resetToken } = req.params;
-  console.log("🚀 ~  validateResetPasswordToken ~ resetToken:", resetToken);
 
   const decode = await jwt.verify(resetToken, process.env.JWT_SECRET_KEY!);
   if (!decode) {
@@ -240,7 +239,22 @@ const verifyUserToken = async (req: Request, res: Response, next: NextFunction) 
     forwardCustomError(next, StatusCode.NOT_FOUND, ApiResults.FAIL_READ);
     return;
   }
-  sendSuccessResponse(res, ApiResults.VERIFIED_TOKEN, targetUser);
+  sendSuccessResponse(res, ApiResults.VERIFIED_TOKEN, {
+    id: targetUser.id,
+    email: targetUser.email,
+    username: targetUser.username,
+    avatar: targetUser.avatar,
+    isArchived: targetUser.isArchived,
+    lastActiveTime: targetUser.lastActiveTime,
+    createdAt: targetUser.createdAt,
+    updatedAt: targetUser.updatedAt,
+    currentPlan: {
+      userId: targetUser?.currentPlan?.userId || null,
+      name: targetUser?.currentPlan?.name || null,
+      endAt: targetUser?.currentPlan?.endAt || null,
+      status: targetUser?.currentPlan?.status || null,
+    },
+  });
 };
 
 export default {
