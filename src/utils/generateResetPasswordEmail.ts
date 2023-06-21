@@ -1,5 +1,5 @@
 const generateResetPasswordEmail = (username: string, resetPasswordUrl: string): string => {
-  const url = process.env.NODE_ENV === "production" ? "https://hookloop-client.onrender.com" : "http://localhost:3000";
+  const url = process.env.NODE_ENV === "production" ? process.env.FRONT_REMOTE_URL : process.env.FRONT_LOCAL_URL;
   return `
     <html>
         <head>
