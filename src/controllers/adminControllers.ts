@@ -5,19 +5,20 @@ import jwt from "jsonwebtoken";
 import { forwardCustomError } from "@/middlewares";
 import { AdminUser, User } from "@/models";
 import Plan from "@/models/planModel";
-import { ApiResults, IDecodedToken, IPlanOrderRequest, StatusCode } from "@/types";
+import { ApiResults, IDecodedToken, StatusCode } from "@/types";
+import IPlansRequest from "@/types/plansRequest";
 import { filteredUndefinedConditions, getJwtToken, sendSuccessResponse, timeHandler } from "@/utils";
 import mongoDbHandler from "@/utils/mongoDbHandler";
 
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
-  const { username, email, startDate, endDate, isArchived } = req.body;
+  const { username, email, startDate, endDate, isArchived, planType } = req.body;
   const queryConditions = filteredUndefinedConditions({ username, email, isArchived });
 
-  // 如果沒有任何條件，就回傳空陣列
-  if (Object.keys(req.body).length === 0) {
-    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { users: [] });
-    return;
-  }
+  // // 如果沒有任何條件，就回傳空陣列
+  // if (Object.keys(req.body).length === 0) {
+  //   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { users: [] });
+  //   return;
+  // }
 
   // 搜尋註冊時間區間
   if (startDate && endDate) {
@@ -55,8 +56,28 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   if (!targetUsers) {
     // 回傳空陣列，代表沒有符合此條件下的 user
     sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { users: [] });
-  } else {
+  } else if (Object.keys(req.body).length === 0) {
     const data = targetUsers.map((targetUser) => ({
+      id: targetUser.id,
+      email: targetUser.email,
+      username: targetUser.username,
+      avatar: targetUser.avatar,
+      isArchived: targetUser.isArchived,
+      lastActiveTime: targetUser.lastActiveTime,
+      createdAt: targetUser.createdAt,
+      updatedAt: targetUser.updatedAt,
+      currentPlan: {
+        userId: targetUser?.currentPlan?.userId || null,
+        name: targetUser?.currentPlan?.name || null,
+        endAt: targetUser?.currentPlan?.endAt || null,
+        status: targetUser?.currentPlan?.status || null,
+      },
+    }));
+    sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, data);
+  } else {
+    // 過濾符合條件的使用者
+    const usersWithTargetPlan = targetUsers.filter((user) => user.currentPlan?.name === planType);
+    const data = usersWithTargetPlan.map((targetUser) => ({
       id: targetUser.id,
       email: targetUser.email,
       username: targetUser.username,
@@ -203,11 +224,65 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-const getPlansByUserId = async (req: IPlanOrderRequest, res: Response) => {
+const getPlansByUserId = async (req: Request, res: Response) => {
   const { userId } = req.params;
-  const tradeRecords = await Plan.find({ userId });
+  const tradeRecords = await Plan.find({ userId }).populate("user").exec();
+  const { user } = tradeRecords[0];
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+    plans: tradeRecords,
+    user: {
+      username: user?.username,
+      email: user?.email,
+    },
+  });
+};
 
-  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, { plans: tradeRecords });
+const getPlans = async (req: IPlansRequest, res: Response) => {
+  const { userId, planType, payTime, status, merchantOrderNo } = req.body;
+  const queryConditions = filteredUndefinedConditions({ userId, name: planType, payTime, status, merchantOrderNo });
+
+  // 模糊搜尋
+  const regexConditions: { [key: string]: any } = {};
+  if (merchantOrderNo) {
+    regexConditions.merchantOrderNo = { $regex: new RegExp(merchantOrderNo, "i") };
+  }
+
+  // 搜尋PayTime
+  // if (payTime) {
+  //   const { isValidDateTime } = timeHandler;
+
+  //   if (!isValidDateTime(payTime)) {
+  //     forwardCustomError(next, StatusCode.BAD_REQUEST, ApiResults.FAIL_TO_GET_DATA, {
+  //       error: "Invalid date format.",
+  //     });
+  //     return;
+  //   }
+
+  //   // 取得 payTime 當日的起始時間
+  //   const startDate = new Date(payTime);
+  //   startDate.setHours(0, 0, 0, 0);
+
+  //   // 取得 payTime 當日的最後一毫秒
+  //   const endDate = new Date(payTime);
+  //   endDate.setHours(23, 59, 59, 999);
+
+  //   queryConditions.payTime = {
+  //     $gte: startDate,
+  //     $lte: endDate,
+  //   };
+  // }
+
+  const tradeRecords = await Plan.find({ ...queryConditions, ...regexConditions })
+    .populate("user")
+    .exec();
+  const { user } = tradeRecords[0];
+  sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
+    plans: tradeRecords,
+    user: {
+      username: user?.username,
+      email: user?.email,
+    },
+  });
 };
 
 const verifyUserToken = async (req: Request, res: Response, next: NextFunction) => {
@@ -236,4 +311,5 @@ export default {
   login,
   getPlansByUserId,
   verifyUserToken,
+  getPlans,
 };
