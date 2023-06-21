@@ -13,6 +13,10 @@ export interface IPlan {
   payBankCode?: string;
   payerAccount5Code?: string;
   payTime: string;
+  user?: {
+    username: string;
+    email: string;
+  };
 }
 const planSchema = new Schema<IPlan>(
   {
@@ -69,6 +73,15 @@ const planSchema = new Schema<IPlan>(
 );
 
 planSchema.index({ endAt: -1 }); // 在 endAt 上創建索引，方便 UserModel 指向最新方案資料。
+planSchema.virtual("user", {
+  ref: "User",
+  localField: "userId",
+  foreignField: "_id",
+  justOne: true,
+  options: {
+    select: "username email",
+  },
+});
 const Plan = mongoose.model("Plan", planSchema);
 
 export default Plan;
