@@ -2,13 +2,13 @@ import { CorsOptions } from "cors";
 
 const corsOptions: CorsOptions = {
   origin: [
-    "http://localhost:3000",
-    "https://hookloop-client.onrender.com",
-    "https://ccore.newebpay.com",
+    process.env.FRONT_LOCAL_URL!,
+    process.env.FRONT_REMOTE_URL!,
+    process.env.PAY_TEST_URL!,
 
     // admin
-    "http://localhost:5173",
-    "https://hookloop-admin.onrender.com",
+    process.env.ADMIN_LOCAL_URL!,
+    process.env.ADMIN_REMOTE_URL!,
   ],
   credentials: true,
   preflightContinue: true,

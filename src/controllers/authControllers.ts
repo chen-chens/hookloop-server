@@ -85,14 +85,14 @@ const forgetPassword = async (req: Request, res: Response, next: NextFunction) =
   // (2) 寄出通知信，包含一組由信箱、token 組成 url。
   const tempToken = jwt.sign({ userId: targetUser.id, email }, process.env.JWT_SECRET_KEY!, { expiresIn: "10m" });
   const dbClearResetTokenTime = new Date(Date.now() + 10 * 60 * 1000); // token 設定 10分鐘過期，DB 自動移除資料
-  const url = process.env.NODE_ENV === "production" ? "https://hookloop-client.onrender.com" : "http://localhost:3000";
+  const url = process.env.NODE_ENV === "production" ? process.env.FRONT_REMOTE_URL : process.env.FRONT_LOCAL_URL;
   const resetPasswordUrl = `${url}/resetPassword?resetToken=${tempToken}`;
 
   const { OAuth2 } = google.auth;
   const oauth2Client = new OAuth2(
     process.env.GOOGLE_AUTH_CLIENT_ID,
     process.env.GOOGLE_AUTH_CLIENT_SECRET,
-    "https://developers.google.com/oauthplayground", // YOUR_REDIRECT_URL
+    process.env.GOOGLE_REDIRECT_URL, // YOUR_REDIRECT_URL
   );
 
   // To get access token by using credential oauth2Client
