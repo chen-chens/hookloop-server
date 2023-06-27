@@ -47,23 +47,49 @@ export default {
           workspaceId,
         });
 
+        // eslint-disable-next-line no-underscore-dangle
+        const newKanbanId = newKanban._id;
+
         // 找到 kanban 建立在哪個 workspace
         const targetWorkspace = await Workspace.findOne({ _id: workspaceId });
         // 如果 workspace 存在就把新建立的 kanban id 寫入資料庫
         if (targetWorkspace) {
-          // eslint-disable-next-line no-underscore-dangle
-          const kanbans = targetWorkspace?.kanbans.concat([newKanban._id]);
+          const kanbans = targetWorkspace?.kanbans.concat([newKanbanId]);
           targetWorkspace.kanbans = kanbans;
           await targetWorkspace.save();
         }
 
-        sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
-          key: newKanban.key,
-          name: newKanban.name,
-          workspaceId: newKanban.workspaceId,
-          listOrder: newKanban.listOrder,
-          isArchived: newKanban.isArchived,
-        });
+        // 建立預設 List
+        const newLists = await List.insertMany(
+          ["Pending", "Active", "Done"].map((listName) => ({
+            name: listName,
+            kanbanId: newKanbanId,
+          })),
+        );
+        // 更新 Kanban 的 listOrder
+        const kanban = await Kanban.findOneAndUpdate(
+          { _id: newKanbanId },
+          {
+            $push: {
+              listOrder: {
+                // eslint-disable-next-line no-underscore-dangle
+                $each: newLists.map((list) => list._id.toString()),
+              },
+            },
+          },
+        );
+
+        if (kanban) {
+          sendSuccessResponse(res, ApiResults.SUCCESS_CREATE, {
+            key: kanban.key,
+            name: kanban.name,
+            workspaceId: kanban.workspaceId,
+            listOrder: kanban.listOrder,
+            isArchived: kanban.isArchived,
+          });
+        } else {
+          forwardCustomError(next, StatusCode.INTERNAL_SERVER_ERROR, ApiResults.UNEXPECTED_ERROR);
+        }
       }
     }
   },
