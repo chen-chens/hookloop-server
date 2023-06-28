@@ -75,7 +75,7 @@ export default {
 
         // 建立預設 List
         const newLists = await List.insertMany(
-          ["Pending", "Active", "Done"].map((listName) => ({
+          ["List-1", "List-2", "List-3"].map((listName) => ({
             name: listName,
             kanbanId: newKanbanId,
           })),
