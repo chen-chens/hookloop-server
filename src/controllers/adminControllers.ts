@@ -273,8 +273,12 @@ const getPlans = async (req: IPlansRequest, res: Response) => {
   // }
 
   const tradeRecords = await Plan.find({ ...queryConditions, ...regexConditions })
-    .populate("user")
+    .populate({
+      path: "userId",
+      select: "username email",
+    })
     .exec();
+
   const { user } = tradeRecords[0];
   sendSuccessResponse(res, ApiResults.SUCCESS_GET_DATA, {
     plans: tradeRecords,
